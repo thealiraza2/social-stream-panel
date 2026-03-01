@@ -8,7 +8,10 @@ import {
   Facebook, Twitter, Instagram, Youtube
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import heroImg from "@/assets/hero.png";
+import supportImg from "@/assets/support.png";
+import paymentsImg from "@/assets/payments.png";
+import stepsImg from "@/assets/steps.png";
 /* ------------------------------------------------------------------ */
 /*  Animated counter hook                                              */
 /* ------------------------------------------------------------------ */
@@ -217,16 +220,9 @@ export default function LandingPage() {
           </div>
 
           {/* Hero image placeholder */}
-          <div className="relative mx-auto aspect-square w-full max-w-lg">
+          <div className="relative mx-auto w-full max-w-lg">
             <div className="absolute inset-0 rounded-3xl gradient-primary opacity-20 blur-2xl" />
-            <div className="relative flex h-full items-center justify-center rounded-3xl border border-border bg-card/60 backdrop-blur-sm">
-              <div className="text-center p-8">
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl gradient-primary">
-                  <Zap className="h-10 w-10 text-white" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">Place your 3D Hero Image here</p>
-              </div>
-            </div>
+            <img src={heroImg} alt="SMM Panel Dashboard" className="relative w-full rounded-3xl shadow-2xl shadow-primary/10" />
           </div>
         </div>
       </Section>
@@ -234,6 +230,9 @@ export default function LandingPage() {
       {/* ==================== FEATURES ==================== */}
       <Section id="features" className="bg-secondary/30">
         <SectionTitle badge="Features" title="Why Choose Us?" description="Everything you need to dominate social media, at unbeatable prices." />
+        <div className="mx-auto mb-12 max-w-md">
+          <img src={supportImg} alt="24/7 Customer Support" className="w-full rounded-2xl" />
+        </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: Zap, title: "Instant Delivery", desc: "Orders start processing within seconds. No delays, no waiting around.", gradient: "gradient-primary" },
@@ -260,30 +259,8 @@ export default function LandingPage() {
       {/* ==================== HOW IT WORKS ==================== */}
       <Section id="how-it-works">
         <SectionTitle badge="How It Works" title="Get Started in 3 Easy Steps" description="From sign-up to results — it's that simple." />
-        <div className="grid gap-8 md:grid-cols-3">
-          {[
-            { step: "01", icon: UserPlus, title: "Register & Log In", desc: "Create a free account in seconds. No credit card required to get started." },
-            { step: "02", icon: CreditCard, title: "Add Funds", desc: "Deposit via Visa, Mastercard, Crypto, Easypaisa, JazzCash, and more." },
-            { step: "03", icon: ShoppingCart, title: "Place Order & Enjoy", desc: "Choose a service, paste your link, and watch your engagement grow instantly." },
-          ].map((s, i) => (
-            <div key={s.step} className="relative text-center">
-              {/* connector line */}
-              {i < 2 && (
-                <div className="absolute right-0 top-16 hidden h-0.5 w-full translate-x-1/2 bg-gradient-to-r from-primary/40 to-transparent md:block" />
-              )}
-              <div className="relative mx-auto mb-6 flex h-32 w-32 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-primary/10" />
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full gradient-primary shadow-lg shadow-primary/25">
-                  <s.icon className="h-9 w-9 text-white" />
-                </div>
-                <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-xs font-bold text-background">
-                  {s.step}
-                </span>
-              </div>
-              <h3 className="mb-2 text-xl font-semibold text-foreground">{s.title}</h3>
-              <p className="mx-auto max-w-xs text-sm text-muted-foreground">{s.desc}</p>
-            </div>
-          ))}
+        <div className="mx-auto max-w-3xl">
+          <img src={stepsImg} alt="How it works - Register, Add Funds, Place Order" className="w-full rounded-2xl" />
         </div>
       </Section>
 
@@ -340,14 +317,21 @@ export default function LandingPage() {
 
       {/* ==================== CTA BANNER ==================== */}
       <Section className="text-center">
-        <div className="rounded-3xl gradient-primary p-10 md:p-16">
-          <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl">Ready to Grow Your Social Media?</h2>
-          <p className="mx-auto mb-8 max-w-lg text-base text-white/80">
-            Join thousands of satisfied users and start boosting your presence today.
-          </p>
-          <Button size="lg" className="bg-white text-primary hover:bg-white/90 border-0 px-10 text-base font-semibold" asChild>
-            <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4" /></Link>
-          </Button>
+        <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
+          <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
+            <div className="text-left">
+              <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl">Ready to Grow Your Social Media?</h2>
+              <p className="mb-8 max-w-lg text-base text-white/80">
+                Join thousands of satisfied users and start boosting your presence today.
+              </p>
+              <Button size="lg" className="bg-white text-primary hover:bg-white/90 border-0 px-10 text-base font-semibold" asChild>
+                <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="mx-auto max-w-xs">
+              <img src={paymentsImg} alt="Secure Payments" className="w-full drop-shadow-2xl" />
+            </div>
+          </div>
         </div>
       </Section>
 
