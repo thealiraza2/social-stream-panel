@@ -59,64 +59,31 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-// Fetch services: Uses Vercel in Production, falls back to Proxy in Lovable Preview
+  // Fetch services through secure server-side Vercel API route
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
-    
+
     try {
-      let res: any;
-      let data: any;
-      let useFallback = false;
+      const res = await fetch('/api/fetch-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
 
-      // Attempt 1: Vercel Serverless Function (Primary for Live Website)
-      try {
-        res = await fetch('/api/fetch-services', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
-        });
-
-        // 🔴 CRITICAL FIX: Lovable (Vite) chupke se HTML bhejta hai. Agar JSON nahi hai, to fallback karo!
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || !contentType || !contentType.includes("application/json")) {
-          useFallback = true;
-        }
-      } catch (networkError) {
-        useFallback = true;
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData?.error || `HTTP Error ${res.status}`);
       }
 
-      // Attempt 2: Fallback for Lovable Preview (Form Data)
-      if (useFallback) {
-        console.log("Vercel API not found or returned HTML. Using proxy fallback...");
-        
-        const formData = new URLSearchParams();
-        formData.append("key", provider.apiKey);
-        formData.append("action", "services");
-
-        res = await fetch(`https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
-        });
-
-        // Agar Proxy bhi block ho jaye (Cloudflare ki wajah se)
-        const proxyContentType = res.headers.get("content-type");
-        if (proxyContentType && proxyContentType.includes("text/html")) {
-          throw new Error("Proxy Blocked by Provider. PLEASE PUBLISH & TEST ON LIVE VERCEL LINK.");
-        }
-      }
-
-      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-
-      data = await res.json();
+      const data = await res.json();
 
       if (!Array.isArray(data)) {
         if (data.error) throw new Error(data.error);
         throw new Error("Unexpected response format from provider");
       }
-      
+
       setRows(
         data.map((svc: any) => ({
           svc,
