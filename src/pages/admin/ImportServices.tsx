@@ -30,8 +30,6 @@ interface ImportRow {
   marginValue: string;
 }
 
-
-
 const ImportServices = () => {
   const { toast } = useToast();
   const [providers, setProviders] = useState<any[]>([]);
@@ -45,19 +43,23 @@ const ImportServices = () => {
   // Load providers + categories
   useEffect(() => {
     const load = async () => {
-      const [pSnap, cSnap] = await Promise.all([
-        getDocs(collection(db, "providers")),
-        getDocs(collection(db, "categories")),
-      ]);
-      setProviders(pSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((p: any) => p.status === "active"));
-      setCategories(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active"));
+      try {
+        const [pSnap, cSnap] = await Promise.all([
+          getDocs(collection(db, "providers")),
+          getDocs(collection(db, "categories")),
+        ]);
+        setProviders(pSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((p: any) => p.status === "active"));
+        setCategories(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active"));
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
     };
     load();
   }, []);
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services via local API route
+  // Fetch services via local Vercel API route (Fixes CORS)
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
@@ -68,9 +70,13 @@ const ImportServices = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
       });
+      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
       const data: ProviderService[] = await res.json();
-      if (!Array.isArray(data)) throw new Error("Unexpected response format");
+      
+      if (!Array.isArray(data)) throw new Error("Unexpected response format from provider");
+      
       setRows(
         data.map(svc => ({
           svc,
