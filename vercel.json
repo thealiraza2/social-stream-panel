@@ -1,20 +1,8 @@
+
 {
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node@5.6.9"
+      "runtime": "@vercel/node"
     }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  }
 }
