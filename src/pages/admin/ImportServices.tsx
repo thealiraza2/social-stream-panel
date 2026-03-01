@@ -59,20 +59,31 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services via local Vercel API route (Fixes CORS)
+  // Fetch services: Uses Vercel in Production, falls back to Proxy in Lovable Preview
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
+    
     try {
-      let res = await fetch('/api/fetch-services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
-      });
+      let res: any;
+      let data: any;
 
-      // Lovable preview can return 404 for Vercel serverless routes; fallback to CORS proxy for local testing
-      if (res.status === 404) {
+      // Attempt 1: Vercel Serverless Function (Primary for Live Website)
+      try {
+        res = await fetch('/api/fetch-services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
+        });
+      } catch (networkError) {
+        // Fallback flag if route is completely unreachable
+        res = { status: 404, ok: false };
+      }
+
+      // Attempt 2: Fallback for Lovable Preview
+      if (!res || !res.ok || res.status === 404) {
+        console.log("Local API not found, using proxy fallback for preview...");
         res = await fetch(`https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -80,14 +91,17 @@ const ImportServices = () => {
         });
       }
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
-      const data: ProviderService[] = await res.json();
+      data = await res.json();
 
-      if (!Array.isArray(data)) throw new Error("Unexpected response format from provider");
+      if (!Array.isArray(data)) {
+        if (data.error) throw new Error(data.error);
+        throw new Error("Unexpected response format from provider");
+      }
       
       setRows(
-        data.map(svc => ({
+        data.map((svc: any) => ({
           svc,
           selected: false,
           categoryId: "",
@@ -95,9 +109,10 @@ const ImportServices = () => {
           marginValue: "50",
         }))
       );
-      toast({ title: `${data.length} services fetched from ${provider.name}` });
+      toast({ title: `${data.length} services fetched successfully!` });
     } catch (err: any) {
-      toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
+      console.error("Fetch Error:", err);
+      toast({ title: "Fetch failed", description: err.message || "Failed to fetch data", variant: "destructive" });
     } finally {
       setFetching(false);
     }
