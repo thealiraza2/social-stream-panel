@@ -2,14 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace with your Firebase project credentials
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyBNPRfwfqogpA1ryn5PRX9iKFFJ4FXvGb0",
+  authDomain: "smm-panel-45f15.firebaseapp.com",
+  projectId: "smm-panel-45f15",
+  storageBucket: "smm-panel-45f15.firebasestorage.app",
+  messagingSenderId: "398245193553",
+  appId: "1:398245193553:web:0f207a07800f2ea5411570",
+  measurementId: "G-JPZE1RSP7Q",
 };
 
 const app = initializeApp(firebaseConfig);
