@@ -81,13 +81,19 @@ const ImportServices = () => {
         res = { status: 404, ok: false };
       }
 
-      // Attempt 2: Fallback for Lovable Preview
+      // Attempt 2: Fallback for Lovable Preview with Form Data
       if (!res || !res.ok || res.status === 404) {
-        console.log("Local API not found, using proxy fallback for preview...");
+        console.log("Local API not found, using proxy fallback with Form Data...");
+        
+        // SMM Panels MUST receive Form Data, not JSON!
+        const formData = new URLSearchParams();
+        formData.append("key", provider.apiKey);
+        formData.append("action", "services");
+
         res = await fetch(`https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: provider.apiKey, action: 'services' }),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(), // Sending as Form Data
         });
       }
 
