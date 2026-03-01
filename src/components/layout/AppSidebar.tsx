@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, ClipboardList, Wallet, Server, MessageSquare,
-  Users, CreditCard, BarChart3, FolderOpen, FileText, Shield, Globe, Newspaper,
+  Users, CreditCard, BarChart3, FolderOpen, FileText, Shield, Globe, Newspaper, PackagePlus,
   BookOpen, UserPlus, Activity, Ban, Link2, Mail, PenTool, Tags, UserCheck,
   Monitor, Settings, Plug, Package, Languages, HelpCircle, AlertTriangle, Gift,
   ChevronDown, Repeat, XCircle,
@@ -44,6 +44,7 @@ const adminGroups = [
     items: [
       { title: "Services", url: "/admin/services", icon: Server },
       { title: "Categories", url: "/admin/categories", icon: FolderOpen },
+      { title: "Import Services", url: "/admin/import-services", icon: PackagePlus },
     ],
   },
   {

@@ -44,6 +44,7 @@ import StaffActivity from "./pages/admin/StaffActivity";
 import ChildPanels from "./pages/admin/ChildPanels";
 import Settings from "./pages/admin/Settings";
 import Providers from "./pages/admin/Providers";
+import ImportServices from "./pages/admin/ImportServices";
 import Modules from "./pages/admin/Modules";
 import News from "./pages/admin/News";
 import LanguagesPage from "./pages/admin/Languages";
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="/admin/child-panels" element={<AdminPage><ChildPanels /></AdminPage>} />
               <Route path="/admin/settings" element={<AdminPage><Settings /></AdminPage>} />
               <Route path="/admin/providers" element={<AdminPage><Providers /></AdminPage>} />
+              <Route path="/admin/import-services" element={<AdminPage><ImportServices /></AdminPage>} />
               <Route path="/admin/modules" element={<AdminPage><Modules /></AdminPage>} />
               <Route path="/admin/languages" element={<AdminPage><LanguagesPage /></AdminPage>} />
               <Route path="/admin/logs" element={<AdminPage><SystemLogs /></AdminPage>} />
