@@ -23,12 +23,39 @@ import Profile from "./pages/user/Profile";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import ServiceManagement from "./pages/admin/ServiceManagement";
+import CategoryManagement from "./pages/admin/CategoryManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
 import PaymentManagement from "./pages/admin/PaymentManagement";
 import TicketManagement from "./pages/admin/TicketManagement";
+import TransactionLogs from "./pages/admin/TransactionLogs";
+import DripFeed from "./pages/admin/DripFeed";
+import Subscriptions from "./pages/admin/Subscriptions";
+import CancelledOrders from "./pages/admin/CancelledOrders";
+import BlacklistIP from "./pages/admin/BlacklistIP";
+import BlacklistLink from "./pages/admin/BlacklistLink";
+import BlacklistEmail from "./pages/admin/BlacklistEmail";
+import BlogCategories from "./pages/admin/BlogCategories";
+import BlogPosts from "./pages/admin/BlogPosts";
+import Subscribers from "./pages/admin/Subscribers";
+import UserActivity from "./pages/admin/UserActivity";
+import StaffManagement from "./pages/admin/StaffManagement";
+import StaffActivity from "./pages/admin/StaffActivity";
+import ChildPanels from "./pages/admin/ChildPanels";
+import Settings from "./pages/admin/Settings";
+import Providers from "./pages/admin/Providers";
+import Modules from "./pages/admin/Modules";
+import News from "./pages/admin/News";
+import LanguagesPage from "./pages/admin/Languages";
+import FAQs from "./pages/admin/FAQs";
+import SystemLogs from "./pages/admin/SystemLogs";
+import PaymentBonuses from "./pages/admin/PaymentBonuses";
 
 const queryClient = new QueryClient();
+
+const AdminPage = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute><AdminRoute><AppLayout>{children}</AppLayout></AdminRoute></ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -53,12 +80,35 @@ const App = () => (
               <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
 
               {/* Admin Routes */}
-              <Route path="/admin" element={<ProtectedRoute><AdminRoute><AppLayout><AdminDashboard /></AppLayout></AdminRoute></ProtectedRoute>} />
-              <Route path="/admin/services" element={<ProtectedRoute><AdminRoute><AppLayout><ServiceManagement /></AppLayout></AdminRoute></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute><AdminRoute><AppLayout><UserManagement /></AppLayout></AdminRoute></ProtectedRoute>} />
-              <Route path="/admin/orders" element={<ProtectedRoute><AdminRoute><AppLayout><OrderManagement /></AppLayout></AdminRoute></ProtectedRoute>} />
-              <Route path="/admin/payments" element={<ProtectedRoute><AdminRoute><AppLayout><PaymentManagement /></AppLayout></AdminRoute></ProtectedRoute>} />
-              <Route path="/admin/tickets" element={<ProtectedRoute><AdminRoute><AppLayout><TicketManagement /></AppLayout></AdminRoute></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+              <Route path="/admin/orders" element={<AdminPage><OrderManagement /></AdminPage>} />
+              <Route path="/admin/drip-feed" element={<AdminPage><DripFeed /></AdminPage>} />
+              <Route path="/admin/subscriptions" element={<AdminPage><Subscriptions /></AdminPage>} />
+              <Route path="/admin/cancelled" element={<AdminPage><CancelledOrders /></AdminPage>} />
+              <Route path="/admin/services" element={<AdminPage><ServiceManagement /></AdminPage>} />
+              <Route path="/admin/categories" element={<AdminPage><CategoryManagement /></AdminPage>} />
+              <Route path="/admin/transactions" element={<AdminPage><TransactionLogs /></AdminPage>} />
+              <Route path="/admin/payments" element={<AdminPage><PaymentManagement /></AdminPage>} />
+              <Route path="/admin/payment-bonuses" element={<AdminPage><PaymentBonuses /></AdminPage>} />
+              <Route path="/admin/users" element={<AdminPage><UserManagement /></AdminPage>} />
+              <Route path="/admin/subscribers" element={<AdminPage><Subscribers /></AdminPage>} />
+              <Route path="/admin/user-activity" element={<AdminPage><UserActivity /></AdminPage>} />
+              <Route path="/admin/tickets" element={<AdminPage><TicketManagement /></AdminPage>} />
+              <Route path="/admin/blacklist-ip" element={<AdminPage><BlacklistIP /></AdminPage>} />
+              <Route path="/admin/blacklist-link" element={<AdminPage><BlacklistLink /></AdminPage>} />
+              <Route path="/admin/blacklist-email" element={<AdminPage><BlacklistEmail /></AdminPage>} />
+              <Route path="/admin/blog-categories" element={<AdminPage><BlogCategories /></AdminPage>} />
+              <Route path="/admin/blog-posts" element={<AdminPage><BlogPosts /></AdminPage>} />
+              <Route path="/admin/news" element={<AdminPage><News /></AdminPage>} />
+              <Route path="/admin/faqs" element={<AdminPage><FAQs /></AdminPage>} />
+              <Route path="/admin/staff" element={<AdminPage><StaffManagement /></AdminPage>} />
+              <Route path="/admin/staff-activity" element={<AdminPage><StaffActivity /></AdminPage>} />
+              <Route path="/admin/child-panels" element={<AdminPage><ChildPanels /></AdminPage>} />
+              <Route path="/admin/settings" element={<AdminPage><Settings /></AdminPage>} />
+              <Route path="/admin/providers" element={<AdminPage><Providers /></AdminPage>} />
+              <Route path="/admin/modules" element={<AdminPage><Modules /></AdminPage>} />
+              <Route path="/admin/languages" element={<AdminPage><LanguagesPage /></AdminPage>} />
+              <Route path="/admin/logs" element={<AdminPage><SystemLogs /></AdminPage>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
