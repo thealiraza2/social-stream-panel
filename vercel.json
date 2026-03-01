@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/smm-api",
-      "destination": "https://smmfollows.com/api/v2"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
