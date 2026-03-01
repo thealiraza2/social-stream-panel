@@ -31,10 +31,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // 🔴 CRITICAL FIX: SMM Panels strictly require URLSearchParams (Form Data), NOT JSON!
+    const formData = new URLSearchParams();
+    formData.append("key", apiKey);
+    formData.append("action", "services");
+
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: apiKey, action: "services" }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(), // Sending as Form Data
     });
 
     if (!response.ok) {
