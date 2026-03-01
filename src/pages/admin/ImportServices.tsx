@@ -30,7 +30,7 @@ interface ImportRow {
   marginValue: string;
 }
 
-const CORS_PROXY = "https://corsproxy.io/?";
+
 
 const ImportServices = () => {
   const { toast } = useToast();
@@ -57,17 +57,16 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services via CORS proxy
+  // Fetch services via local API route
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
     try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`;
-      const res = await fetch(proxyUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: provider.apiKey, action: "services" }),
+      const res = await fetch('/api/fetch-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ProviderService[] = await res.json();
