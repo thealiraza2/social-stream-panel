@@ -30,7 +30,7 @@ interface ImportRow {
   marginValue: string;
 }
 
-const FETCH_SERVICES_ENDPOINT = "/api/fetch-services";
+const FETCH_SERVICES_ENDPOINT = "/smm-api";
 
 const ImportServices = () => {
   const { toast } = useToast();
@@ -66,7 +66,7 @@ const ImportServices = () => {
       const res = await fetch(FETCH_SERVICES_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
+        body: JSON.stringify({ key: provider.apiKey, action: "services" }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ProviderService[] = await res.json();
