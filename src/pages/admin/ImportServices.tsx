@@ -30,7 +30,7 @@ interface ImportRow {
   marginValue: string;
 }
 
-const FETCH_SERVICES_ENDPOINT = "/smm-api";
+const FETCH_SERVICES_ENDPOINT = "/api/proxy-provider";
 
 const ImportServices = () => {
   const { toast } = useToast();
