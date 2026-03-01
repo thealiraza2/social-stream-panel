@@ -66,10 +66,10 @@ const ImportServices = () => {
     setRows([]);
 
     try {
-      const res = await fetch('/api/fetch-services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+      const res = await fetch("/api/fetch-services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ providerId: selectedProvider }),
       });
 
       if (!res.ok) {
