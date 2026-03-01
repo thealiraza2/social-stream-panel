@@ -1,8 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+const PROVIDER_URL = "https://smmpakpanel.com/api/v2";
+
+const getAllowedOrigin = (origin?: string) => {
+  if (!origin) return "*";
+  if (origin === "https://social-stream-panel-one.vercel.app") return origin;
+  if (origin.endsWith(".vercel.app")) return origin;
+  return "https://social-stream-panel-one.vercel.app";
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin as string | undefined;
+  res.setHeader("Access-Control-Allow-Origin", getAllowedOrigin(origin));
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -14,41 +24,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { apiUrl, apiKey } = req.body || {};
-
-  if (!apiUrl || !apiKey) {
-    return res.status(400).json({ error: "apiUrl and apiKey are required" });
-  }
-
-  // Basic URL validation
-  try {
-    const url = new URL(apiUrl);
-    if (!["http:", "https:"].includes(url.protocol)) {
-      return res.status(400).json({ error: "Invalid API URL protocol" });
-    }
-  } catch {
-    return res.status(400).json({ error: "Invalid API URL" });
+  const apiKey = process.env.SMM_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "Server API key is not configured" });
   }
 
   try {
-    // 🔴 CRITICAL FIX: SMM Panels strictly require URLSearchParams (Form Data), NOT JSON!
     const formData = new URLSearchParams();
     formData.append("key", apiKey);
     formData.append("action", "services");
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(PROVIDER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData.toString(), // Sending as Form Data
+      body: formData.toString(),
     });
 
+    const raw = await response.text();
+
     if (!response.ok) {
-      return res.status(response.status).json({ error: `Provider API returned ${response.status}` });
+      return res.status(response.status).json({
+        error: `Provider API returned ${response.status}`,
+        details: raw,
+      });
     }
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    try {
+      const data = JSON.parse(raw);
+      return res.status(200).json(data);
+    } catch {
+      return res.status(502).json({ error: "Invalid JSON from provider", details: raw });
+    }
   } catch (err: any) {
-    return res.status(500).json({ error: err.message || "Failed to fetch from provider" });
+    return res.status(500).json({ error: err?.message || "Failed to fetch from provider" });
   }
 }
+
