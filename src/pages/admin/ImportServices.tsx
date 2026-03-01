@@ -30,6 +30,8 @@ interface ImportRow {
   marginValue: string;
 }
 
+const FETCH_SERVICES_ENDPOINT = "/api/fetch-services";
+
 const ImportServices = () => {
   const { toast } = useToast();
   const [providers, setProviders] = useState<any[]>([]);
@@ -55,13 +57,13 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services from external API
+  // Fetch services via local backend proxy (never call provider URL directly from frontend)
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
     try {
-      const res = await fetch("/api/fetch-services", {
+      const res = await fetch(FETCH_SERVICES_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),

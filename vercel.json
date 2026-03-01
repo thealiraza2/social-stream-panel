@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/provider/:match*",
+      "destination": "https://smmfollows.com/:match*"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
