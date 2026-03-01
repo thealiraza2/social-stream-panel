@@ -19,6 +19,7 @@ import OrderLogs from "./pages/user/OrderLogs";
 import AddFunds from "./pages/user/AddFunds";
 import Services from "./pages/user/Services";
 import Tickets from "./pages/user/Tickets";
+import Profile from "./pages/user/Profile";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import ServiceManagement from "./pages/admin/ServiceManagement";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/add-funds" element={<ProtectedRoute><AppLayout><AddFunds /></AppLayout></ProtectedRoute>} />
               <Route path="/services" element={<ProtectedRoute><AppLayout><Services /></AppLayout></ProtectedRoute>} />
               <Route path="/tickets" element={<ProtectedRoute><AppLayout><Tickets /></AppLayout></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute><AdminRoute><AppLayout><AdminDashboard /></AppLayout></AdminRoute></ProtectedRoute>} />

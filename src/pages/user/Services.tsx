@@ -1,17 +1,136 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Server } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Server, Search } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
-const Services = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold">Services</h1>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Server className="h-5 w-5 text-primary" /> Available Services</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">Service catalog with pricing coming soon.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
+interface Category {
+  id: string;
+  name: string;
+  sortOrder: number;
+  status: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  categoryId: string;
+  rate: number;
+  minQuantity: number;
+  maxQuantity: number;
+  description: string;
+  status: string;
+}
+
+const Services = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const catSnap = await getDocs(collection(db, "categories"));
+      const cats = catSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Category))
+        .filter((c) => c.status === "active")
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      setCategories(cats);
+
+      const svcSnap = await getDocs(collection(db, "services"));
+      const svcs = svcSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Service))
+        .filter((s) => s.status === "active");
+      setServices(svcs);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const filtered = services.filter((s) => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.description?.toLowerCase().includes(search.toLowerCase());
+    const matchCategory = categoryFilter === "all" || s.categoryId === categoryFilter;
+    return matchSearch && matchCategory;
+  });
+
+  const getCategoryName = (catId: string) => categories.find((c) => c.id === catId)?.name ?? "—";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Services</h1>
+        <p className="text-muted-foreground">Browse available social media services</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search services..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Server className="h-10 w-10 mb-3" />
+              <p>No services available</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Rate / 1K</TableHead>
+                  <TableHead>Min</TableHead>
+                  <TableHead>Max</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((s, i) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{getCategoryName(s.categoryId)}</Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold text-primary">${s.rate}</TableCell>
+                    <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
+                    <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 export default Services;
