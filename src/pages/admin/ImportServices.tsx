@@ -59,7 +59,7 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services: Uses Vercel in Production, falls back to Proxy in Lovable Preview
+// Fetch services: Uses Vercel in Production, falls back to Proxy in Lovable Preview
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
@@ -68,6 +68,7 @@ const ImportServices = () => {
     try {
       let res: any;
       let data: any;
+      let useFallback = false;
 
       // Attempt 1: Vercel Serverless Function (Primary for Live Website)
       try {
@@ -76,16 +77,20 @@ const ImportServices = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
         });
+
+        // 🔴 CRITICAL FIX: Lovable (Vite) chupke se HTML bhejta hai. Agar JSON nahi hai, to fallback karo!
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType || !contentType.includes("application/json")) {
+          useFallback = true;
+        }
       } catch (networkError) {
-        // Fallback flag if route is completely unreachable
-        res = { status: 404, ok: false };
+        useFallback = true;
       }
 
-      // Attempt 2: Fallback for Lovable Preview with Form Data
-      if (!res || !res.ok || res.status === 404) {
-        console.log("Local API not found, using proxy fallback with Form Data...");
+      // Attempt 2: Fallback for Lovable Preview (Form Data)
+      if (useFallback) {
+        console.log("Vercel API not found or returned HTML. Using proxy fallback...");
         
-        // SMM Panels MUST receive Form Data, not JSON!
         const formData = new URLSearchParams();
         formData.append("key", provider.apiKey);
         formData.append("action", "services");
@@ -93,8 +98,14 @@ const ImportServices = () => {
         res = await fetch(`https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(), // Sending as Form Data
+          body: formData.toString(),
         });
+
+        // Agar Proxy bhi block ho jaye (Cloudflare ki wajah se)
+        const proxyContentType = res.headers.get("content-type");
+        if (proxyContentType && proxyContentType.includes("text/html")) {
+          throw new Error("Proxy Blocked by Provider. PLEASE PUBLISH & TEST ON LIVE VERCEL LINK.");
+        }
       }
 
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
