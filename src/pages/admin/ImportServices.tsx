@@ -65,16 +65,25 @@ const ImportServices = () => {
     setFetching(true);
     setRows([]);
     try {
-      const res = await fetch('/api/fetch-services', {
+      let res = await fetch('/api/fetch-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
       });
-      
+
+      // Lovable preview can return 404 for Vercel serverless routes; fallback to CORS proxy for local testing
+      if (res.status === 404) {
+        res = await fetch(`https://corsproxy.io/?${encodeURIComponent(provider.apiUrl)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: provider.apiKey, action: 'services' }),
+        });
+      }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data: ProviderService[] = await res.json();
-      
+
       if (!Array.isArray(data)) throw new Error("Unexpected response format from provider");
       
       setRows(
