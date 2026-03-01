@@ -61,10 +61,10 @@ const ImportServices = () => {
     setFetching(true);
     setRows([]);
     try {
-      const res = await fetch(provider.apiUrl, {
+      const res = await fetch("/api/fetch-services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: provider.apiKey, action: "services" }),
+        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ProviderService[] = await res.json();
