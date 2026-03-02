@@ -143,14 +143,14 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      if (svc.providerId && svc.providerApiUrl && svc.providerApiKey) {
+      if (svc.providerId && svc.providerServiceId) {
         try {
-          const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/place-order", {
+          const providerRes = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              apiUrl: svc.providerApiUrl,
-              apiKey: svc.providerApiKey,
+              apiUrl: svc.providerApiUrl || "",
+              apiKey: svc.providerApiKey || "",
               service: svc.providerServiceId,
               link: link,
               quantity: qty,
@@ -162,9 +162,13 @@ const NewOrder = () => {
               providerOrderId: providerData.order,
               status: "processing",
             });
+            toast({ title: "Order sent to provider", description: `Provider Order ID: ${providerData.order}` });
+          } else if (providerData.error) {
+            toast({ title: "Provider error", description: providerData.error, variant: "destructive" });
           }
-        } catch (apiErr) {
+        } catch (apiErr: any) {
           console.error("Provider API error (order saved locally):", apiErr);
+          toast({ title: "Provider API failed", description: "Order saved locally but provider routing failed.", variant: "destructive" });
         }
       }
 

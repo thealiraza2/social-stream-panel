@@ -134,14 +134,14 @@ const BulkOrder = () => {
           createdAt: serverTimestamp(),
         });
 
-        if (svc.providerId && svc.providerApiUrl && svc.providerApiKey) {
+        if (svc.providerId && svc.providerServiceId) {
           try {
-            const res = await fetch("https://my-server-one-lake.vercel.app/api/place-order", {
+            const res = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                apiUrl: svc.providerApiUrl,
-                apiKey: svc.providerApiKey,
+                apiUrl: svc.providerApiUrl || "",
+                apiKey: svc.providerApiKey || "",
                 service: svc.providerServiceId,
                 link,
                 quantity: qty,
@@ -153,6 +153,8 @@ const BulkOrder = () => {
                 providerOrderId: data.order,
                 status: "processing",
               });
+            } else if (data.error) {
+              console.error("Provider error for link:", link, data.error);
             }
           } catch (apiErr) {
             console.error("Provider API error:", apiErr);
