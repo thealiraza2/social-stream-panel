@@ -19,7 +19,7 @@ const firebaseConfig = {
 
 const getAllowedOrigin = (origin?: string) => {
   if (!origin) return "*";
-  if (origin === "https://social-stream-panel-one.vercel.app") return origin;
+  if (origin === "https://my-server-one-lake.vercel.app/api/fetch-services") return origin;
   if (origin.endsWith(".vercel.app")) return origin;
   return "https://social-stream-panel-one.vercel.app";
 };
