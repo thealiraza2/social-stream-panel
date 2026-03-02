@@ -190,7 +190,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3">
         {!collapsed && (
           <div className="rounded-lg bg-sidebar-accent/50 p-3 text-xs text-muted-foreground text-center">
-            {isAdmin ? "Admin Panel" : `Balance: $${profile?.balance?.toFixed(2) ?? "0.00"}`}
+            {isAdmin ? "Admin Panel" : `Balance: Rs.${profile?.balance?.toFixed(2) ?? "0.00"}`}
           </div>
         )}
       </SidebarFooter>

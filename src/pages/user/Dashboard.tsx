@@ -1,35 +1,68 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, TrendingUp, ShoppingCart, Plus, DollarSign } from "lucide-react";
+import { Wallet, ShoppingCart, Plus, DollarSign, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const mockOrders = [
-  { id: "#1234", service: "Instagram Followers", quantity: 1000, charge: "$2.50", status: "completed" },
-  { id: "#1235", service: "YouTube Views", quantity: 5000, charge: "$8.00", status: "processing" },
-  { id: "#1236", service: "Twitter Likes", quantity: 500, charge: "$1.20", status: "pending" },
-  { id: "#1237", service: "TikTok Followers", quantity: 2000, charge: "$5.00", status: "completed" },
-  { id: "#1238", service: "Facebook Page Likes", quantity: 300, charge: "$3.50", status: "canceled" },
-];
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 const statusColor: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
   processing: "bg-info/10 text-info border-info/20",
+  in_progress: "bg-info/10 text-info border-info/20",
   pending: "bg-warning/10 text-warning border-warning/20",
   canceled: "bg-destructive/10 text-destructive border-destructive/20",
+  partial: "bg-muted text-muted-foreground border-border",
 };
 
 const UserDashboard = () => {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [totalSpend, setTotalSpend] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      try {
+        // Fetch user's orders
+        const orderSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid)));
+        const allOrders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+        allOrders.sort((a: any, b: any) => {
+          const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+          const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+          return bT - aT;
+        });
+        setOrders(allOrders);
+
+        // Calculate total spend
+        const spend = allOrders.reduce((sum: number, o: any) => sum + (o.charge || 0), 0);
+        setTotalSpend(spend);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
 
   const stats = [
-    { label: "Balance", value: `$${profile?.balance?.toFixed(2) ?? "0.00"}`, icon: Wallet, gradient: "gradient-purple" },
-    { label: "Total Spend", value: "$45.20", icon: DollarSign, gradient: "gradient-blue" },
-    { label: "Total Orders", value: "23", icon: ShoppingCart, gradient: "gradient-teal" },
+    { label: "Balance", value: `Rs.${profile?.balance?.toFixed(2) ?? "0.00"}`, icon: Wallet, gradient: "gradient-purple" },
+    { label: "Total Spend", value: `Rs.${totalSpend.toFixed(2)}`, icon: DollarSign, gradient: "gradient-blue" },
+    { label: "Total Orders", value: orders.length.toString(), icon: ShoppingCart, gradient: "gradient-teal" },
   ];
+
+  const recentOrders = orders.slice(0, 5);
+
+  const formatDate = (ts: any) => {
+    if (!ts?.toDate) return "—";
+    return ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <div className="space-y-6">
@@ -71,32 +104,45 @@ const UserDashboard = () => {
           <div className="p-4 pb-2">
             <h2 className="text-lg font-semibold">Recent Orders</h2>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Service</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Charge</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockOrders.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-medium">{o.id}</TableCell>
-                  <TableCell>{o.service}</TableCell>
-                  <TableCell>{o.quantity.toLocaleString()}</TableCell>
-                  <TableCell>{o.charge}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={statusColor[o.status]}>
-                      {o.status}
-                    </Badge>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-muted-foreground">
+              <ClipboardList className="h-8 w-8 mb-2" />
+              <p className="text-sm">No orders yet</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Charge</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {recentOrders.map((o) => (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}</TableCell>
+                    <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
+                    <TableCell>{o.quantity?.toLocaleString()}</TableCell>
+                    <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={statusColor[o.status] || ""}>
+                        {o.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

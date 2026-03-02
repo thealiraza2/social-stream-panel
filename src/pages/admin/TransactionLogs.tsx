@@ -63,7 +63,7 @@ const TransactionLogs = () => {
                     <TableRow key={t.id}>
                       <TableCell className="font-mono text-xs">{t.userId?.slice(0, 10)}</TableCell>
                       <TableCell><Badge variant="outline">{t.type}</Badge></TableCell>
-                      <TableCell className="font-medium">${t.amount?.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">Rs.{t.amount?.toFixed(2)}</TableCell>
                       <TableCell>{t.paymentMethod}</TableCell>
                       <TableCell><Badge variant="outline" className={t.status === "completed" ? "text-green-600" : t.status === "pending" ? "text-yellow-600" : "text-red-600"}>{t.status}</Badge></TableCell>
                       <TableCell className="max-w-[200px] truncate text-sm">{t.description}</TableCell>

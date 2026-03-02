@@ -358,7 +358,7 @@ const ImportServices = () => {
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
                       <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                      <TableCell className="text-sm">${row.svc.rate}</TableCell>
+                      <TableCell className="text-sm">Rs.{row.svc.rate}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                       <TableCell>
@@ -391,7 +391,7 @@ const ImportServices = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm font-semibold text-primary">
-                        ${calcSelling(row).toFixed(2)}
+                        Rs.{calcSelling(row).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         {row.added ? (

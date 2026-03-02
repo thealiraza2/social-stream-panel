@@ -90,7 +90,7 @@ const ServiceManagement = () => {
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell>{getCategoryName(s.categoryId)}</TableCell>
-                      <TableCell>${s.rate}</TableCell>
+                      <TableCell>Rs.{s.rate}</TableCell>
                       <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                       <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
                       <TableCell><Badge variant="outline" className={s.status === "active" ? "text-green-600" : "text-red-600"}>{s.status}</Badge></TableCell>
