@@ -60,41 +60,41 @@ const ImportServices = () => {
 
   // 🔴 FIXED: NOW CALLING YOUR EXTERNAL PROXY SERVER
  const handleFetch = async () => {
-    if (!provider) return;
-    setFetching(true);
-    setRows([]);
+  if (!provider) return;
+  setFetching(true);
+  setRows([]);
+  
+  try {
+    // 🟢 Calling YOUR Proxy Server (Request URL MUST be this)
+    const res = await fetch('https://my-server-one-lake.vercel.app/api/proxy-provider', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        apiUrl: provider.apiUrl, // SMM Panel Link (e.g. smmpakpanel.com/api/v2)
+        apiKey: provider.apiKey 
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Proxy Server Error: ${res.status}`);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) throw new Error(data.error || "Invalid Response");
     
-    try {
-      // 🟢 YEAH HAI ASLI FIX: Hum proxy server ko call kar rahe hain
-      const res = await fetch('https://my-server-one-lake.vercel.app/api/fetch-services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          apiUrl: provider.apiUrl, // SMM Panel ka URL (e.g. smmpakpanel.com/api/v2)
-          apiKey: provider.apiKey 
-        }),
-      });
-
-      if (!res.ok) throw new Error(`Proxy Server Error: ${res.status}`);
-      
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error(data.error || "Invalid response format");
-      
-      setRows(data.map((svc: any) => ({
-          svc,
-          selected: false,
-          categoryId: "",
-          marginType: "percent" as const,
-          marginValue: "50",
-      })));
-      toast({ title: "Services fetched successfully!" });
-    } catch (err: any) {
-      toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
-    } finally {
-      setFetching(false);
-    }
-  };
-
+    setRows(data.map((svc: any) => ({
+        svc,
+        selected: false,
+        categoryId: "",
+        marginType: "percent" as const,
+        marginValue: "50",
+    })));
+    toast({ title: "Services fetched successfully!" });
+  } catch (err: any) {
+    toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
+  } finally {
+    setFetching(false);
+  }
+};
+  
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
