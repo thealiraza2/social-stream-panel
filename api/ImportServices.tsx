@@ -120,6 +120,8 @@ const ImportServices = () => {
           description: r.svc.description || "",
           providerId: selectedProvider,
           providerServiceId: r.svc.service,
+          providerApiUrl: provider?.apiUrl || "",
+          providerApiKey: provider?.apiKey || "",
           status: "active",
           createdAt: serverTimestamp(),
         })
