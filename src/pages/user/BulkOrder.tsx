@@ -175,7 +175,7 @@ const BulkOrder = () => {
 
   if (submitted) {
     return (
-      <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl animate-fade-in">
         <div>
           <h1 className="text-2xl font-bold">Bulk Order</h1>
           <p className="text-muted-foreground">Place multiple orders at once</p>
@@ -196,7 +196,7 @@ const BulkOrder = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Bulk Order</h1>
         <p className="text-muted-foreground">Select a service, paste links — all orders placed at once</p>

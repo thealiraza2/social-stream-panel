@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Shield, Calendar, Save, KeyRound } from "lucide-react";
+import { User, Mail, Shield, Calendar, Save, KeyRound, Wallet, ShoppingCart, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,6 +18,7 @@ const Profile = () => {
 
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
   const [saving, setSaving] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -26,10 +27,17 @@ const Profile = () => {
 
   const initials = profile?.displayName
     ?.split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2) ?? "U";
+
+  useEffect(() => {
+    if (!user) return;
+    getDocs(query(collection(db, "orders"), where("userId", "==", user.uid)))
+      .then(snap => setOrderCount(snap.size))
+      .catch(() => {});
+  }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!user || !displayName.trim()) return;
@@ -76,56 +84,72 @@ const Profile = () => {
     return ts.toDate().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   };
 
+  const memberSince = profile?.createdAt?.toDate?.();
+  const memberDays = memberSince ? Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Manage your account settings</p>
+    <div className="space-y-6 max-w-2xl animate-fade-in">
+      {/* Hero Header */}
+      <Card className="gradient-primary text-white border-0 overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-5">
+            <Avatar className="h-20 w-20 border-4 border-white/20">
+              <AvatarFallback className="bg-white/20 text-white text-2xl font-bold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-bold">{profile?.displayName}</h1>
+              <p className="text-white/70 text-sm flex items-center gap-1">
+                <Mail className="h-3.5 w-3.5" /> {profile?.email}
+              </p>
+              <p className="text-white/60 text-xs mt-1 flex items-center gap-1">
+                <Calendar className="h-3 w-3" /> Member for {memberDays} days
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account Overview */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        {[
+          { label: "Balance", value: `Rs.${profile?.balance?.toFixed(2) ?? "0.00"}`, icon: Wallet, gradient: "gradient-purple" },
+          { label: "Orders", value: orderCount.toString(), icon: ShoppingCart, gradient: "gradient-teal" },
+          { label: "Member Since", value: formatDate(profile?.createdAt), icon: Clock, gradient: "gradient-blue" },
+          { label: "Status", value: profile?.status === "active" ? "Active" : "Inactive", icon: Shield, gradient: "gradient-orange" },
+        ].map(s => (
+          <Card key={s.label} className="border">
+            <CardContent className="p-3 text-center">
+              <s.icon className="h-4 w-4 mx-auto text-primary mb-1" />
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="text-sm font-semibold truncate">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Profile Info */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" /> Account Info
+            <User className="h-5 w-5 text-primary" /> Edit Profile
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 gradient-purple">
-              <AvatarFallback className="bg-transparent text-white text-xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <p className="font-semibold text-lg">{profile?.displayName}</p>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" /> {profile?.email}</span>
-                <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> {profile?.role}</span>
-              </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> Joined {formatDate(profile?.createdAt)}
-              </p>
-            </div>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Display Name</Label>
+            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
           </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Display Name</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={profile?.email ?? ""} disabled />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-            </div>
-            <Button onClick={handleUpdateProfile} disabled={saving} className="gradient-purple text-white border-0">
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input value={profile?.email ?? ""} disabled />
+            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
+          <Button onClick={handleUpdateProfile} disabled={saving} className="gradient-purple text-white border-0">
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
         </CardContent>
       </Card>
 
