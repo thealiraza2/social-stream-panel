@@ -66,16 +66,13 @@ const ImportServices = () => {
     setRows([]);
 
     try {
-      const res = await fetch("/api/fetch-services", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ providerId: selectedProvider }),
+      const res = await fetch('https://my-server-one-lake.vercel.app/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData?.error || `HTTP Error ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
       const data = await res.json();
 
