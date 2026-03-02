@@ -39,7 +39,13 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
+      // Owner can only update provider response fields on their own order
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'providerOrderId']) &&
+        request.resource.data.status in ['pending', 'processing', 'failed']
+      );
       allow delete: if isAdmin();
     }
 

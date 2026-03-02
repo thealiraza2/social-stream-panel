@@ -81,7 +81,11 @@ const BulkOrder = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!user || !profile || !selectedServiceData || !quantity || links.length === 0) return;
+    if (!selectedServiceData || !quantity || links.length === 0) return;
+    if (!user || !profile) {
+      toast({ title: "Authentication required", description: "Please login again to place orders.", variant: "destructive" });
+      return;
+    }
 
     const svc = selectedServiceData;
     const qty = Number(quantity);
