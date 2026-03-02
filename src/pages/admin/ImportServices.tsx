@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, RefreshCw, Search, PackagePlus } from "lucide-react";
+import { Download, RefreshCw, Search, PackagePlus, Plus, Check } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ interface ImportRow {
   categoryId: string;
   marginType: "percent" | "fixed";
   marginValue: string;
+  added?: boolean;
 }
 
 const ImportServices = () => {
@@ -140,6 +141,40 @@ const ImportServices = () => {
   };
 
   const selectedRows = rows.filter(r => r.selected);
+
+  // Add single service
+  const handleAddSingle = async (row: ImportRow, filteredIdx: number) => {
+    if (!row.categoryId) {
+      toast({ title: "Category required", description: "Please assign a category first.", variant: "destructive" });
+      return;
+    }
+    try {
+      await addDoc(collection(db, "services"), {
+        name: row.svc.name,
+        categoryId: row.categoryId,
+        rate: parseFloat(calcSelling(row).toFixed(4)),
+        providerRate: parseFloat(row.svc.rate) || 0,
+        minQuantity: parseInt(row.svc.min) || 0,
+        maxQuantity: parseInt(row.svc.max) || 0,
+        providerId: selectedProvider,
+        providerServiceId: row.svc.service,
+        type: row.svc.type || "default",
+        status: "active",
+        marginType: row.marginType,
+        marginValue: parseFloat(row.marginValue) || 0,
+        createdAt: serverTimestamp(),
+      });
+      const realIdx = rows.indexOf(filtered[filteredIdx]);
+      setRows(prev => {
+        const next = [...prev];
+        next[realIdx] = { ...next[realIdx], added: true, selected: false };
+        return next;
+      });
+      toast({ title: "Service added!" });
+    } catch (err: any) {
+      toast({ title: "Failed to add", description: err.message, variant: "destructive" });
+    }
+  };
 
   // Import selected
   const handleImport = async () => {
@@ -312,6 +347,7 @@ const ImportServices = () => {
                     <TableHead className="w-[180px]">Category</TableHead>
                     <TableHead className="w-[120px]">Margin</TableHead>
                     <TableHead className="w-[100px]">Selling</TableHead>
+                    <TableHead className="w-[80px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,46 +362,59 @@ const ImportServices = () => {
                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                       <TableCell>
-                        {row.selected && (
-                          <Select value={row.categoryId} onValueChange={v => updateRow(idx, { categoryId: v })}>
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        )}
+                        <Select value={row.categoryId} onValueChange={v => updateRow(idx, { categoryId: v })}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
-                        {row.selected && (
-                          <div className="flex gap-1 items-center">
-                            <Select value={row.marginType} onValueChange={v => updateRow(idx, { marginType: v as any })}>
-                              <SelectTrigger className="h-8 w-[50px] text-xs px-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="percent">%</SelectItem>
-                                <SelectItem value="fixed">$</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="number"
-                              value={row.marginValue}
-                              onChange={e => updateRow(idx, { marginValue: e.target.value })}
-                              className="h-8 w-[60px] text-xs"
-                            />
-                          </div>
-                        )}
+                        <div className="flex gap-1 items-center">
+                          <Select value={row.marginType} onValueChange={v => updateRow(idx, { marginType: v as any })}>
+                            <SelectTrigger className="h-8 w-[50px] text-xs px-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percent">%</SelectItem>
+                              <SelectItem value="fixed">$</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            value={row.marginValue}
+                            onChange={e => updateRow(idx, { marginValue: e.target.value })}
+                            className="h-8 w-[60px] text-xs"
+                          />
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm font-semibold text-primary">
-                        {row.selected ? `$${calcSelling(row).toFixed(2)}` : "—"}
+                        ${calcSelling(row).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {row.added ? (
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            <Check className="h-3 w-3 mr-1" /> Added
+                          </Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            disabled={!row.categoryId}
+                            onClick={() => handleAddSingle(row, idx)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                         {search ? "No matching services" : "No services fetched"}
                       </TableCell>
                     </TableRow>
