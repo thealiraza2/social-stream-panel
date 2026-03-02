@@ -50,7 +50,7 @@ const ImportServices = () => {
         setProviders(pSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((p: any) => p.status === "active"));
         setCategories(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active"));
       } catch (error) {
-        console.error("Error loading data:", error);
+        console.error("Error loading providers/categories:", error);
       }
     };
     load();
@@ -58,7 +58,7 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // 🔴 CONNECTED TO YOUR NEW VERCEL SERVER
+  // 🔴 FIXED: NOW CALLING YOUR EXTERNAL PROXY SERVER
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
@@ -68,21 +68,18 @@ const ImportServices = () => {
       const res = await fetch('https://my-server-one-lake.vercel.app/api/fetch-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
+        body: JSON.stringify({ 
+          apiUrl: provider.apiUrl, 
+          apiKey: provider.apiKey 
+        }),
       });
 
-      if (!res.ok) throw new Error(`HTTP Error ${res.status} from your Vercel Server`);
-
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server returned HTML instead of JSON. Ensure your custom server has the correct API code.");
-      }
-
+      if (!res.ok) throw new Error(`Proxy Server Error: ${res.status}`);
+      
       const data = await res.json();
 
       if (!Array.isArray(data)) {
-        if (data.error) throw new Error(data.error);
-        throw new Error("Unexpected response format from provider");
+        throw new Error(data.error || "Unexpected data format from proxy server");
       }
       
       setRows(
@@ -97,7 +94,7 @@ const ImportServices = () => {
       toast({ title: `${data.length} services fetched successfully!` });
     } catch (err: any) {
       console.error("Fetch Error:", err);
-      toast({ title: "Fetch failed", description: err.message || "Failed to fetch data", variant: "destructive" });
+      toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
     } finally {
       setFetching(false);
     }
