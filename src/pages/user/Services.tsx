@@ -118,7 +118,7 @@ const Services = () => {
                     <TableCell>
                       <Badge variant="outline">{getCategoryName(s.categoryId)}</Badge>
                     </TableCell>
-                    <TableCell className="font-semibold text-primary">${s.rate}</TableCell>
+                    <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
                     <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                     <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>

@@ -111,8 +111,8 @@ const AdminDashboard = () => {
 
   const statCards = [
     { label: "Total Users", value: stats.totalUsers.toLocaleString(), icon: Users, gradient: "gradient-purple" },
-    { label: "Total Revenue", value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, gradient: "gradient-blue" },
-    { label: "Daily Profit", value: `$${stats.dailyProfit.toFixed(2)}`, icon: TrendingUp, gradient: "gradient-teal" },
+    { label: "Total Revenue", value: `Rs.${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, gradient: "gradient-blue" },
+    { label: "Daily Profit", value: `Rs.${stats.dailyProfit.toFixed(2)}`, icon: TrendingUp, gradient: "gradient-teal" },
     { label: "Active Orders", value: stats.activeOrders.toString(), icon: ShoppingCart, gradient: "gradient-orange" },
     { label: "Services", value: stats.totalServices.toString(), icon: Server, gradient: "gradient-purple" },
     { label: "Open Tickets", value: stats.openTickets.toString(), icon: MessageSquare, gradient: "gradient-blue" },
@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                   {recentUsers.map((u: any) => (
                     <TableRow key={u.id}>
                       <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell className="text-sm">${(u.balance || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-sm">Rs.{(u.balance || 0).toFixed(2)}</TableCell>
                       <TableCell><Badge variant="outline" className={u.status === "active" ? "text-green-600" : "text-destructive"}>{u.status}</Badge></TableCell>
                     </TableRow>
                   ))}

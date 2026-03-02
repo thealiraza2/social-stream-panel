@@ -68,7 +68,7 @@ const UserManagement = () => {
                     <TableRow key={u.id}>
                       <TableCell>{u.displayName || "—"}</TableCell>
                       <TableCell>{u.email}</TableCell>
-                      <TableCell className="font-medium">${(u.balance || 0).toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">Rs.{(u.balance || 0).toFixed(2)}</TableCell>
                       <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
                       <TableCell><Badge variant="outline" className={u.status === "active" ? "text-green-600" : "text-destructive"}>{u.status}</Badge></TableCell>
                       <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>

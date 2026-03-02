@@ -33,8 +33,8 @@ const AddFunds = () => {
     if (!user || !method || !amount || !transactionId) return;
 
     const parsedAmount = Number(amount);
-    if (parsedAmount <= 0 || parsedAmount > 10000) {
-      toast({ title: "Invalid amount", description: "Enter between $1 and $10,000", variant: "destructive" });
+    if (parsedAmount <= 0 || parsedAmount > 1000000) {
+      toast({ title: "Invalid amount", description: "Enter between Rs.1 and Rs.1,000,000", variant: "destructive" });
       return;
     }
 
@@ -105,14 +105,14 @@ const AddFunds = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label>Amount (USD)</Label>
+                <Label>Amount (PKR)</Label>
                 <Input
                   type="number"
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="1"
-                  max="10000"
+                  max="1000000"
                   step="0.01"
                   required
                 />

@@ -100,7 +100,7 @@ const OrderManagement = () => {
                       <TableCell className="text-sm max-w-[200px] truncate">{o.serviceName}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">{o.link}</TableCell>
                       <TableCell>{o.quantity?.toLocaleString()}</TableCell>
-                      <TableCell>${o.charge?.toFixed(4)}</TableCell>
+                      <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[o.status] || ""}>{o.status}</Badge></TableCell>
                       <TableCell className="text-xs">{formatDate(o.createdAt)}</TableCell>
                       <TableCell>

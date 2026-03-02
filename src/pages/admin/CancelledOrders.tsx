@@ -36,7 +36,7 @@ const CancelledOrders = () => {
                     <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}</TableCell>
                     <TableCell>{o.serviceName}</TableCell>
                     <TableCell className="font-mono text-xs">{o.userId?.slice(0, 10)}</TableCell>
-                    <TableCell>${o.charge?.toFixed(4)}</TableCell>
+                    <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
                     <TableCell className="text-xs">{formatDate(o.createdAt)}</TableCell>
                   </TableRow>
                 ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,17 @@ interface Order {
   quantity: number;
   charge: number;
   status: string;
+  providerOrderId?: string;
   createdAt: any;
 }
 
 const statusColor: Record<string, string> = {
   pending: "bg-warning/10 text-warning border-warning/20",
   processing: "bg-info/10 text-info border-info/20",
+  in_progress: "bg-info/10 text-info border-info/20",
   completed: "bg-success/10 text-success border-success/20",
   canceled: "bg-destructive/10 text-destructive border-destructive/20",
+  partial: "bg-muted text-muted-foreground border-border",
   refunded: "bg-muted text-muted-foreground border-border",
 };
 
@@ -37,14 +40,38 @@ const OrderLogs = () => {
   useEffect(() => {
     if (!user) return;
     const fetchOrders = async () => {
-      const q = query(
-        collection(db, "orders"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order)));
-      setLoading(false);
+      try {
+        // Try with orderBy first (needs composite index)
+        try {
+          const q = query(
+            collection(db, "orders"),
+            where("userId", "==", user.uid),
+            orderBy("createdAt", "desc")
+          );
+          const snap = await getDocs(q);
+          setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order)));
+        } catch (indexError: any) {
+          // If composite index not ready, fallback to simple query
+          console.warn("Composite index not ready, using fallback query:", indexError.message);
+          const q = query(
+            collection(db, "orders"),
+            where("userId", "==", user.uid)
+          );
+          const snap = await getDocs(q);
+          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
+          // Sort client-side
+          docs.sort((a, b) => {
+            const aTime = a.createdAt?.toDate?.()?.getTime() || 0;
+            const bTime = b.createdAt?.toDate?.()?.getTime() || 0;
+            return bTime - aTime;
+          });
+          setOrders(docs);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch orders:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOrders();
   }, [user]);
@@ -82,8 +109,10 @@ const OrderLogs = () => {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="processing">Processing</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="canceled">Canceled</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
             <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
@@ -124,7 +153,7 @@ const OrderLogs = () => {
                       </a>
                     </TableCell>
                     <TableCell>{o.quantity?.toLocaleString()}</TableCell>
-                    <TableCell>${o.charge?.toFixed(4)}</TableCell>
+                    <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={statusColor[o.status] || ""}>
                         {o.status}

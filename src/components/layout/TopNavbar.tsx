@@ -39,7 +39,7 @@ export function TopNavbar() {
       {profile?.role === "user" && (
         <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm font-medium">
           <Wallet className="h-3.5 w-3.5 text-primary" />
-          <span>${profile.balance?.toFixed(2) ?? "0.00"}</span>
+          <span>Rs.{profile.balance?.toFixed(2) ?? "0.00"}</span>
         </div>
       )}
 

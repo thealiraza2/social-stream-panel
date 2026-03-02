@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { ShoppingCart, DollarSign, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, serverTimestamp, query, where, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, addDoc, getDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -28,10 +27,12 @@ interface Service {
   maxQuantity: number;
   description: string;
   status: string;
+  providerId?: string;
+  providerServiceId?: number;
 }
 
 const NewOrder = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -87,7 +88,8 @@ const NewOrder = () => {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "orders"), {
+      // 1. Create order in Firebase
+      const orderRef = await addDoc(collection(db, "orders"), {
         userId: user.uid,
         serviceId: selectedService,
         serviceName: svc.name,
@@ -95,13 +97,17 @@ const NewOrder = () => {
         quantity: qty,
         charge: totalCharge,
         status: "pending",
+        providerId: svc.providerId || "",
+        providerServiceId: svc.providerServiceId || 0,
         createdAt: serverTimestamp(),
       });
 
+      // 2. Deduct balance
       await updateDoc(doc(db, "users", user.uid), {
         balance: increment(-totalCharge),
       });
 
+      // 3. Log transaction
       await addDoc(collection(db, "transactions"), {
         userId: user.uid,
         amount: totalCharge,
@@ -112,7 +118,41 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      toast({ title: "Order placed!", description: `$${totalCharge.toFixed(4)} charged from your balance` });
+      // 4. Auto-send to provider API
+      if (svc.providerId) {
+        try {
+          const providerDoc = await getDoc(doc(db, "providers", svc.providerId));
+          if (providerDoc.exists()) {
+            const provider = providerDoc.data();
+            if (provider.status === "active" && provider.apiUrl && provider.apiKey) {
+              const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/proxy-provider", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  apiUrl: provider.apiUrl,
+                  apiKey: provider.apiKey,
+                  action: "add",
+                  service: svc.providerServiceId,
+                  link: link,
+                  quantity: qty,
+                }),
+              });
+              const providerData = await providerRes.json();
+              if (providerData.order) {
+                await updateDoc(doc(db, "orders", orderRef.id), {
+                  providerOrderId: providerData.order,
+                  status: "processing",
+                });
+              }
+            }
+          }
+        } catch (apiErr) {
+          console.error("Provider API error (order saved locally):", apiErr);
+        }
+      }
+
+      await refreshProfile();
+      toast({ title: "Order placed!", description: `Rs.${totalCharge.toFixed(2)} charged from your balance` });
       navigate("/orders");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -164,14 +204,14 @@ const NewOrder = () => {
                 <SelectContent>
                   {filteredServices.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.name} — ${s.rate}/1k
+                      {s.name} — Rs.{s.rate}/1k
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {selectedServiceData && (
                 <p className="text-xs text-muted-foreground">
-                  Min: {selectedServiceData.minQuantity.toLocaleString()} · Max: {selectedServiceData.maxQuantity.toLocaleString()} · Rate: ${selectedServiceData.rate}/1k
+                  Min: {selectedServiceData.minQuantity.toLocaleString()} · Max: {selectedServiceData.maxQuantity.toLocaleString()} · Rate: Rs.{selectedServiceData.rate}/1k
                 </p>
               )}
             </div>
@@ -204,7 +244,7 @@ const NewOrder = () => {
                 <DollarSign className="h-5 w-5 text-primary" />
                 <span className="font-medium">Total Charge</span>
               </div>
-              <span className="text-xl font-bold text-primary">${charge}</span>
+              <span className="text-xl font-bold text-primary">Rs.{charge}</span>
             </div>
 
             <Button
