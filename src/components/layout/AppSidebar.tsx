@@ -15,6 +15,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 const userItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -106,10 +110,43 @@ const adminGroups = [
 ];
 
 export function AppSidebar() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const isAdmin = profile?.role === "admin";
+
+  const [openTicketCount, setOpenTicketCount] = useState(0);
+
+  // Listen to open tickets in real-time
+  useEffect(() => {
+    if (!user) return;
+
+    if (isAdmin) {
+      // Admin sees all open tickets
+      const q = query(collection(db, "tickets"), where("status", "==", "open"));
+      const unsub = onSnapshot(q, (snap) => setOpenTicketCount(snap.size), () => setOpenTicketCount(0));
+      return unsub;
+    } else {
+      // User sees their own answered tickets
+      const q = query(
+        collection(db, "tickets"),
+        where("userId", "==", user.uid),
+        where("status", "==", "answered")
+      );
+      const unsub = onSnapshot(q, (snap) => setOpenTicketCount(snap.size), () => setOpenTicketCount(0));
+      return unsub;
+    }
+  }, [user, isAdmin]);
+
+  const getTicketBadge = (url: string) => {
+    const isTicketLink = url === "/tickets" || url === "/admin/tickets";
+    if (!isTicketLink || openTicketCount === 0) return null;
+    return (
+      <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] flex items-center justify-center text-[10px] px-1.5">
+        {openTicketCount}
+      </Badge>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -152,6 +189,7 @@ export function AppSidebar() {
                               >
                                 <item.icon className="mr-2 h-4 w-4" />
                                 {!collapsed && <span>{item.title}</span>}
+                                {!collapsed && getTicketBadge(item.url)}
                               </NavLink>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
@@ -178,6 +216,7 @@ export function AppSidebar() {
                         >
                           <item.icon className="mr-2 h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && getTicketBadge(item.url)}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
