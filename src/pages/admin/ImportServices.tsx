@@ -67,7 +67,7 @@ const ImportServices = () => {
     setRows([]);
 
     try {
-      const res = await fetch('https://my-server-one-lake.vercel.app/api/fetch-services', {
+      const res = await fetch('https://social-stream-panel-nine.vercel.app/api/fetch-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
