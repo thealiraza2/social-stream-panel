@@ -102,14 +102,7 @@ const BulkOrder = () => {
       return;
     }
 
-    if (svc.providerId && (!svc.providerApiUrl || !svc.providerApiKey || !svc.providerServiceId)) {
-      toast({
-        title: "Service not configured",
-        description: "Provider credentials missing. Re-import this service from Admin > Import Services.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // If provider credentials are missing, order will still be created as "pending" (manual processing)
 
     setLoading(true);
     try {
