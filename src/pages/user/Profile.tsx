@@ -81,7 +81,7 @@ const Profile = () => {
 
   const formatDate = (ts: any) => {
     if (!ts?.toDate) return "—";
-    return ts.toDate().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    return ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const memberSince = profile?.createdAt?.toDate?.();

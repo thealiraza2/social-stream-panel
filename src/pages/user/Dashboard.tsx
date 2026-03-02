@@ -236,34 +236,57 @@ const UserDashboard = () => {
               <Button variant="link" onClick={() => navigate("/new-order")} className="text-primary mt-1">Place your first order →</Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Charge</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map((o) => (
-                  <TableRow key={o.id}>
-                    <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}</TableCell>
-                    <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
-                    <TableCell>{o.quantity?.toLocaleString()}</TableCell>
-                    <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusColor[o.status] || ""}>
-                        {o.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
+            <>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Charge</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentOrders.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}</TableCell>
+                      <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
+                      <TableCell>{o.quantity?.toLocaleString()}</TableCell>
+                      <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={statusColor[o.status] || ""}>
+                          {o.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y">
+              {recentOrders.map((o) => (
+                <div key={o.id} className="p-4 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-sm leading-tight flex-1 min-w-0 truncate">{o.serviceName}</p>
+                    <Badge variant="outline" className={`${statusColor[o.status] || ""} text-xs shrink-0`}>
+                      {o.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Rs.{o.charge?.toFixed(2)}</span>
+                    <span>{formatDate(o.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>

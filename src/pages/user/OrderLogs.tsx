@@ -174,48 +174,79 @@ const OrderLogs = () => {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Link</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Start/Remains</TableHead>
-                    <TableHead>Charge</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedOrders.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell>
-                        <button onClick={() => copyId(o.id)} className="font-mono text-xs flex items-center gap-1 hover:text-primary transition-colors" title="Copy ID">
-                          {o.id.slice(0, 8)} <Copy className="h-3 w-3 opacity-50" />
-                        </button>
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
-                      <TableCell className="max-w-[120px] truncate">
-                        <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Link</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Start/Remains</TableHead>
+                      <TableHead>Charge</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedOrders.map((o) => (
+                      <TableRow key={o.id}>
+                        <TableCell>
+                          <button onClick={() => copyId(o.id)} className="font-mono text-xs flex items-center gap-1 hover:text-primary transition-colors" title="Copy ID">
+                            {o.id.slice(0, 8)} <Copy className="h-3 w-3 opacity-50" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
+                        <TableCell className="max-w-[120px] truncate">
+                          <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
+                            {o.link}
+                          </a>
+                        </TableCell>
+                        <TableCell>{o.quantity?.toLocaleString()}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {o.startCount != null ? o.startCount.toLocaleString() : "—"} / {o.remains != null ? o.remains.toLocaleString() : "—"}
+                        </TableCell>
+                        <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColor[o.status] || ""}>
+                            {o.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden divide-y">
+                {paginatedOrders.map((o) => (
+                  <div key={o.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-sm leading-tight flex-1 min-w-0 truncate">{o.serviceName}</p>
+                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-xs shrink-0`}>
+                        {o.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Qty: {o.quantity?.toLocaleString()} • Rs.{o.charge?.toFixed(2)}</span>
+                      <span>{formatDate(o.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <button onClick={() => copyId(o.id)} className="font-mono text-xs flex items-center gap-1 hover:text-primary transition-colors text-muted-foreground">
+                        <Copy className="h-3 w-3" /> {o.id.slice(0, 8)}
+                      </button>
+                      {o.link && (
+                        <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[150px]">
                           {o.link}
                         </a>
-                      </TableCell>
-                      <TableCell>{o.quantity?.toLocaleString()}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {o.startCount != null ? o.startCount.toLocaleString() : "—"} / {o.remains != null ? o.remains.toLocaleString() : "—"}
-                      </TableCell>
-                      <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={statusColor[o.status] || ""}>
-                          {o.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (

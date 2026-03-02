@@ -115,45 +115,76 @@ const Services = () => {
               <p>No services available</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Rate / 1K</TableHead>
-                  <TableHead>Min</TableHead>
-                  <TableHead>Max</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((s, i) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{getCategoryName(s.categoryId)}</Badge>
-                    </TableCell>
-                    <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
-                    <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
-                    <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 text-xs h-7"
-                        onClick={() => navigate(`/new-order?service=${s.id}`)}
-                      >
-                        <ShoppingCart className="h-3 w-3" /> Order
-                      </Button>
-                    </TableCell>
+            <>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Rate / 1K</TableHead>
+                    <TableHead>Min</TableHead>
+                    <TableHead>Max</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((s, i) => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                      <TableCell className="font-medium">{s.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{getCategoryName(s.categoryId)}</Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
+                      <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
+                      <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 text-xs h-7"
+                          onClick={() => navigate(`/new-order?service=${s.id}`)}
+                        >
+                          <ShoppingCart className="h-3 w-3" /> Order
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y">
+              {filtered.map((s, i) => (
+                <div key={s.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm leading-tight">{s.name}</p>
+                      <Badge variant="outline" className="mt-1 text-xs">{getCategoryName(s.categoryId)}</Badge>
+                    </div>
+                    <span className="font-semibold text-primary text-sm whitespace-nowrap">Rs.{s.rate}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Min: {s.minQuantity?.toLocaleString()} — Max: {s.maxQuantity?.toLocaleString()}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-xs h-7"
+                      onClick={() => navigate(`/new-order?service=${s.id}`)}
+                    >
+                      <ShoppingCart className="h-3 w-3" /> Order
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>
