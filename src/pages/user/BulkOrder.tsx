@@ -102,6 +102,15 @@ const BulkOrder = () => {
       return;
     }
 
+    if (svc.providerId && (!svc.providerApiUrl || !svc.providerApiKey || !svc.providerServiceId)) {
+      toast({
+        title: "Service not configured",
+        description: "Provider credentials missing. Re-import this service from Admin > Import Services.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       for (const link of links) {
