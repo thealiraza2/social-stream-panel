@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Banknote, Layers, Info, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, getDoc, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -80,28 +80,6 @@ const BulkOrder = () => {
     fetchData();
   }, []);
 
-  const resolveProviderCredentials = async (service: Service) => {
-    if (service.providerApiUrl && service.providerApiKey) {
-      return { apiUrl: service.providerApiUrl, apiKey: service.providerApiKey };
-    }
-
-    if (service.providerId) {
-      try {
-        const providerSnap = await getDoc(doc(db, "providers", service.providerId));
-        if (providerSnap.exists()) {
-          const provider = providerSnap.data() as { apiUrl?: string; apiKey?: string };
-          if (provider.apiUrl && provider.apiKey) {
-            return { apiUrl: provider.apiUrl, apiKey: provider.apiKey };
-          }
-        }
-      } catch (error) {
-        console.error("Unable to read provider credentials from providers collection:", error);
-      }
-    }
-
-    return null;
-  };
-
   const handleSubmit = async () => {
     if (!user || !profile || !selectedServiceData || !quantity || links.length === 0) return;
 
@@ -121,17 +99,6 @@ const BulkOrder = () => {
 
     if (profile.balance < totalCharge) {
       toast({ title: "Insufficient Balance", description: `Rs.${totalCharge.toFixed(2)} required`, variant: "destructive" });
-      return;
-    }
-
-    if (!svc.providerServiceId) {
-      toast({ title: "Service misconfigured", description: "Provider service id missing. Contact admin.", variant: "destructive" });
-      return;
-    }
-
-    const creds = await resolveProviderCredentials(svc);
-    if (!creds) {
-      toast({ title: "Service misconfigured", description: "Provider credentials missing on service/provider. Contact admin.", variant: "destructive" });
       return;
     }
 
@@ -171,9 +138,9 @@ const BulkOrder = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            apiUrl: creds.apiUrl,
-            apiKey: creds.apiKey,
-            service: svc.providerServiceId,
+            apiUrl: svc.providerApiUrl || "",
+            apiKey: svc.providerApiKey || "",
+            service: svc.providerServiceId || 0,
             link,
             quantity: qty,
           }),
