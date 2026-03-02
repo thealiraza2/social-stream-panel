@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreditCard, Check, X, Eye, RefreshCw } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, query, orderBy, increment } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, query, orderBy, where, increment, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 const PaymentManagement = () => {
@@ -47,10 +47,47 @@ const PaymentManagement = () => {
     try {
       await updateDoc(doc(db, "transactions", tx.id), { status: action });
       if (action === "completed" && tx.type === "deposit" && tx.userId) {
-        await updateDoc(doc(db, "users", tx.userId), { balance: increment(tx.amount) });
+        let totalCredit = tx.amount;
+        // Process promo code dual-benefit
+        if (tx.promoCode) {
+          try {
+            const infQ = query(collection(db, "influencers"), where("promoCode", "==", tx.promoCode), where("status", "==", "approved"));
+            const infSnap = await getDocs(infQ);
+            if (!infSnap.empty) {
+              const infDoc = infSnap.docs[0];
+              const inf = infDoc.data();
+              // 5% user bonus
+              const userBonus = Math.round(tx.amount * 0.05 * 100) / 100;
+              totalCredit += userBonus;
+              // Calculate influencer commission
+              const commPercent = inf.customCommission || (
+                (inf.monthlyDeposits || 0) >= 140000 ? 20 :
+                (inf.monthlyDeposits || 0) >= 28000 ? 15 : 10
+              );
+              const commission = Math.round(tx.amount * (commPercent / 100) * 100) / 100;
+              // Update influencer stats
+              const newMonthly = (inf.monthlyDeposits || 0) + tx.amount;
+              const newTier = newMonthly >= 140000 ? 3 : newMonthly >= 28000 ? 2 : 1;
+              await updateDoc(doc(db, "influencers", infDoc.id), {
+                totalReferredDeposits: increment(tx.amount),
+                totalCommissionEarned: increment(commission),
+                commissionBalance: increment(commission),
+                monthlyDeposits: increment(tx.amount),
+                currentTier: newTier,
+                updatedAt: serverTimestamp(),
+              });
+              // Track referral
+              await addDoc(collection(db, "referral_tracking"), {
+                referredUserId: tx.userId, influencerId: infDoc.id, promoCode: tx.promoCode,
+                type: "deposit", depositAmount: tx.amount, userBonus, influencerCommission: commission,
+                commissionPercent: commPercent, createdAt: serverTimestamp(),
+              });
+            }
+          } catch (err) { console.error("Promo processing error:", err); }
+        }
+        await updateDoc(doc(db, "users", tx.userId), { balance: increment(totalCredit) });
       }
       toast({ title: action === "completed" ? "Payment approved! Balance updated." : "Payment rejected." });
-      // Update local state
       setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: action } : t));
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

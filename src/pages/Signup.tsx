@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 
 const Signup = () => {
   const [displayName, setDisplayName] = useState("");
@@ -26,6 +28,30 @@ const Signup = () => {
     setLoading(true);
     try {
       await signup(email, password, displayName);
+      // Referral tracking
+      const refSlug = localStorage.getItem("referralSlug");
+      if (refSlug) {
+        try {
+          const q = query(collection(db, "influencers"), where("referralSlug", "==", refSlug), where("status", "==", "approved"));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const infDoc = snap.docs[0];
+            const infId = infDoc.id;
+            // Update user doc with referredBy
+            const currentUser = (await import("firebase/auth")).getAuth().currentUser;
+            if (currentUser) {
+              await updateDoc(doc(db, "users", currentUser.uid), { referredBy: infId });
+              await updateDoc(doc(db, "influencers", infId), { totalSignups: increment(1) });
+              await addDoc(collection(db, "referral_tracking"), {
+                referredUserId: currentUser.uid, influencerId: infId, promoCode: infDoc.data().promoCode,
+                type: "signup", depositAmount: 0, userBonus: 0, influencerCommission: 0, commissionPercent: 0,
+                createdAt: serverTimestamp(),
+              });
+            }
+          }
+        } catch (err) { console.error("Referral tracking error:", err); }
+        localStorage.removeItem("referralSlug");
+      }
       toast({ title: "Account created!", description: "Welcome to SMM Panel" });
       navigate("/dashboard");
     } catch (err: any) {
