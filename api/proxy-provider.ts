@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-const PROVIDER_URL = "https://smmfollows.com/api/v2";
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -12,20 +11,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Method not allowed. Please use POST." });
   }
 
-  const { key, action = "services" } = req.body ?? {};
+  // Frontend se dynamic data receive karein
+  const { apiUrl, apiKey } = req.body ?? {};
 
-  if (!key || typeof key !== "string") {
-    return res.status(400).json({ error: "Provider API key is required" });
+  if (!apiUrl || !apiKey) {
+    return res.status(400).json({ error: "Both apiUrl and apiKey are required" });
   }
 
   try {
-    const providerRes = await fetch(PROVIDER_URL, {
+    // 🔴 SMM Panels MUST receive Form Data (URLSearchParams)
+    const formData = new URLSearchParams();
+    formData.append("key", apiKey);
+    formData.append("action", "services");
+
+    const providerRes = await fetch(apiUrl, { // <--- Dynamic URL used here
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, action }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(),
     });
 
     const text = await providerRes.text();
