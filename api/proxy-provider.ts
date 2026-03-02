@@ -6,14 +6,15 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const { apiUrl, apiKey } = req.body || {};
+  const { apiUrl, apiKey, ...rest } = req.body || {};
   if (!apiUrl || !apiKey) return res.status(400).json({ error: "apiUrl and apiKey required" });
 
   try {
-    // SMM Panels MUST receive Form Data (URLSearchParams)
     const formData = new URLSearchParams();
     formData.append("key", apiKey);
-    formData.append("action", "services");
+    for (const [key, value] of Object.entries(rest)) {
+      formData.append(key, String(value));
+    }
 
     const response = await fetch(apiUrl, {
       method: "POST",
