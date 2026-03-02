@@ -102,9 +102,15 @@ const BulkOrder = () => {
       return;
     }
 
-    // If provider credentials are missing, order will still be created as "pending" (manual processing)
+    // Validate provider credentials before submitting
+    if (!svc.providerApiUrl || !svc.providerApiKey || !svc.providerServiceId) {
+      toast({ title: "Service misconfigured", description: "Provider credentials missing. Contact admin.", variant: "destructive" });
+      return;
+    }
 
     setLoading(true);
+    let successCount = 0;
+    let failCount = 0;
     try {
       for (const link of links) {
         const orderRef = await addDoc(collection(db, "orders"), {
@@ -134,37 +140,43 @@ const BulkOrder = () => {
           createdAt: serverTimestamp(),
         });
 
-        if (svc.providerId && svc.providerServiceId) {
-          try {
-            const res = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                apiUrl: svc.providerApiUrl || "",
-                apiKey: svc.providerApiKey || "",
-                service: svc.providerServiceId,
-                link,
-                quantity: qty,
-              }),
-            });
-            const data = await res.json();
-            if (data.order) {
-              await updateDoc(doc(db, "orders", orderRef.id), {
-                providerOrderId: data.order,
-                status: "processing",
-              });
-            } else if (data.error) {
-              console.error("Provider error for link:", link, data.error);
-            }
-          } catch (apiErr) {
-            console.error("Provider API error:", apiErr);
-          }
+        const res = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiUrl: svc.providerApiUrl,
+            apiKey: svc.providerApiKey,
+            service: svc.providerServiceId,
+            link,
+            quantity: qty,
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          failCount++;
+          await updateDoc(doc(db, "orders", orderRef.id), { status: "failed" });
+          await updateDoc(doc(db, "users", user.uid), { balance: increment(perOrderCharge) });
+        } else if (data.order) {
+          successCount++;
+          await updateDoc(doc(db, "orders", orderRef.id), {
+            providerOrderId: data.order,
+            status: "processing",
+          });
         }
       }
 
       await refreshProfile();
-      setSubmitted(true);
-      toast({ title: "All orders placed!", description: `${orderCount} orders — Rs.${totalCharge.toFixed(2)} deducted` });
+
+      if (failCount > 0 && successCount === 0) {
+        toast({ title: "All orders failed", description: "Provider rejected all orders. Balance refunded.", variant: "destructive" });
+      } else if (failCount > 0) {
+        toast({ title: `${successCount} placed, ${failCount} failed`, description: "Failed orders were refunded.", variant: "destructive" });
+        setSubmitted(true);
+      } else {
+        setSubmitted(true);
+        toast({ title: "All orders placed!", description: `${successCount} orders — Rs.${totalCharge.toFixed(2)} deducted` });
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {

@@ -143,33 +143,45 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      if (svc.providerId && svc.providerServiceId) {
-        try {
-          const providerRes = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              apiUrl: svc.providerApiUrl || "",
-              apiKey: svc.providerApiKey || "",
-              service: svc.providerServiceId,
-              link: link,
-              quantity: qty,
-            }),
-          });
-          const providerData = await providerRes.json();
-          if (providerData.order) {
-            await updateDoc(doc(db, "orders", orderRef.id), {
-              providerOrderId: providerData.order,
-              status: "processing",
-            });
-            toast({ title: "Order sent to provider", description: `Provider Order ID: ${providerData.order}` });
-          } else if (providerData.error) {
-            toast({ title: "Provider error", description: providerData.error, variant: "destructive" });
-          }
-        } catch (apiErr: any) {
-          console.error("Provider API error (order saved locally):", apiErr);
-          toast({ title: "Provider API failed", description: "Order saved locally but provider routing failed.", variant: "destructive" });
-        }
+      // Validate provider credentials before calling API
+      if (!svc.providerApiUrl || !svc.providerApiKey || !svc.providerServiceId) {
+        toast({ title: "Service misconfigured", description: "Provider credentials missing. Contact admin.", variant: "destructive" });
+        await refreshProfile();
+        return;
+      }
+
+      const providerRes = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiUrl: svc.providerApiUrl,
+          apiKey: svc.providerApiKey,
+          service: svc.providerServiceId,
+          link: link,
+          quantity: qty,
+        }),
+      });
+
+      const providerData = await providerRes.json();
+
+      if (!providerRes.ok || providerData.error) {
+        toast({
+          title: "Order failed at provider",
+          description: providerData.error || `HTTP ${providerRes.status}`,
+          variant: "destructive",
+        });
+        // Refund balance since provider rejected
+        await updateDoc(doc(db, "users", user.uid), { balance: increment(totalCharge) });
+        await updateDoc(doc(db, "orders", orderRef.id), { status: "failed" });
+        await refreshProfile();
+        return;
+      }
+
+      if (providerData.order) {
+        await updateDoc(doc(db, "orders", orderRef.id), {
+          providerOrderId: providerData.order,
+          status: "processing",
+        });
       }
 
       await refreshProfile();
