@@ -85,18 +85,18 @@ const BulkOrder = () => {
     const qty = Number(quantity);
 
     if (qty < svc.minQuantity || qty > svc.maxQuantity) {
-      toast({ title: "Invalid quantity", description: `${svc.minQuantity} - ${svc.maxQuantity} ke beech honi chahiye`, variant: "destructive" });
+      toast({ title: "Invalid Quantity", description: `Must be between ${svc.minQuantity} and ${svc.maxQuantity}`, variant: "destructive" });
       return;
     }
 
     const invalidLinks = links.filter((l) => !l.startsWith("http"));
     if (invalidLinks.length > 0) {
-      toast({ title: "Invalid links", description: `${invalidLinks.length} links valid URL nahi hain`, variant: "destructive" });
+      toast({ title: "Invalid Links", description: `${invalidLinks.length} link(s) are not valid URLs`, variant: "destructive" });
       return;
     }
 
     if (profile.balance < totalCharge) {
-      toast({ title: "Balance kam hai", description: `Rs.${totalCharge.toFixed(2)} chahiye`, variant: "destructive" });
+      toast({ title: "Insufficient Balance", description: `Rs.${totalCharge.toFixed(2)} required`, variant: "destructive" });
       return;
     }
 
@@ -165,7 +165,7 @@ const BulkOrder = () => {
 
       await refreshProfile();
       setSubmitted(true);
-      toast({ title: "Sab orders place ho gaye!", description: `${orderCount} orders — Rs.${totalCharge.toFixed(2)} deducted` });
+      toast({ title: "All orders placed!", description: `${orderCount} orders — Rs.${totalCharge.toFixed(2)} deducted` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -178,16 +178,16 @@ const BulkOrder = () => {
       <div className="space-y-6 max-w-2xl">
         <div>
           <h1 className="text-2xl font-bold">Bulk Order</h1>
-          <p className="text-muted-foreground">Ek saath multiple orders place karein</p>
+          <p className="text-muted-foreground">Place multiple orders at once</p>
         </div>
         <Card className="border-green-500/30 bg-green-500/5">
           <CardContent className="pt-6 text-center space-y-3">
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-            <p className="font-semibold text-lg">{orderCount} Orders Successfully Place Ho Gaye!</p>
-            <p className="text-muted-foreground text-sm">Rs.{totalCharge.toFixed(2)} balance se deduct hua</p>
+            <p className="font-semibold text-lg">{orderCount} Orders Placed Successfully!</p>
+            <p className="text-muted-foreground text-sm">Rs.{totalCharge.toFixed(2)} deducted from balance</p>
             <div className="flex gap-2 justify-center pt-2">
-              <Button variant="outline" onClick={() => navigate("/orders")}>Order Logs</Button>
-              <Button onClick={() => { setSubmitted(false); setLinksText(""); }} className="gradient-purple text-white border-0">Aur Orders</Button>
+              <Button variant="outline" onClick={() => navigate("/orders")}>View Order Logs</Button>
+              <Button onClick={() => { setSubmitted(false); setLinksText(""); }} className="gradient-purple text-white border-0">Place More Orders</Button>
             </div>
           </CardContent>
         </Card>
@@ -199,7 +199,7 @@ const BulkOrder = () => {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">Bulk Order</h1>
-        <p className="text-muted-foreground">Ek service select karein, links paste karein — sab ek saath order ho jayein</p>
+        <p className="text-muted-foreground">Select a service, paste links — all orders placed at once</p>
       </div>
 
       <Card>
@@ -248,7 +248,7 @@ const BulkOrder = () => {
 
           {/* Quantity */}
           <div className="space-y-2">
-            <Label>Quantity (har link ke liye same)</Label>
+            <Label>Quantity (same for each link)</Label>
             <Input
               type="number"
               placeholder={selectedServiceData ? `${selectedServiceData.minQuantity} - ${selectedServiceData.maxQuantity}` : "Enter quantity"}
@@ -261,7 +261,7 @@ const BulkOrder = () => {
 
           {/* Links */}
           <div className="space-y-2">
-            <Label>Links (1 per line)</Label>
+            <Label>Links (one per line)</Label>
             <Textarea
               placeholder={"https://instagram.com/p/post1\nhttps://instagram.com/p/post2\nhttps://instagram.com/p/post3"}
               value={linksText}
@@ -271,7 +271,7 @@ const BulkOrder = () => {
             />
             {links.length > 0 && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Info className="h-3 w-3" /> {links.length} links detected
+                <Info className="h-3 w-3" /> {links.length} link(s) detected
               </p>
             )}
           </div>
@@ -299,7 +299,7 @@ const BulkOrder = () => {
             className="w-full gradient-purple text-white border-0"
             disabled={loading || !selectedService || !quantity || links.length === 0}
           >
-            {loading ? "Orders Place Ho Rahe Hain..." : `Place ${orderCount || 0} Orders`}
+            {loading ? "Placing Orders..." : `Place ${orderCount || 0} Orders`}
           </Button>
         </CardContent>
       </Card>
