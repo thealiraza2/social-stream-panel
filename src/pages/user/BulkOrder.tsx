@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Banknote, Layers, Plus, Trash2, Info, CheckCircle2, XCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Banknote, Layers, Info, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, getDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
+interface Category {
+  id: string;
+  name: string;
+  sortOrder: number;
+  status: string;
+}
 
 interface Service {
   id: string;
@@ -25,123 +32,84 @@ interface Service {
   providerServiceId?: number;
 }
 
-interface BulkOrderLine {
-  serviceId: string;
-  link: string;
-  quantity: number;
-}
-
-interface ParsedResult {
-  line: BulkOrderLine;
-  service: Service | undefined;
-  charge: number;
-  error: string | null;
-}
-
 const BulkOrder = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [bulkText, setBulkText] = useState("");
-  const [parsedOrders, setParsedOrders] = useState<ParsedResult[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedService, setSelectedService] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [linksText, setLinksText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const filteredServices = services.filter(
+    (s) => s.categoryId === selectedCategory && s.status === "active"
+  );
+  const selectedServiceData = services.find((s) => s.id === selectedService);
+
+  const links = linksText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  const orderCount = links.length;
+  const perOrderCharge = selectedServiceData && quantity
+    ? (selectedServiceData.rate / 1000) * Number(quantity)
+    : 0;
+  const totalCharge = perOrderCharge * orderCount;
+
   useEffect(() => {
-    const fetchServices = async () => {
-      const snap = await getDocs(collection(db, "services"));
-      const svcs = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as Service))
-        .filter((s) => s.status === "active");
+    const fetchData = async () => {
+      const catSnap = await getDocs(collection(db, "categories"));
+      const cats = catSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Category))
+        .filter((c) => c.status === "active")
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      setCategories(cats);
+
+      const svcSnap = await getDocs(collection(db, "services"));
+      const svcs = svcSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Service));
       setServices(svcs);
     };
-    fetchServices();
+    fetchData();
   }, []);
 
-  const parseOrders = () => {
-    const lines = bulkText.trim().split("\n").filter(Boolean);
-    const results: ParsedResult[] = lines.map((line) => {
-      const parts = line.split("|").map((p) => p.trim());
-      if (parts.length !== 3) {
-        return {
-          line: { serviceId: "", link: "", quantity: 0 },
-          service: undefined,
-          charge: 0,
-          error: "Format ghalat hai. service_id|link|quantity hona chahiye",
-        };
-      }
+  const handleSubmit = async () => {
+    if (!user || !profile || !selectedServiceData || !quantity || links.length === 0) return;
 
-      const [serviceId, link, qtyStr] = parts;
-      const quantity = parseInt(qtyStr, 10);
-      const service = services.find((s) => s.id === serviceId);
+    const svc = selectedServiceData;
+    const qty = Number(quantity);
 
-      if (!service) {
-        return {
-          line: { serviceId, link, quantity },
-          service: undefined,
-          charge: 0,
-          error: `Service ID "${serviceId}" nahi mili`,
-        };
-      }
+    if (qty < svc.minQuantity || qty > svc.maxQuantity) {
+      toast({ title: "Invalid quantity", description: `${svc.minQuantity} - ${svc.maxQuantity} ke beech honi chahiye`, variant: "destructive" });
+      return;
+    }
 
-      if (isNaN(quantity) || quantity < service.minQuantity || quantity > service.maxQuantity) {
-        return {
-          line: { serviceId, link, quantity },
-          service,
-          charge: 0,
-          error: `Quantity ${service.minQuantity}-${service.maxQuantity} ke beech honi chahiye`,
-        };
-      }
-
-      if (!link.startsWith("http")) {
-        return {
-          line: { serviceId, link, quantity },
-          service,
-          charge: 0,
-          error: "Link valid URL hona chahiye",
-        };
-      }
-
-      const charge = (service.rate / 1000) * quantity;
-      return {
-        line: { serviceId, link, quantity },
-        service,
-        charge,
-        error: null,
-      };
-    });
-
-    setParsedOrders(results);
-    setSubmitted(false);
-  };
-
-  const validOrders = parsedOrders.filter((p) => !p.error);
-  const totalCharge = validOrders.reduce((sum, p) => sum + p.charge, 0);
-
-  const handleSubmitAll = async () => {
-    if (!user || !profile || validOrders.length === 0) return;
+    const invalidLinks = links.filter((l) => !l.startsWith("http"));
+    if (invalidLinks.length > 0) {
+      toast({ title: "Invalid links", description: `${invalidLinks.length} links valid URL nahi hain`, variant: "destructive" });
+      return;
+    }
 
     if (profile.balance < totalCharge) {
-      toast({ title: "Balance kam hai", description: `Rs.${totalCharge.toFixed(2)} chahiye, balance Rs.${profile.balance.toFixed(2)} hai`, variant: "destructive" });
+      toast({ title: "Balance kam hai", description: `Rs.${totalCharge.toFixed(2)} chahiye`, variant: "destructive" });
       return;
     }
 
     setLoading(true);
     try {
-      for (const order of validOrders) {
-        const svc = order.service!;
-        const qty = order.line.quantity;
-        const charge = order.charge;
-
+      for (const link of links) {
         const orderRef = await addDoc(collection(db, "orders"), {
           userId: user.uid,
-          serviceId: order.line.serviceId,
+          serviceId: selectedService,
           serviceName: svc.name,
-          link: order.line.link,
+          link,
           quantity: qty,
-          charge,
+          charge: perOrderCharge,
           status: "pending",
           providerId: svc.providerId || "",
           providerServiceId: svc.providerServiceId || 0,
@@ -149,20 +117,19 @@ const BulkOrder = () => {
         });
 
         await updateDoc(doc(db, "users", user.uid), {
-          balance: increment(-charge),
+          balance: increment(-perOrderCharge),
         });
 
         await addDoc(collection(db, "transactions"), {
           userId: user.uid,
-          amount: charge,
+          amount: perOrderCharge,
           type: "spend",
           paymentMethod: "balance",
           status: "completed",
-          description: `Bulk Order: ${svc.name} x${qty}`,
+          description: `Bulk: ${svc.name} x${qty}`,
           createdAt: serverTimestamp(),
         });
 
-        // Auto-send to provider
         if (svc.providerId) {
           try {
             const providerDoc = await getDoc(doc(db, "providers", svc.providerId));
@@ -177,7 +144,7 @@ const BulkOrder = () => {
                     apiKey: provider.apiKey,
                     action: "add",
                     service: svc.providerServiceId,
-                    link: order.line.link,
+                    link,
                     quantity: qty,
                   }),
                 });
@@ -198,7 +165,7 @@ const BulkOrder = () => {
 
       await refreshProfile();
       setSubmitted(true);
-      toast({ title: "Sab orders place ho gaye!", description: `${validOrders.length} orders — Rs.${totalCharge.toFixed(2)} deducted` });
+      toast({ title: "Sab orders place ho gaye!", description: `${orderCount} orders — Rs.${totalCharge.toFixed(2)} deducted` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -206,136 +173,136 @@ const BulkOrder = () => {
     }
   };
 
+  if (submitted) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <div>
+          <h1 className="text-2xl font-bold">Bulk Order</h1>
+          <p className="text-muted-foreground">Ek saath multiple orders place karein</p>
+        </div>
+        <Card className="border-green-500/30 bg-green-500/5">
+          <CardContent className="pt-6 text-center space-y-3">
+            <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
+            <p className="font-semibold text-lg">{orderCount} Orders Successfully Place Ho Gaye!</p>
+            <p className="text-muted-foreground text-sm">Rs.{totalCharge.toFixed(2)} balance se deduct hua</p>
+            <div className="flex gap-2 justify-center pt-2">
+              <Button variant="outline" onClick={() => navigate("/orders")}>Order Logs</Button>
+              <Button onClick={() => { setSubmitted(false); setLinksText(""); }} className="gradient-purple text-white border-0">Aur Orders</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">Bulk Order</h1>
-        <p className="text-muted-foreground">Ek saath multiple orders place karein</p>
+        <p className="text-muted-foreground">Ek service select karein, links paste karein — sab ek saath order ho jayein</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-primary" /> Bulk Order Input
+            <Layers className="h-5 w-5 text-primary" /> Bulk Order
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border bg-muted/50 p-3 text-sm space-y-1">
-            <p className="font-medium flex items-center gap-1.5"><Info className="h-4 w-4 text-primary" /> Format Guide:</p>
-            <p className="text-muted-foreground font-mono text-xs">service_id|link|quantity</p>
-            <p className="text-muted-foreground text-xs">Har line mein ek order — example:</p>
-            <pre className="text-xs bg-background rounded p-2 mt-1 text-muted-foreground">
-{`abc123|https://instagram.com/p/xyz|1000
-def456|https://twitter.com/post/123|500`}
-            </pre>
+        <CardContent className="space-y-5">
+          {/* Category */}
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedService(""); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* Service */}
           <div className="space-y-2">
-            <Label>Orders (ek order per line)</Label>
-            <Textarea
-              placeholder="service_id|link|quantity"
-              value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              rows={6}
-              className="font-mono text-sm"
+            <Label>Service</Label>
+            <Select value={selectedService} onValueChange={setSelectedService} disabled={!selectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select service" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredServices.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} — Rs.{s.rate}/1k
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedServiceData && (
+              <p className="text-xs text-muted-foreground">
+                Min: {selectedServiceData.minQuantity.toLocaleString()} · Max: {selectedServiceData.maxQuantity.toLocaleString()} · Rate: Rs.{selectedServiceData.rate}/1k
+              </p>
+            )}
+          </div>
+
+          {/* Quantity */}
+          <div className="space-y-2">
+            <Label>Quantity (har link ke liye same)</Label>
+            <Input
+              type="number"
+              placeholder={selectedServiceData ? `${selectedServiceData.minQuantity} - ${selectedServiceData.maxQuantity}` : "Enter quantity"}
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              min={selectedServiceData?.minQuantity}
+              max={selectedServiceData?.maxQuantity}
             />
           </div>
 
-          <Button onClick={parseOrders} variant="outline" disabled={!bulkText.trim()}>
-            <Plus className="h-4 w-4 mr-1" /> Parse Orders
+          {/* Links */}
+          <div className="space-y-2">
+            <Label>Links (1 per line)</Label>
+            <Textarea
+              placeholder={"https://instagram.com/p/post1\nhttps://instagram.com/p/post2\nhttps://instagram.com/p/post3"}
+              value={linksText}
+              onChange={(e) => setLinksText(e.target.value)}
+              rows={6}
+              className="font-mono text-sm"
+            />
+            {links.length > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="h-3 w-3" /> {links.length} links detected
+              </p>
+            )}
+          </div>
+
+          {/* Total */}
+          <div className="rounded-lg border bg-secondary/50 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Banknote className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-medium">Total Charge</span>
+                {orderCount > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {orderCount} orders × Rs.{perOrderCharge.toFixed(2)} each
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="text-xl font-bold text-primary">
+              Rs.{totalCharge.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            className="w-full gradient-purple text-white border-0"
+            disabled={loading || !selectedService || !quantity || links.length === 0}
+          >
+            {loading ? "Orders Place Ho Rahe Hain..." : `Place ${orderCount || 0} Orders`}
           </Button>
         </CardContent>
       </Card>
-
-      {parsedOrders.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Parsed Orders ({parsedOrders.length})</span>
-              <div className="flex gap-2 text-sm font-normal">
-                <Badge variant="default" className="bg-green-600">{validOrders.length} Valid</Badge>
-                <Badge variant="destructive">{parsedOrders.length - validOrders.length} Errors</Badge>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Link</TableHead>
-                  <TableHead>Qty</TableHead>
-                  <TableHead>Charge</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {parsedOrders.map((p, i) => (
-                  <TableRow key={i} className={p.error ? "bg-destructive/5" : ""}>
-                    <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                    <TableCell className="text-sm max-w-[200px] truncate">
-                      {p.service?.name ?? p.line.serviceId}
-                    </TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate text-muted-foreground">
-                      {p.line.link}
-                    </TableCell>
-                    <TableCell>{p.line.quantity.toLocaleString()}</TableCell>
-                    <TableCell className="font-semibold text-primary">
-                      {p.error ? "—" : `Rs.${p.charge.toFixed(2)}`}
-                    </TableCell>
-                    <TableCell>
-                      {p.error ? (
-                        <span className="text-xs text-destructive flex items-center gap-1">
-                          <XCircle className="h-3.5 w-3.5" /> {p.error}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-green-600 flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Valid
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {validOrders.length > 0 && !submitted && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div className="rounded-lg border bg-secondary/50 p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Banknote className="h-5 w-5 text-primary" />
-                <span className="font-medium">Total Charge ({validOrders.length} orders)</span>
-              </div>
-              <span className="text-xl font-bold text-primary">
-                Rs.{totalCharge.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <Button
-              onClick={handleSubmitAll}
-              className="w-full gradient-purple text-white border-0"
-              disabled={loading}
-            >
-              {loading ? "Orders Place Ho Rahe Hain..." : `Place ${validOrders.length} Orders`}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {submitted && (
-        <Card className="border-green-500/30 bg-green-500/5">
-          <CardContent className="pt-6 text-center space-y-2">
-            <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
-            <p className="font-semibold text-lg">Sab Orders Successfully Place Ho Gaye!</p>
-            <Button variant="outline" onClick={() => navigate("/orders")}>Order Logs Dekhein</Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
