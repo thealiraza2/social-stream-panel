@@ -12,24 +12,6 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
-interface ProviderService {
-  service: number;
-  name: string;
-  rate: string;
-  min: string;
-  max: string;
-  type?: string;
-  category?: string;
-}
-
-interface ImportRow {
-  svc: ProviderService;
-  selected: boolean;
-  categoryId: string;
-  marginType: "percent" | "fixed";
-  marginValue: string;
-}
-
 const ImportServices = () => {
   const { toast } = useToast();
   const [providers, setProviders] = useState<any[]>([]);
@@ -37,64 +19,62 @@ const ImportServices = () => {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [fetching, setFetching] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [rows, setRows] = useState<ImportRow[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const [pSnap, cSnap] = await Promise.all([
-          getDocs(collection(db, "providers")),
-          getDocs(collection(db, "categories")),
-        ]);
-        setProviders(pSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((p: any) => p.status === "active"));
-        setCategories(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active"));
-      } catch (error) {
-        console.error("Error loading providers/categories:", error);
-      }
+      const [pSnap, cSnap] = await Promise.all([
+        getDocs(collection(db, "providers")),
+        getDocs(collection(db, "categories")),
+      ]);
+      setProviders(pSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((p: any) => p.status === "active"));
+      setCategories(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active"));
     };
     load();
   }, []);
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // 🔴 FIXED: NOW CALLING YOUR EXTERNAL PROXY SERVER
- const handleFetch = async () => {
-  if (!provider) return;
-  setFetching(true);
-  setRows([]);
-  
-  try {
-    // 🟢 Calling YOUR Proxy Server (Request URL MUST be this)
-    const res = await fetch('https://my-server-one-lake.vercel.app/api/proxy-provider', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        apiUrl: provider.apiUrl, // SMM Panel Link (e.g. smmpakpanel.com/api/v2)
-        apiKey: provider.apiKey 
-      }),
-    });
-
-    if (!res.ok) throw new Error(`Proxy Server Error: ${res.status}`);
-    const data = await res.json();
-
-    if (!Array.isArray(data)) throw new Error(data.error || "Invalid Response");
+  // 🔴 YAHAN DEKHEIN: Proxy URL bilkul fix hai
+  const handleFetch = async () => {
+    if (!provider) return;
+    setFetching(true);
+    setRows([]);
     
-    setRows(data.map((svc: any) => ({
-        svc,
-        selected: false,
-        categoryId: "",
-        marginType: "percent" as const,
-        marginValue: "50",
-    })));
-    toast({ title: "Services fetched successfully!" });
-  } catch (err: any) {
-    toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
-  } finally {
-    setFetching(false);
-  }
-};
-  
+    try {
+      console.log("Fetching via Proxy for Provider:", provider.name);
+      
+      const res = await fetch('https://my-server-one-lake.vercel.app/api/proxy-provider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          apiUrl: provider.apiUrl, 
+          apiKey: provider.apiKey 
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Proxy Error: ${res.status}`);
+      
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error(data.error || "Invalid Response");
+      
+      setRows(data.map((svc: any) => ({
+          svc,
+          selected: false,
+          categoryId: "",
+          marginType: "percent",
+          marginValue: "50",
+      })));
+      toast({ title: "Services loaded successfully!" });
+    } catch (err: any) {
+      toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  // UI Code starts here...
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
@@ -110,12 +90,7 @@ const ImportServices = () => {
     });
   };
 
-  const toggleAll = (checked: boolean) => {
-    const filteredSet = new Set(filtered.map(r => r.svc.service));
-    setRows(prev => prev.map(r => filteredSet.has(r.svc.service) ? { ...r, selected: checked } : r));
-  };
-
-  const updateRow = (filteredIdx: number, field: Partial<ImportRow>) => {
+  const updateRow = (filteredIdx: number, field: any) => {
     setRows(prev => {
       const next = [...prev];
       const realIdx = rows.indexOf(filtered[filteredIdx]);
@@ -124,21 +99,14 @@ const ImportServices = () => {
     });
   };
 
-  const calcSelling = (row: ImportRow) => {
+  const calcSelling = (row: any) => {
     const base = parseFloat(row.svc.rate) || 0;
     const margin = parseFloat(row.marginValue) || 0;
-    if (row.marginType === "percent") return base + (base * margin) / 100;
-    return base + margin;
+    return row.marginType === "percent" ? base + (base * margin) / 100 : base + margin;
   };
 
-  const selectedRows = rows.filter(r => r.selected);
-
   const handleImport = async () => {
-    const toImport = selectedRows.filter(r => r.categoryId);
-    if (toImport.length === 0) {
-      toast({ title: "No services ready", description: "Select services and assign categories first.", variant: "destructive" });
-      return;
-    }
+    const toImport = rows.filter(r => r.selected && r.categoryId);
     setImporting(true);
     try {
       const batch = toImport.map(r =>
@@ -151,230 +119,82 @@ const ImportServices = () => {
           maxQuantity: parseInt(r.svc.max) || 0,
           providerId: selectedProvider,
           providerServiceId: r.svc.service,
-          type: r.svc.type || "default",
           status: "active",
-          marginType: r.marginType,
-          marginValue: parseFloat(r.marginValue) || 0,
           createdAt: serverTimestamp(),
         })
       );
       await Promise.all(batch);
-      toast({ title: `${toImport.length} services imported successfully!` });
-      const importedIds = new Set(toImport.map(r => r.svc.service));
-      setRows(prev => prev.map(r => importedIds.has(r.svc.service) ? { ...r, selected: false } : r));
-    } catch (err: any) {
-      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+      toast({ title: "Import successful!" });
     } finally {
       setImporting(false);
     }
   };
 
-  const bulkSetCategory = (catId: string) => {
-    const selectedSet = new Set(selectedRows.map(r => r.svc.service));
-    setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, categoryId: catId } : r));
-  };
-
-  const bulkSetMargin = (type: "percent" | "fixed", value: string) => {
-    const selectedSet = new Set(selectedRows.map(r => r.svc.service));
-    setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, marginType: type, marginValue: value } : r));
-  };
-
-  const allFilteredSelected = filtered.length > 0 && filtered.every(r => r.selected);
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Import Services</h1>
-        {selectedRows.length > 0 && (
-          <Badge variant="secondary" className="text-sm">
-            {selectedRows.length} selected
-          </Badge>
-        )}
-      </div>
-
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Import Services</h1>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Select API Provider</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
             <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-              <SelectTrigger className="sm:w-[300px]">
-                <SelectValue placeholder="Choose a provider..." />
-              </SelectTrigger>
+              <SelectTrigger className="w-[300px]"><SelectValue placeholder="Choose Provider" /></SelectTrigger>
               <SelectContent>
-                {providers.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
+                {providers.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button
-              onClick={handleFetch}
-              disabled={!selectedProvider || fetching}
-              className="gradient-purple text-white border-0"
-            >
-              {fetching ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-              {fetching ? "Fetching..." : "Fetch Services"}
+            <Button onClick={handleFetch} disabled={fetching}>
+              {fetching ? <RefreshCw className="animate-spin mr-2" /> : <Download className="mr-2" />}
+              Fetch Services
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {selectedRows.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Bulk Actions ({selectedRows.length} selected)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="space-y-1.5 flex-1">
-                <Label className="text-xs">Assign Category</Label>
-                <Select onValueChange={bulkSetCategory}>
-                  <SelectTrigger><SelectValue placeholder="Set category for all selected" /></SelectTrigger>
-                  <SelectContent>
-                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 w-[140px]">
-                <Label className="text-xs">Margin Type</Label>
-                <Select onValueChange={(v) => bulkSetMargin(v as any, selectedRows[0]?.marginValue || "50")}>
-                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percent">Percentage %</SelectItem>
-                    <SelectItem value="fixed">Fixed $</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 w-[100px]">
-                <Label className="text-xs">Margin</Label>
-                <Input
-                  type="number"
-                  placeholder="50"
-                  onChange={e => {
-                    const v = e.target.value;
-                    const selectedSet = new Set(selectedRows.map(r => r.svc.service));
-                    setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, marginValue: v } : r));
-                  }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {rows.length > 0 && (
         <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between gap-3">
-              <CardTitle className="text-base">{rows.length} Services Available</CardTitle>
-              <div className="relative w-full sm:w-[260px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search services..."
-                  className="pl-9"
-                />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{rows.length} Services Found</CardTitle>
+            <Input className="w-64" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-auto max-h-[60vh]">
+          <CardContent>
+            <div className="border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[40px]">
-                      <Checkbox
-                        checked={allFilteredSelected}
-                        onCheckedChange={(c) => toggleAll(!!c)}
-                      />
-                    </TableHead>
-                    <TableHead className="w-[70px]">ID</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>ID</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead className="w-[90px]">Rate/1k</TableHead>
-                    <TableHead className="w-[70px]">Min</TableHead>
-                    <TableHead className="w-[70px]">Max</TableHead>
-                    <TableHead className="w-[180px]">Category</TableHead>
-                    <TableHead className="w-[120px]">Margin</TableHead>
-                    <TableHead className="w-[100px]">Selling</TableHead>
+                    <TableHead>Rate/1k</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Selling</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((row, idx) => (
-                    <TableRow key={row.svc.service} className={row.selected ? "bg-primary/5" : ""}>
+                    <TableRow key={row.svc.service}>
+                      <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(idx)} /></TableCell>
+                      <TableCell>{row.svc.service}</TableCell>
+                      <TableCell className="max-w-[300px] truncate">{row.svc.name}</TableCell>
+                      <TableCell>${row.svc.rate}</TableCell>
                       <TableCell>
-                        <Checkbox checked={row.selected} onCheckedChange={() => toggleRow(idx)} />
+                        <Select value={row.categoryId} onValueChange={v => updateRow(idx, { categoryId: v })}>
+                          <SelectTrigger className="w-32"><SelectValue placeholder="Set Category" /></SelectTrigger>
+                          <SelectContent>
+                            {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
-                      <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                      <TableCell className="text-sm">${row.svc.rate}</TableCell>
-                      <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
-                      <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
-                      <TableCell>
-                        {row.selected && (
-                          <Select value={row.categoryId} onValueChange={v => updateRow(idx, { categoryId: v })}>
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {row.selected && (
-                          <div className="flex gap-1 items-center">
-                            <Select value={row.marginType} onValueChange={v => updateRow(idx, { marginType: v as any })}>
-                              <SelectTrigger className="h-8 w-[50px] text-xs px-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="percent">%</SelectItem>
-                                <SelectItem value="fixed">$</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="number"
-                              value={row.marginValue}
-                              onChange={e => updateRow(idx, { marginValue: e.target.value })}
-                              className="h-8 w-[60px] text-xs"
-                            />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm font-semibold text-primary">
-                        {row.selected ? `$${calcSelling(row).toFixed(2)}` : "—"}
-                      </TableCell>
+                      <TableCell className="font-bold">${calcSelling(row).toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
-                  {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                        {search ? "No matching services" : "No services fetched"}
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleImport} disabled={importing}>Import Selected</Button>
+            </div>
           </CardContent>
         </Card>
-      )}
-
-      {selectedRows.length > 0 && (
-        <div className="flex justify-end">
-          <Button
-            size="lg"
-            onClick={handleImport}
-            disabled={importing}
-            className="gradient-purple text-white border-0 px-8"
-          >
-            {importing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
-            {importing ? "Importing..." : `Import ${selectedRows.filter(r => r.categoryId).length} Selected`}
-          </Button>
-        </div>
       )}
     </div>
   );
