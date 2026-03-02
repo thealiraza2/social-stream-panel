@@ -58,20 +58,57 @@ const Tickets = () => {
 
   const fetchTickets = async () => {
     if (!user) return;
-    const q = query(collection(db, "tickets"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
-    setTickets(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Ticket)));
-    setLoading(false);
+    try {
+      let ticketList: Ticket[];
+      try {
+        const q = query(collection(db, "tickets"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        ticketList = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Ticket));
+      } catch {
+        // Fallback if composite index not ready
+        const q = query(collection(db, "tickets"), where("userId", "==", user.uid));
+        const snap = await getDocs(q);
+        ticketList = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Ticket));
+        ticketList.sort((a, b) => {
+          const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+          const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+          return bT - aT;
+        });
+      }
+      setTickets(ticketList);
+    } catch (err: any) {
+      console.error("Tickets fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchTickets(); }, [user]);
 
   const fetchMessages = async (ticketId: string) => {
     setMsgLoading(true);
-    const q = query(collection(db, "ticket_messages"), where("ticketId", "==", ticketId), orderBy("createdAt", "asc"));
-    const snap = await getDocs(q);
-    setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
-    setMsgLoading(false);
+    try {
+      let msgList: Message[];
+      try {
+        const q = query(collection(db, "ticket_messages"), where("ticketId", "==", ticketId), orderBy("createdAt", "asc"));
+        const snap = await getDocs(q);
+        msgList = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+      } catch {
+        const q = query(collection(db, "ticket_messages"), where("ticketId", "==", ticketId));
+        const snap = await getDocs(q);
+        msgList = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+        msgList.sort((a, b) => {
+          const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+          const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+          return aT - bT;
+        });
+      }
+      setMessages(msgList);
+    } catch (err: any) {
+      console.error("Messages fetch error:", err);
+    } finally {
+      setMsgLoading(false);
+    }
   };
 
   const handleCreateTicket = async () => {
@@ -114,6 +151,8 @@ const Tickets = () => {
       });
       if (selectedTicket.status === "answered") {
         await updateDoc(doc(db, "tickets", selectedTicket.id), { status: "open" });
+        setSelectedTicket(prev => prev ? { ...prev, status: "open" } : null);
+        setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status: "open" } : t));
       }
       setReply("");
       fetchMessages(selectedTicket.id);
@@ -161,9 +200,11 @@ const Tickets = () => {
                 <div className="space-y-3">
                   {messages.map((m) => {
                     const isMe = m.senderId === user?.uid;
+                    const isAdmin = m.senderId === "admin";
                     return (
                       <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[75%] rounded-xl px-4 py-2.5 ${isMe ? "gradient-purple text-white" : "bg-secondary"}`}>
+                          {isAdmin && <p className="text-[10px] font-medium mb-1 text-muted-foreground">Admin</p>}
                           <p className="text-sm whitespace-pre-wrap">{m.message}</p>
                           <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-muted-foreground"}`}>{formatDate(m.createdAt)}</p>
                         </div>

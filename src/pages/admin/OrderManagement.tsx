@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,13 @@ import { collection, getDocs, doc, updateDoc, orderBy, query } from "firebase/fi
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  processing: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  in_progress: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
-  completed: "bg-green-500/10 text-green-600 border-green-500/20",
-  partial: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  cancelled: "bg-red-500/10 text-red-600 border-red-500/20",
+  pending: "bg-warning/10 text-warning border-warning/20",
+  processing: "bg-info/10 text-info border-info/20",
+  in_progress: "bg-info/10 text-info border-info/20",
+  completed: "bg-success/10 text-success border-success/20",
+  partial: "bg-muted text-muted-foreground border-border",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  canceled: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const OrderManagement = () => {
@@ -28,9 +29,26 @@ const OrderManagement = () => {
 
   const fetchOrders = async () => {
     setLoading(true);
-    const snap = await getDocs(query(collection(db, "orders"), orderBy("createdAt", "desc")));
-    setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    setLoading(false);
+    try {
+      let orderList: any[];
+      try {
+        const snap = await getDocs(query(collection(db, "orders"), orderBy("createdAt", "desc")));
+        orderList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch {
+        const snap = await getDocs(collection(db, "orders"));
+        orderList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        orderList.sort((a, b) => {
+          const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+          const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+          return bT - aT;
+        });
+      }
+      setOrders(orderList);
+    } catch (err: any) {
+      console.error("Orders fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchOrders(); }, []);
@@ -68,7 +86,12 @@ const OrderManagement = () => {
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            {Object.keys(statusColors).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="processing">Processing</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -77,7 +100,10 @@ const OrderManagement = () => {
           {loading ? (
             <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No orders found</p>
+            <div className="flex flex-col items-center py-12 text-muted-foreground">
+              <ClipboardList className="h-8 w-8 mb-2" />
+              <p>No orders found</p>
+            </div>
           ) : (
             <div className="overflow-auto">
               <Table>
@@ -98,7 +124,9 @@ const OrderManagement = () => {
                     <TableRow key={o.id}>
                       <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{o.serviceName}</TableCell>
-                      <TableCell className="text-sm max-w-[150px] truncate">{o.link}</TableCell>
+                      <TableCell className="text-sm max-w-[150px] truncate">
+                        <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">{o.link}</a>
+                      </TableCell>
                       <TableCell>{o.quantity?.toLocaleString()}</TableCell>
                       <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
                       <TableCell><Badge variant="outline" className={statusColors[o.status] || ""}>{o.status}</Badge></TableCell>
@@ -107,7 +135,12 @@ const OrderManagement = () => {
                         <Select value={o.status} onValueChange={v => updateStatus(o.id, v)}>
                           <SelectTrigger className="h-8 w-[120px] text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {Object.keys(statusColors).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="partial">Partial</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

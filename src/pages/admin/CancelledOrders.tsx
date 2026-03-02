@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 
@@ -10,12 +11,31 @@ const CancelledOrders = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      const snap = await getDocs(query(collection(db, "orders"), where("status", "==", "cancelled"), orderBy("createdAt", "desc")));
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
+    const fetchData = async () => {
+      try {
+        let orderList: any[];
+        try {
+          const snap = await getDocs(query(collection(db, "orders"), where("status", "==", "cancelled"), orderBy("createdAt", "desc")));
+          orderList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch {
+          // Fallback: fetch all orders, filter client-side
+          const snap = await getDocs(collection(db, "orders"));
+          orderList = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+            .filter((o: any) => o.status === "cancelled" || o.status === "canceled");
+          orderList.sort((a, b) => {
+            const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+            const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+            return bT - aT;
+          });
+        }
+        setOrders(orderList);
+      } catch (err) {
+        console.error("Cancelled orders fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
+    fetchData();
   }, []);
 
   const formatDate = (ts: any) => ts?.toDate ? ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -26,7 +46,10 @@ const CancelledOrders = () => {
       <Card>
         <CardContent className="p-0">
           {loading ? <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div> : orders.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No cancelled orders</p>
+            <div className="flex flex-col items-center py-12 text-muted-foreground">
+              <XCircle className="h-8 w-8 mb-2" />
+              <p>No cancelled orders</p>
+            </div>
           ) : (
             <Table>
               <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Service</TableHead><TableHead>User</TableHead><TableHead>Charge</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>

@@ -87,7 +87,7 @@ const UserManagement = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Edit User: {editing?.email}</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="space-y-2"><Label>Balance ($)</Label><Input type="number" step="0.01" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Balance (Rs.)</Label><Input type="number" step="0.01" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} /></div>
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={form.role} onValueChange={v => setForm({ ...form, role: v })}>

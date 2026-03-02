@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
@@ -15,12 +15,29 @@ const TransactionLogs = () => {
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
-    const fetch = async () => {
-      const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
-      setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
+    const fetchData = async () => {
+      try {
+        let txList: any[];
+        try {
+          const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
+          txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch {
+          const snap = await getDocs(collection(db, "transactions"));
+          txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          txList.sort((a, b) => {
+            const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+            const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+            return bT - aT;
+          });
+        }
+        setTransactions(txList);
+      } catch (err) {
+        console.error("Transaction fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
+    fetchData();
   }, []);
 
   const filtered = transactions.filter(t => {
@@ -52,6 +69,11 @@ const TransactionLogs = () => {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-muted-foreground">
+              <FileText className="h-8 w-8 mb-2" />
+              <p>No transactions found</p>
+            </div>
           ) : (
             <div className="overflow-auto">
               <Table>
@@ -70,7 +92,6 @@ const TransactionLogs = () => {
                       <TableCell className="text-xs">{formatDate(t.createdAt)}</TableCell>
                     </TableRow>
                   ))}
-                  {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No transactions found</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>

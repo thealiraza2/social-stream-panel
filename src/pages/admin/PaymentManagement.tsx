@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, Check, X, Eye } from "lucide-react";
+import { CreditCard, Check, X, Eye, RefreshCw } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, query, orderBy, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -19,9 +19,26 @@ const PaymentManagement = () => {
 
   const fetchTransactions = async () => {
     setLoading(true);
-    const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
-    setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    setLoading(false);
+    try {
+      let txList: any[];
+      try {
+        const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
+        txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch {
+        const snap = await getDocs(collection(db, "transactions"));
+        txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        txList.sort((a, b) => {
+          const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+          const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+          return bT - aT;
+        });
+      }
+      setTransactions(txList);
+    } catch (err: any) {
+      console.error("Payment fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchTransactions(); }, []);
@@ -33,7 +50,8 @@ const PaymentManagement = () => {
         await updateDoc(doc(db, "users", tx.userId), { balance: increment(tx.amount) });
       }
       toast({ title: action === "completed" ? "Payment approved! Balance updated." : "Payment rejected." });
-      fetchTransactions();
+      // Update local state
+      setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: action } : t));
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -44,7 +62,12 @@ const PaymentManagement = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Payment Management</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Payment Management</h1>
+        <Button variant="outline" size="sm" onClick={fetchTransactions}>
+          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+        </Button>
+      </div>
       <Select value={statusFilter} onValueChange={setStatusFilter}>
         <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
         <SelectContent>
@@ -58,11 +81,16 @@ const PaymentManagement = () => {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-muted-foreground">
+              <CreditCard className="h-8 w-8 mb-2" />
+              <p>No payments found</p>
+            </div>
           ) : (
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow><TableHead>User ID</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead><TableHead>Screenshot</TableHead><TableHead>Date</TableHead><TableHead>Actions</TableHead></TableRow>
+                  <TableRow><TableHead>User ID</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Txn ID</TableHead><TableHead>Status</TableHead><TableHead>Screenshot</TableHead><TableHead>Date</TableHead><TableHead>Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map(t => (
@@ -70,9 +98,10 @@ const PaymentManagement = () => {
                       <TableCell className="font-mono text-xs">{t.userId?.slice(0, 10)}</TableCell>
                       <TableCell className="font-medium">Rs.{t.amount?.toFixed(2)}</TableCell>
                       <TableCell>{t.paymentMethod}</TableCell>
+                      <TableCell className="font-mono text-xs">{t.transactionId || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={
-                          t.status === "pending" ? "text-yellow-600" : t.status === "completed" ? "text-green-600" : "text-red-600"
+                          t.status === "pending" ? "bg-warning/10 text-warning border-warning/20" : t.status === "completed" ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20"
                         }>{t.status}</Badge>
                       </TableCell>
                       <TableCell>
@@ -84,14 +113,13 @@ const PaymentManagement = () => {
                       <TableCell className="flex gap-1">
                         {t.status === "pending" && (
                           <>
-                            <Button size="sm" variant="ghost" className="text-green-600" onClick={() => handleAction(t, "completed")}><Check className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(t, "rejected")}><X className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-green-600" onClick={() => handleAction(t, "completed")}><Check className="h-4 w-4 mr-1" /> Approve</Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(t, "rejected")}><X className="h-4 w-4 mr-1" /> Reject</Button>
                           </>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No payments found</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
