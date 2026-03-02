@@ -117,6 +117,7 @@ const ImportServices = () => {
           providerRate: parseFloat(r.svc.rate) || 0,
           minQuantity: parseInt(r.svc.min) || 0,
           maxQuantity: parseInt(r.svc.max) || 0,
+          description: r.svc.description || "",
           providerId: selectedProvider,
           providerServiceId: r.svc.service,
           status: "active",
