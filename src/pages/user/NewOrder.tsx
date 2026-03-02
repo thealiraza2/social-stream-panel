@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShoppingCart, Banknote, Info, Wallet, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, getDoc, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -94,28 +94,6 @@ const NewOrder = () => {
     fetchData();
   }, []);
 
-  const resolveProviderCredentials = async (service: Service) => {
-    if (service.providerApiUrl && service.providerApiKey) {
-      return { apiUrl: service.providerApiUrl, apiKey: service.providerApiKey };
-    }
-
-    if (service.providerId) {
-      try {
-        const providerSnap = await getDoc(doc(db, "providers", service.providerId));
-        if (providerSnap.exists()) {
-          const provider = providerSnap.data() as { apiUrl?: string; apiKey?: string };
-          if (provider.apiUrl && provider.apiKey) {
-            return { apiUrl: provider.apiUrl, apiKey: provider.apiKey };
-          }
-        }
-      } catch (error) {
-        console.error("Unable to read provider credentials from providers collection:", error);
-      }
-    }
-
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !link || !quantity || !user || !profile) return;
@@ -131,17 +109,6 @@ const NewOrder = () => {
     const totalCharge = Number(charge);
     if (profile.balance < totalCharge) {
       toast({ title: "Insufficient balance", description: "Please add funds first", variant: "destructive" });
-      return;
-    }
-
-    if (!svc.providerServiceId) {
-      toast({ title: "Service misconfigured", description: "Provider service id missing. Contact admin.", variant: "destructive" });
-      return;
-    }
-
-    const creds = await resolveProviderCredentials(svc);
-    if (!creds) {
-      toast({ title: "Service misconfigured", description: "Provider credentials missing on service/provider. Contact admin.", variant: "destructive" });
       return;
     }
 
@@ -178,9 +145,9 @@ const NewOrder = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiUrl: creds.apiUrl,
-          apiKey: creds.apiKey,
-          service: svc.providerServiceId,
+          apiUrl: svc.providerApiUrl || "",
+          apiKey: svc.providerApiKey || "",
+          service: svc.providerServiceId || 0,
           link,
           quantity: qty,
         }),
