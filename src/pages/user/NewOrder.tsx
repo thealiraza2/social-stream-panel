@@ -111,6 +111,21 @@ const NewOrder = () => {
     }
 
     const totalCharge = Number(charge);
+    const apiUrl = svc.providerApiUrl || "";
+    const apiKey = svc.providerApiKey || "";
+    const service = svc.providerServiceId || 0;
+
+    console.log("Payload:", { apiUrl, apiKey, service, link, quantity: qty });
+
+    if (!apiUrl || !apiKey || !service || !link || !qty) {
+      toast({
+        title: "Provider credentials not loaded from database.",
+        description: "Service is missing provider API configuration. Please contact admin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (profile.balance < totalCharge) {
       toast({ title: "Insufficient balance", description: "Please add funds first", variant: "destructive" });
       return;
@@ -144,21 +159,6 @@ const NewOrder = () => {
         description: `Order: ${svc.name} x${qty}`,
         createdAt: serverTimestamp(),
       });
-
-      const apiUrl = svc.providerApiUrl || "";
-      const apiKey = svc.providerApiKey || "";
-      const service = svc.providerServiceId || 0;
-
-      console.log("Payload:", { apiUrl, apiKey, service, link, quantity: qty });
-
-      if (!apiUrl || !apiKey) {
-        toast({ title: "Provider credentials not loaded from database", description: "Service is missing provider API credentials. Please contact admin.", variant: "destructive" });
-        await updateDoc(doc(db, "users", user.uid), { balance: increment(totalCharge) });
-        await updateDoc(doc(db, "orders", orderRef.id), { status: "failed" });
-        await refreshProfile();
-        setLoading(false);
-        return;
-      }
 
       const providerRes = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
         method: "POST",
