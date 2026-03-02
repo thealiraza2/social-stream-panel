@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShoppingCart, Banknote, Info, Wallet, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, getDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -29,6 +29,8 @@ interface Service {
   status: string;
   providerId?: string;
   providerServiceId?: number;
+  providerApiUrl?: string;
+  providerApiKey?: string;
 }
 
 const steps = [
@@ -139,31 +141,25 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      if (svc.providerId) {
+      if (svc.providerId && svc.providerApiUrl && svc.providerApiKey) {
         try {
-          const providerDoc = await getDoc(doc(db, "providers", svc.providerId));
-          if (providerDoc.exists()) {
-            const provider = providerDoc.data();
-            if (provider.status === "active" && provider.apiUrl && provider.apiKey) {
-              const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/place-order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  apiUrl: provider.apiUrl,
-                  apiKey: provider.apiKey,
-                  service: svc.providerServiceId,
-                  link: link,
-                  quantity: qty,
-                }),
-              });
-              const providerData = await providerRes.json();
-              if (providerData.order) {
-                await updateDoc(doc(db, "orders", orderRef.id), {
-                  providerOrderId: providerData.order,
-                  status: "processing",
-                });
-              }
-            }
+          const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/place-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              apiUrl: svc.providerApiUrl,
+              apiKey: svc.providerApiKey,
+              service: svc.providerServiceId,
+              link: link,
+              quantity: qty,
+            }),
+          });
+          const providerData = await providerRes.json();
+          if (providerData.order) {
+            await updateDoc(doc(db, "orders", orderRef.id), {
+              providerOrderId: providerData.order,
+              status: "processing",
+            });
           }
         } catch (apiErr) {
           console.error("Provider API error (order saved locally):", apiErr);
