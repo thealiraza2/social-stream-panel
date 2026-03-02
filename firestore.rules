@@ -233,8 +233,9 @@ service cloud.firestore {
       allow list: if isSignedIn();
       // Users can create their own application
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // Only admins can update (approve/reject, set commission, update stats)
-      allow update: if isAdmin();
+      // Admins can update anything; signed-in users can only increment clicks/signups
+      allow update: if isAdmin() || (isSignedIn() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClicks', 'totalSignups']));
       allow delete: if isAdmin();
     }
 
