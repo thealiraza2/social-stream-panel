@@ -59,17 +59,18 @@ const ImportServices = () => {
   const provider = providers.find(p => p.id === selectedProvider);
 
   // 🔴 FIXED: NOW CALLING YOUR EXTERNAL PROXY SERVER
-  const handleFetch = async () => {
+ const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
     
     try {
+      // 🟢 YEAH HAI ASLI FIX: Hum proxy server ko call kar rahe hain
       const res = await fetch('https://my-server-one-lake.vercel.app/api/fetch-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          apiUrl: provider.apiUrl, 
+          apiUrl: provider.apiUrl, // SMM Panel ka URL (e.g. smmpakpanel.com/api/v2)
           apiKey: provider.apiKey 
         }),
       });
@@ -77,23 +78,17 @@ const ImportServices = () => {
       if (!res.ok) throw new Error(`Proxy Server Error: ${res.status}`);
       
       const data = await res.json();
-
-      if (!Array.isArray(data)) {
-        throw new Error(data.error || "Unexpected data format from proxy server");
-      }
+      if (!Array.isArray(data)) throw new Error(data.error || "Invalid response format");
       
-      setRows(
-        data.map((svc: any) => ({
+      setRows(data.map((svc: any) => ({
           svc,
           selected: false,
           categoryId: "",
           marginType: "percent" as const,
           marginValue: "50",
-        }))
-      );
-      toast({ title: `${data.length} services fetched successfully!` });
+      })));
+      toast({ title: "Services fetched successfully!" });
     } catch (err: any) {
-      console.error("Fetch Error:", err);
       toast({ title: "Fetch failed", description: err.message, variant: "destructive" });
     } finally {
       setFetching(false);
