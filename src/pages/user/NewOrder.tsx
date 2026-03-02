@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Banknote, Info } from "lucide-react";
+import { ShoppingCart, Banknote, Info, Wallet, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, getDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Category {
   id: string;
@@ -31,10 +31,18 @@ interface Service {
   providerServiceId?: number;
 }
 
+const steps = [
+  { label: "Category", icon: "1" },
+  { label: "Service", icon: "2" },
+  { label: "Details", icon: "3" },
+  { label: "Confirm", icon: "4" },
+];
+
 const NewOrder = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -43,6 +51,8 @@ const NewOrder = () => {
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [successCharge, setSuccessCharge] = useState(0);
 
   const filteredServices = services.filter(
     (s) => s.categoryId === selectedCategory && s.status === "active"
@@ -51,6 +61,10 @@ const NewOrder = () => {
   const charge = selectedServiceData && quantity
     ? ((selectedServiceData.rate / 1000) * Number(quantity)).toFixed(4)
     : "0.00";
+  const remainingBalance = (profile?.balance ?? 0) - Number(charge);
+
+  // Progress stepper logic
+  const currentStep = !selectedCategory ? 0 : !selectedService ? 1 : (!link || !quantity) ? 2 : 3;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +78,16 @@ const NewOrder = () => {
       const svcSnap = await getDocs(collection(db, "services"));
       const svcs = svcSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Service));
       setServices(svcs);
+
+      // Pre-select from URL params (e.g., from Services page "Order Now")
+      const preService = searchParams.get("service");
+      if (preService) {
+        const svc = svcs.find(s => s.id === preService);
+        if (svc) {
+          setSelectedCategory(svc.categoryId);
+          setSelectedService(svc.id);
+        }
+      }
     };
     fetchData();
   }, []);
@@ -88,7 +112,6 @@ const NewOrder = () => {
 
     setLoading(true);
     try {
-      // 1. Create order in Firebase
       const orderRef = await addDoc(collection(db, "orders"), {
         userId: user.uid,
         serviceId: selectedService,
@@ -102,12 +125,10 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      // 2. Deduct balance
       await updateDoc(doc(db, "users", user.uid), {
         balance: increment(-totalCharge),
       });
 
-      // 3. Log transaction
       await addDoc(collection(db, "transactions"), {
         userId: user.uid,
         amount: totalCharge,
@@ -118,7 +139,6 @@ const NewOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      // 4. Auto-send to provider API
       if (svc.providerId) {
         try {
           const providerDoc = await getDoc(doc(db, "providers", svc.providerId));
@@ -152,8 +172,8 @@ const NewOrder = () => {
       }
 
       await refreshProfile();
-      toast({ title: "Order placed!", description: `Rs.${totalCharge.toFixed(2)} charged from your balance` });
-      navigate("/orders");
+      setSuccessCharge(totalCharge);
+      setOrderSuccess(true);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -161,11 +181,53 @@ const NewOrder = () => {
     }
   };
 
+  if (orderSuccess) {
+    return (
+      <div className="space-y-6 max-w-2xl animate-fade-in">
+        <Card className="border-success/30 bg-success/5">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <div className="relative inline-block">
+              <CheckCircle2 className="h-16 w-16 text-success mx-auto animate-scale-in" />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-success rounded-full animate-ping" />
+            </div>
+            <h2 className="text-2xl font-bold">Order Placed Successfully!</h2>
+            <p className="text-muted-foreground">Rs.{successCharge.toFixed(2)} has been charged from your balance</p>
+            <div className="flex gap-3 justify-center pt-2">
+              <Button variant="outline" onClick={() => navigate("/orders")}>View Orders</Button>
+              <Button onClick={() => { setOrderSuccess(false); setLink(""); setQuantity(""); }} className="gradient-purple text-white border-0">Place Another</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">New Order</h1>
         <p className="text-muted-foreground">Place a new social media order</p>
+      </div>
+
+      {/* Progress Stepper */}
+      <div className="flex items-center justify-between px-2">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex items-center gap-1 flex-1">
+            <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold shrink-0 transition-all ${
+              i <= currentStep 
+                ? "gradient-purple text-white shadow-md" 
+                : "bg-muted text-muted-foreground"
+            }`}>
+              {i < currentStep ? "✓" : step.icon}
+            </div>
+            <span className={`text-xs font-medium hidden sm:inline ${i <= currentStep ? "text-primary" : "text-muted-foreground"}`}>
+              {step.label}
+            </span>
+            {i < steps.length - 1 && (
+              <div className={`flex-1 h-0.5 mx-2 rounded ${i < currentStep ? "bg-primary" : "bg-border"}`} />
+            )}
+          </div>
+        ))}
       </div>
 
       <Card>
@@ -210,9 +272,20 @@ const NewOrder = () => {
                 </SelectContent>
               </Select>
               {selectedServiceData && (
-                <p className="text-xs text-muted-foreground">
-                  Min: {selectedServiceData.minQuantity.toLocaleString()} · Max: {selectedServiceData.maxQuantity.toLocaleString()} · Rate: Rs.{selectedServiceData.rate}/1k
-                </p>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Min: {selectedServiceData.minQuantity.toLocaleString()} · Max: {selectedServiceData.maxQuantity.toLocaleString()} · Rate: Rs.{selectedServiceData.rate}/1k
+                  </p>
+                  {selectedServiceData.description && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-foreground flex gap-2">
+                      <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                      <span>{selectedServiceData.description}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Average delivery time varies by service
+                  </p>
+                </div>
               )}
             </div>
 
@@ -239,18 +312,35 @@ const NewOrder = () => {
               />
             </div>
 
-            <div className="rounded-lg border bg-secondary/50 p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Banknote className="h-5 w-5 text-primary" />
-                <span className="font-medium">Total Charge</span>
+            {/* Charge + Balance Preview */}
+            <div className="rounded-lg border bg-secondary/50 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Total Charge</span>
+                </div>
+                <span className="text-xl font-bold text-primary">Rs.{charge}</span>
               </div>
-              <span className="text-xl font-bold text-primary">Rs.{charge}</span>
+              <div className="border-t pt-3 flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Remaining Balance</span>
+                </div>
+                <span className={`font-semibold ${remainingBalance < 0 ? "text-destructive" : "text-success"}`}>
+                  Rs.{remainingBalance.toFixed(2)}
+                </span>
+              </div>
+              {remainingBalance < 0 && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" /> Insufficient balance — please add funds
+                </p>
+              )}
             </div>
 
             <Button
               type="submit"
               className="w-full gradient-purple text-white border-0"
-              disabled={loading || !selectedService || !link || !quantity}
+              disabled={loading || !selectedService || !link || !quantity || remainingBalance < 0}
             >
               {loading ? "Placing Order..." : "Place Order"}
             </Button>

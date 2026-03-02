@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Server, Search } from "lucide-react";
+import { Server, Search, ShoppingCart } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 interface Category {
   id: string;
@@ -27,6 +29,7 @@ interface Service {
 }
 
 const Services = () => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +55,13 @@ const Services = () => {
     fetchData();
   }, []);
 
+  // Service counts per category
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    services.forEach(s => { counts[s.categoryId] = (counts[s.categoryId] || 0) + 1; });
+    return counts;
+  }, [services]);
+
   const filtered = services.filter((s) => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.description?.toLowerCase().includes(search.toLowerCase());
@@ -62,10 +72,15 @@ const Services = () => {
   const getCategoryName = (catId: string) => categories.find((c) => c.id === catId)?.name ?? "—";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Services</h1>
-        <p className="text-muted-foreground">Browse available social media services</p>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Services
+            <Badge variant="secondary" className="text-xs">{services.length} total</Badge>
+          </h1>
+          <p className="text-muted-foreground">Browse available social media services</p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -74,13 +89,15 @@ const Services = () => {
           <Input className="pl-9" placeholder="Search services..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-56">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">All Categories ({services.length})</SelectItem>
             {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              <SelectItem key={c.id} value={c.id}>
+                {c.name} ({categoryCounts[c.id] || 0})
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -108,6 +125,7 @@ const Services = () => {
                   <TableHead>Min</TableHead>
                   <TableHead>Max</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,6 +140,16 @@ const Services = () => {
                     <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                     <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => navigate(`/new-order?service=${s.id}`)}
+                      >
+                        <ShoppingCart className="h-3 w-3" /> Order
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
