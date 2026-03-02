@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, DollarSign, Info } from "lucide-react";
+import { ShoppingCart, Banknote, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, getDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
@@ -241,7 +241,7 @@ const NewOrder = () => {
 
             <div className="rounded-lg border bg-secondary/50 p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" />
+                <Banknote className="h-5 w-5 text-primary" />
                 <span className="font-medium">Total Charge</span>
               </div>
               <span className="text-xl font-bold text-primary">Rs.{charge}</span>

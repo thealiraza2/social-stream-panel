@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, ShoppingCart, Plus, DollarSign, ClipboardList } from "lucide-react";
+import { Wallet, ShoppingCart, Plus, Banknote, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -53,7 +53,7 @@ const UserDashboard = () => {
 
   const stats = [
     { label: "Balance", value: `Rs.${profile?.balance?.toFixed(2) ?? "0.00"}`, icon: Wallet, gradient: "gradient-purple" },
-    { label: "Total Spend", value: `Rs.${totalSpend.toFixed(2)}`, icon: DollarSign, gradient: "gradient-blue" },
+    { label: "Total Spend", value: `Rs.${totalSpend.toFixed(2)}`, icon: Banknote, gradient: "gradient-blue" },
     { label: "Total Orders", value: orders.length.toString(), icon: ShoppingCart, gradient: "gradient-teal" },
   ];
 
