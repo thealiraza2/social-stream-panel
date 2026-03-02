@@ -253,12 +253,12 @@ const AddFunds = () => {
               <div className="space-y-2">
                 <Label>Promo Code (Optional)</Label>
                 <Input
-                  placeholder="Enter promo code for 5% bonus"
+                  placeholder="Enter promo code for 2% bonus"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   maxLength={20}
                 />
-                {promoCode && <p className="text-xs text-green-600">You'll get 5% extra balance if valid!</p>}
+                {promoCode && <p className="text-xs text-green-600">You'll get 2% extra balance if valid!</p>}
               </div>
 
               <Button

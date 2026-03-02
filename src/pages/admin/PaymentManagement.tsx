@@ -56,14 +56,11 @@ const PaymentManagement = () => {
             if (!infSnap.empty) {
               const infDoc = infSnap.docs[0];
               const inf = infDoc.data();
-              // 5% user bonus
-              const userBonus = Math.round(tx.amount * 0.05 * 100) / 100;
+              // 2% user bonus
+              const userBonus = Math.round(tx.amount * 0.02 * 100) / 100;
               totalCredit += userBonus;
-              // Calculate influencer commission
-              const commPercent = inf.customCommission || (
-                (inf.monthlyDeposits || 0) >= 140000 ? 20 :
-                (inf.monthlyDeposits || 0) >= 28000 ? 15 : 10
-              );
+              // Calculate influencer commission (flat 5% or custom)
+              const commPercent = inf.customCommission || 5;
               const commission = Math.round(tx.amount * (commPercent / 100) * 100) / 100;
               // Update influencer stats
               const newMonthly = (inf.monthlyDeposits || 0) + tx.amount;
