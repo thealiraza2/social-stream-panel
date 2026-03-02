@@ -40,6 +40,7 @@ const AddFunds = () => {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [recentDeposits, setRecentDeposits] = useState<any[]>([]);
+  const [promoCode, setPromoCode] = useState("");
 
   const selectedMethod = paymentMethods.find((m) => m.id === method);
 
@@ -99,6 +100,19 @@ const AddFunds = () => {
         screenshotUrl = await uploadToImgBB(screenshot);
       }
 
+      // Validate promo code if provided
+      let validPromo = "";
+      if (promoCode.trim()) {
+        const pq = query(collection(db, "influencers"), where("promoCode", "==", promoCode.trim().toUpperCase()), where("status", "==", "approved"));
+        const pSnap = await getDocs(pq);
+        if (pSnap.empty) {
+          toast({ title: "Invalid promo code", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        validPromo = promoCode.trim().toUpperCase();
+      }
+
       await addDoc(collection(db, "transactions"), {
         userId: user.uid,
         amount: parsedAmount,
@@ -108,6 +122,7 @@ const AddFunds = () => {
         screenshotUrl,
         status: "pending",
         description: `Deposit via ${selectedMethod?.name}`,
+        promoCode: validPromo || null,
         createdAt: serverTimestamp(),
       });
 
@@ -116,6 +131,7 @@ const AddFunds = () => {
       setTransactionId("");
       setScreenshot(null);
       setMethod("");
+      setPromoCode("");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -232,6 +248,17 @@ const AddFunds = () => {
                     <Upload className="h-3 w-3" /> {screenshot.name} selected
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Promo Code (Optional)</Label>
+                <Input
+                  placeholder="Enter promo code for 5% bonus"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  maxLength={20}
+                />
+                {promoCode && <p className="text-xs text-green-600">You'll get 5% extra balance if valid!</p>}
               </div>
 
               <Button

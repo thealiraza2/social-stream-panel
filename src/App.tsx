@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import ReferralRedirect from "./pages/ReferralRedirect";
 
 import UserDashboard from "./pages/user/Dashboard";
 import NewOrder from "./pages/user/NewOrder";
@@ -21,6 +22,9 @@ import AddFunds from "./pages/user/AddFunds";
 import Services from "./pages/user/Services";
 import Tickets from "./pages/user/Tickets";
 import Profile from "./pages/user/Profile";
+import Influencer from "./pages/user/Influencer";
+import InfluencerAssets from "./pages/user/InfluencerAssets";
+import InfluencerPayouts from "./pages/user/InfluencerPayouts";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import ServiceManagement from "./pages/admin/ServiceManagement";
@@ -52,6 +56,8 @@ import LanguagesPage from "./pages/admin/Languages";
 import FAQs from "./pages/admin/FAQs";
 import SystemLogs from "./pages/admin/SystemLogs";
 import PaymentBonuses from "./pages/admin/PaymentBonuses";
+import InfluencerManagement from "./pages/admin/InfluencerManagement";
+import MarketingAssetsAdmin from "./pages/admin/MarketingAssets";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +77,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
               {/* User Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
@@ -81,6 +88,9 @@ const App = () => (
               <Route path="/services" element={<ProtectedRoute><AppLayout><Services /></AppLayout></ProtectedRoute>} />
               <Route path="/tickets" element={<ProtectedRoute><AppLayout><Tickets /></AppLayout></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+              <Route path="/influencer" element={<ProtectedRoute><AppLayout><Influencer /></AppLayout></ProtectedRoute>} />
+              <Route path="/influencer/assets" element={<ProtectedRoute><AppLayout><InfluencerAssets /></AppLayout></ProtectedRoute>} />
+              <Route path="/influencer/payouts" element={<ProtectedRoute><AppLayout><InfluencerPayouts /></AppLayout></ProtectedRoute>} />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
@@ -113,6 +123,8 @@ const App = () => (
               <Route path="/admin/modules" element={<AdminPage><Modules /></AdminPage>} />
               <Route path="/admin/languages" element={<AdminPage><LanguagesPage /></AdminPage>} />
               <Route path="/admin/logs" element={<AdminPage><SystemLogs /></AdminPage>} />
+              <Route path="/admin/influencers" element={<AdminPage><InfluencerManagement /></AdminPage>} />
+              <Route path="/admin/marketing-assets" element={<AdminPage><MarketingAssetsAdmin /></AdminPage>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

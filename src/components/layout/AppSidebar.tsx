@@ -3,7 +3,7 @@ import {
   Users, CreditCard, BarChart3, FolderOpen, FileText, Shield, Globe, Newspaper, PackagePlus,
   BookOpen, UserPlus, Activity, Ban, Link2, Mail, PenTool, Tags, UserCheck,
   Monitor, Settings, Plug, Package, Languages, HelpCircle, AlertTriangle, Gift,
-  ChevronDown, Repeat, XCircle,
+  ChevronDown, Repeat, XCircle, Megaphone, Star, Image,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +27,7 @@ const userItems = [
   { title: "Order Logs", url: "/orders", icon: ClipboardList },
   { title: "Add Funds", url: "/add-funds", icon: Wallet },
   { title: "Services", url: "/services", icon: Server },
+  { title: "Referral Program", url: "/influencer", icon: Star },
   { title: "Support", url: "/tickets", icon: MessageSquare },
 ];
 
@@ -95,6 +96,13 @@ const adminGroups = [
       { title: "Staff Members", url: "/admin/staff", icon: UserCheck },
       { title: "Staff Activity", url: "/admin/staff-activity", icon: Activity },
       { title: "Child Panels", url: "/admin/child-panels", icon: Monitor },
+    ],
+  },
+  {
+    label: "Affiliates",
+    items: [
+      { title: "Influencers", url: "/admin/influencers", icon: Megaphone },
+      { title: "Marketing Assets", url: "/admin/marketing-assets", icon: Image },
     ],
   },
   {
