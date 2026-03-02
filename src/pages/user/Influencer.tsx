@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, MousePointerClick, Wallet, TrendingUp, Copy, Star, ArrowRight, Send, Download, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,11 +12,7 @@ import { collection, query, where, getDocs, addDoc, serverTimestamp } from "fire
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
-const TIERS = [
-  { tier: 1, maxDeposits: 28000, commission: 10 },
-  { tier: 2, maxDeposits: 140000, commission: 15 },
-  { tier: 3, maxDeposits: Infinity, commission: 20 },
-];
+const COMMISSION_RATE = 5; // flat 5% influencer commission
 
 const Influencer = () => {
   const { user } = useAuth();
@@ -102,14 +97,6 @@ const Influencer = () => {
     toast({ title: "Copied!" });
   };
 
-  const getTierProgress = () => {
-    const deposits = influencer?.monthlyDeposits || 0;
-    if (deposits >= 140000) return 100;
-    if (deposits >= 28000) return ((deposits - 28000) / (140000 - 28000)) * 100;
-    return (deposits / 28000) * 100;
-  };
-
-  const currentTierInfo = TIERS.find(t => t.tier === (influencer?.currentTier || 1))!;
   const formatDate = (ts: any) => ts?.toDate ? ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
 
   if (loading) return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
@@ -125,19 +112,12 @@ const Influencer = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-primary" /> Influencer Program</CardTitle>
-            <CardDescription>Earn up to 20% commission on referred deposits. Users who use your code get 5% extra balance!</CardDescription>
+            <CardDescription>Earn 5% commission on referred deposits. Users who use your code get 2% extra balance!</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 mb-6">
-              {TIERS.map(t => (
-                <div key={t.tier} className="flex items-center justify-between p-3 rounded-lg border">
-                  <span className="font-medium">Tier {t.tier}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {t.tier === 1 ? "Up to Rs.28,000/mo" : t.tier === 2 ? "Rs.28,001 - Rs.140,000/mo" : "Above Rs.140,000/mo"}
-                  </span>
-                  <Badge>{t.commission}%</Badge>
-                </div>
-              ))}
+            <div className="p-3 rounded-lg border mb-6 flex items-center justify-between">
+              <span className="font-medium">Commission Rate</span>
+              <Badge>5% on all referred deposits</Badge>
             </div>
             <form onSubmit={handleApply} className="space-y-4">
               <div className="space-y-2">
@@ -231,24 +211,18 @@ const Influencer = () => {
         ))}
       </div>
 
-      {/* Tier & Links */}
+      {/* Commission & Links */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Current Tier</CardTitle>
+            <CardTitle className="text-sm">Commission Info</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <Badge className="gradient-purple text-white border-0">Tier {influencer.currentTier} — {currentTierInfo.commission}%</Badge>
-              <span className="text-sm text-muted-foreground">Rs.{(influencer.monthlyDeposits || 0).toLocaleString()}/mo</span>
+              <Badge className="gradient-purple text-white border-0">Flat 5% Commission</Badge>
+              <span className="text-sm text-muted-foreground">Rs.{(influencer.totalReferredDeposits || 0).toLocaleString()} total</span>
             </div>
-            <Progress value={getTierProgress()} className="h-2" />
-            <p className="text-xs text-muted-foreground">
-              {influencer.currentTier < 3
-                ? `Rs.${(influencer.currentTier === 1 ? 28000 - (influencer.monthlyDeposits || 0) : 140000 - (influencer.monthlyDeposits || 0)).toLocaleString()} more to next tier`
-                : "Maximum tier reached! 🎉"
-              }
-            </p>
+            <p className="text-xs text-muted-foreground">You earn 5% on every referred deposit. Users get 2% bonus!</p>
           </CardContent>
         </Card>
 
