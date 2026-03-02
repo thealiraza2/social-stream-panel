@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 
 import UserDashboard from "./pages/user/Dashboard";
 import NewOrder from "./pages/user/NewOrder";
+import BulkOrder from "./pages/user/BulkOrder";
 import OrderLogs from "./pages/user/OrderLogs";
 import AddFunds from "./pages/user/AddFunds";
 import Services from "./pages/user/Services";
@@ -74,6 +75,7 @@ const App = () => (
               {/* User Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
               <Route path="/new-order" element={<ProtectedRoute><AppLayout><NewOrder /></AppLayout></ProtectedRoute>} />
+              <Route path="/bulk-order" element={<ProtectedRoute><AppLayout><BulkOrder /></AppLayout></ProtectedRoute>} />
               <Route path="/orders" element={<ProtectedRoute><AppLayout><OrderLogs /></AppLayout></ProtectedRoute>} />
               <Route path="/add-funds" element={<ProtectedRoute><AppLayout><AddFunds /></AppLayout></ProtectedRoute>} />
               <Route path="/services" element={<ProtectedRoute><AppLayout><Services /></AppLayout></ProtectedRoute>} />

@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, ClipboardList, Wallet, Server, MessageSquare,
+  LayoutDashboard, ShoppingCart, ClipboardList, Wallet, Server, MessageSquare, Layers,
   Users, CreditCard, BarChart3, FolderOpen, FileText, Shield, Globe, Newspaper, PackagePlus,
   BookOpen, UserPlus, Activity, Ban, Link2, Mail, PenTool, Tags, UserCheck,
   Monitor, Settings, Plug, Package, Languages, HelpCircle, AlertTriangle, Gift,
@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const userItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "New Order", url: "/new-order", icon: ShoppingCart },
+  { title: "Bulk Order", url: "/bulk-order", icon: Layers },
   { title: "Order Logs", url: "/orders", icon: ClipboardList },
   { title: "Add Funds", url: "/add-funds", icon: Wallet },
   { title: "Services", url: "/services", icon: Server },
