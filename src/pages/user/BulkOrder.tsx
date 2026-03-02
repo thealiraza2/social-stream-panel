@@ -101,6 +101,19 @@ const BulkOrder = () => {
       return;
     }
 
+    const apiUrl = svc.providerApiUrl || "";
+    const apiKey = svc.providerApiKey || "";
+    const service = svc.providerServiceId || 0;
+
+    if (!apiUrl || !apiKey || !service) {
+      toast({
+        title: "Provider credentials not loaded from database.",
+        description: "Service is missing provider API credentials. Please contact admin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (profile.balance < totalCharge) {
       toast({ title: "Insufficient Balance", description: `Rs.${totalCharge.toFixed(2)} required`, variant: "destructive" });
       return;
@@ -138,19 +151,7 @@ const BulkOrder = () => {
           createdAt: serverTimestamp(),
         });
 
-        const apiUrl = svc.providerApiUrl || "";
-        const apiKey = svc.providerApiKey || "";
-        const service = svc.providerServiceId || 0;
-
-        console.log("Bulk Payload:", { apiUrl, apiKey, service, link, quantity: qty });
-
-        if (!apiUrl || !apiKey) {
-          toast({ title: "Provider credentials not loaded from database", description: "Service is missing provider API credentials. Please contact admin.", variant: "destructive" });
-          failCount++;
-          await updateDoc(doc(db, "orders", orderRef.id), { status: "failed" });
-          await updateDoc(doc(db, "users", user.uid), { balance: increment(perOrderCharge) });
-          continue;
-        }
+        console.log("Payload:", { apiUrl, apiKey, service, link, quantity: qty });
 
         const res = await fetch("https://social-stream-panel-nine.vercel.app/api/place-order", {
           method: "POST",
