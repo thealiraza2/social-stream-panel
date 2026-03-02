@@ -426,14 +426,14 @@ const ImportServices = () => {
         </Card>
       )}
 
-      {/* Import button */}
-      {selectedRows.length > 0 && (
-        <div className="flex justify-end">
+      {/* Import button — always visible when rows exist */}
+      {rows.length > 0 && (
+        <div className="flex justify-end sticky bottom-4">
           <Button
             size="lg"
             onClick={handleImport}
-            disabled={importing}
-            className="gradient-purple text-white border-0 px-8"
+            disabled={importing || selectedRows.length === 0}
+            className="gradient-purple text-white border-0 px-8 shadow-lg"
           >
             {importing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
             {importing ? "Importing..." : `Import ${selectedRows.filter(r => r.categoryId).length} Selected`}
