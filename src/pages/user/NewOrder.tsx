@@ -145,13 +145,12 @@ const NewOrder = () => {
           if (providerDoc.exists()) {
             const provider = providerDoc.data();
             if (provider.status === "active" && provider.apiUrl && provider.apiKey) {
-              const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/proxy-provider", {
+              const providerRes = await fetch("https://my-server-one-lake.vercel.app/api/place-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   apiUrl: provider.apiUrl,
                   apiKey: provider.apiKey,
-                  action: "add",
                   service: svc.providerServiceId,
                   link: link,
                   quantity: qty,
