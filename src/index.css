@@ -138,4 +138,29 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .neon-glow {
+    box-shadow: 0 0 15px -3px hsl(var(--primary) / 0.3), 0 0 6px -4px hsl(var(--primary) / 0.2);
+  }
+  .dark .neon-glow {
+    box-shadow: 0 0 20px -3px hsl(var(--primary) / 0.4), 0 0 8px -4px hsl(var(--accent) / 0.3);
+  }
+
+  .card-hover-lift {
+    @apply transition-all duration-300;
+  }
+  .card-hover-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.15);
+  }
+  .dark .card-hover-lift:hover {
+    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.25);
+  }
+
+  .font-display {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
+  .font-body {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
 }
