@@ -117,25 +117,30 @@ export function AppSidebar() {
 
   const [openTicketCount, setOpenTicketCount] = useState(0);
 
-  // Listen to open tickets in real-time
+  // Listen to tickets in real-time (case-insensitive status handling)
   useEffect(() => {
-    if (!user) return;
-
-    if (isAdmin) {
-      // Admin sees all open tickets
-      const q = query(collection(db, "tickets"), where("status", "==", "open"));
-      const unsub = onSnapshot(q, (snap) => setOpenTicketCount(snap.size), () => setOpenTicketCount(0));
-      return unsub;
-    } else {
-      // User sees their own answered tickets
-      const q = query(
-        collection(db, "tickets"),
-        where("userId", "==", user.uid),
-        where("status", "==", "answered")
-      );
-      const unsub = onSnapshot(q, (snap) => setOpenTicketCount(snap.size), () => setOpenTicketCount(0));
-      return unsub;
+    if (!user) {
+      setOpenTicketCount(0);
+      return;
     }
+
+    const q = isAdmin
+      ? query(collection(db, "tickets"))
+      : query(collection(db, "tickets"), where("userId", "==", user.uid));
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const count = snap.docs.filter((d) => {
+          const status = String(d.data()?.status ?? "").toLowerCase();
+          return isAdmin ? status === "open" : status === "answered";
+        }).length;
+        setOpenTicketCount(count);
+      },
+      () => setOpenTicketCount(0)
+    );
+
+    return unsub;
   }, [user, isAdmin]);
 
   const getTicketBadge = (url: string) => {
@@ -189,7 +194,7 @@ export function AppSidebar() {
                               >
                                 <item.icon className="mr-2 h-4 w-4" />
                                 {!collapsed && <span>{item.title}</span>}
-                                {!collapsed && getTicketBadge(item.url)}
+                                {getTicketBadge(item.url)}
                               </NavLink>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
@@ -216,7 +221,7 @@ export function AppSidebar() {
                         >
                           <item.icon className="mr-2 h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && getTicketBadge(item.url)}
+                          {getTicketBadge(item.url)}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
