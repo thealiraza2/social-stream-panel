@@ -77,8 +77,23 @@ const NewOrder = () => {
         .sort((a, b) => a.sortOrder - b.sortOrder);
       setCategories(cats);
 
-      const svcSnap = await getDocs(collection(db, "services"));
-      const svcs = svcSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Service));
+      const [svcSnap, provSnap] = await Promise.all([
+        getDocs(collection(db, "services")),
+        getDocs(collection(db, "providers")),
+      ]);
+      const provs = provSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const svcs = svcSnap.docs.map((d) => {
+        const data = { id: d.id, ...d.data() } as Service;
+        // If service lacks provider credentials, look them up from providers collection
+        if (data.providerId && (!data.providerApiUrl || !data.providerApiKey)) {
+          const prov = provs.find((p) => p.id === data.providerId) as any;
+          if (prov) {
+            data.providerApiUrl = prov.apiUrl || "";
+            data.providerApiKey = prov.apiKey || "";
+          }
+        }
+        return data;
+      });
       setServices(svcs);
 
       // Pre-select from URL params (e.g., from Services page "Order Now")
