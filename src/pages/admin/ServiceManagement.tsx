@@ -13,30 +13,66 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
+interface Provider {
+  id: string;
+  name: string;
+  apiUrl: string;
+  apiKey: string;
+}
+
 const ServiceManagement = () => {
   const { toast } = useToast();
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "", description: "", status: "active" });
+  const [form, setForm] = useState({
+    name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
+    description: "", status: "active", providerId: "", providerServiceId: "",
+  });
 
   const fetchData = async () => {
     setLoading(true);
-    const [svcSnap, catSnap] = await Promise.all([getDocs(collection(db, "services")), getDocs(collection(db, "categories"))]);
+    const [svcSnap, catSnap, provSnap] = await Promise.all([
+      getDocs(collection(db, "services")),
+      getDocs(collection(db, "categories")),
+      getDocs(collection(db, "providers")),
+    ]);
     setServices(svcSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     setCategories(catSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    setProviders(provSnap.docs.map(d => ({ id: d.id, ...d.data() } as Provider)));
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const openAdd = () => { setEditing(null); setForm({ name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "", description: "", status: "active" }); setDialogOpen(true); };
-  const openEdit = (s: any) => { setEditing(s); setForm({ name: s.name, categoryId: s.categoryId, rate: String(s.rate), minQuantity: String(s.minQuantity), maxQuantity: String(s.maxQuantity), description: s.description || "", status: s.status }); setDialogOpen(true); };
+  const emptyForm = { name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "", description: "", status: "active", providerId: "", providerServiceId: "" };
+
+  const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setForm({
+      name: s.name, categoryId: s.categoryId, rate: String(s.rate),
+      minQuantity: String(s.minQuantity), maxQuantity: String(s.maxQuantity),
+      description: s.description || "", status: s.status,
+      providerId: s.providerId || "", providerServiceId: String(s.providerServiceId || ""),
+    });
+    setDialogOpen(true);
+  };
 
   const handleSave = async () => {
-    const data = { name: form.name, categoryId: form.categoryId, rate: Number(form.rate), minQuantity: Number(form.minQuantity), maxQuantity: Number(form.maxQuantity), description: form.description, status: form.status };
+    const selectedProvider = providers.find(p => p.id === form.providerId);
+    const data: any = {
+      name: form.name, categoryId: form.categoryId,
+      rate: Number(form.rate), minQuantity: Number(form.minQuantity),
+      maxQuantity: Number(form.maxQuantity), description: form.description, status: form.status,
+      providerId: form.providerId,
+      providerServiceId: Number(form.providerServiceId) || 0,
+      providerApiUrl: selectedProvider?.apiUrl || "",
+      providerApiKey: selectedProvider?.apiKey || "",
+    };
     try {
       if (editing) {
         await updateDoc(doc(db, "services", editing.id), data);
@@ -60,6 +96,7 @@ const ServiceManagement = () => {
   };
 
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || "—";
+  const getProviderName = (id: string) => providers.find(p => p.id === id)?.name || "—";
 
   return (
     <div className="space-y-6">
@@ -78,6 +115,7 @@ const ServiceManagement = () => {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Provider</TableHead>
                     <TableHead>Rate/1k</TableHead>
                     <TableHead>Min</TableHead>
                     <TableHead>Max</TableHead>
@@ -90,6 +128,7 @@ const ServiceManagement = () => {
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell>{getCategoryName(s.categoryId)}</TableCell>
+                      <TableCell>{getProviderName(s.providerId)}</TableCell>
                       <TableCell>Rs.{s.rate}</TableCell>
                       <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                       <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
@@ -100,7 +139,7 @@ const ServiceManagement = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {services.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>}
+                  {services.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
@@ -119,6 +158,17 @@ const ServiceManagement = () => {
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Provider</Label>
+              <Select value={form.providerId} onValueChange={v => setForm({ ...form, providerId: v })}>
+                <SelectTrigger><SelectValue placeholder="Select provider" /></SelectTrigger>
+                <SelectContent>{providers.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Provider Service ID</Label>
+              <Input type="number" placeholder="Service ID on provider's site" value={form.providerServiceId} onChange={e => setForm({ ...form, providerServiceId: e.target.value })} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2"><Label>Rate/1k ($)</Label><Input type="number" step="0.01" value={form.rate} onChange={e => setForm({ ...form, rate: e.target.value })} /></div>
