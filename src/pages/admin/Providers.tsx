@@ -24,9 +24,13 @@ const Providers = () => {
   useEffect(() => { fetchData(); }, []);
 
   const handleSave = async () => {
+    if (!form.name || !form.apiUrl || !form.apiKey) {
+      toast({ title: "All fields required", description: "Name, API URL, and API Key are mandatory.", variant: "destructive" });
+      return;
+    }
     try {
-      if (editing) await updateDoc(doc(db, "providers", editing.id), form);
-      else await addDoc(collection(db, "providers"), { ...form, createdAt: serverTimestamp() });
+      if (editing) await updateDoc(doc(db, "providers", editing.id), { name: form.name, apiUrl: form.apiUrl, apiKey: form.apiKey, status: form.status });
+      else await addDoc(collection(db, "providers"), { name: form.name, apiUrl: form.apiUrl, apiKey: form.apiKey, status: form.status, createdAt: serverTimestamp() });
       toast({ title: editing ? "Updated" : "Added" }); setDialogOpen(false); fetchData();
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };

@@ -63,6 +63,14 @@ const ServiceManagement = () => {
   };
 
   const handleSave = async () => {
+    if (!form.providerId) {
+      toast({ title: "Provider is required", description: "Please select a provider.", variant: "destructive" });
+      return;
+    }
+    if (!form.providerServiceId || Number(form.providerServiceId) <= 0) {
+      toast({ title: "Provider Service ID is required", description: "Enter the service ID from the provider's panel.", variant: "destructive" });
+      return;
+    }
     const selectedProvider = providers.find(p => p.id === form.providerId);
     const data: any = {
       name: form.name, categoryId: form.categoryId,
