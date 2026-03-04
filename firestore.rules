@@ -273,5 +273,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
+
+    // ==========================================
+    // PAYMENT METHODS (user read, admin write)
+    // ==========================================
+    match /paymentMethods/{methodId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
   }
 }
