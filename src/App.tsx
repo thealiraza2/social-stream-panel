@@ -56,6 +56,7 @@ import LanguagesPage from "./pages/admin/Languages";
 import FAQs from "./pages/admin/FAQs";
 import SystemLogs from "./pages/admin/SystemLogs";
 import PaymentBonuses from "./pages/admin/PaymentBonuses";
+import PaymentMethodsAdmin from "./pages/admin/PaymentMethods";
 import InfluencerManagement from "./pages/admin/InfluencerManagement";
 import MarketingAssetsAdmin from "./pages/admin/MarketingAssets";
 
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/admin/transactions" element={<AdminPage><TransactionLogs /></AdminPage>} />
               <Route path="/admin/payments" element={<AdminPage><PaymentManagement /></AdminPage>} />
               <Route path="/admin/payment-bonuses" element={<AdminPage><PaymentBonuses /></AdminPage>} />
+              <Route path="/admin/payment-methods" element={<AdminPage><PaymentMethodsAdmin /></AdminPage>} />
               <Route path="/admin/users" element={<AdminPage><UserManagement /></AdminPage>} />
               <Route path="/admin/subscribers" element={<AdminPage><Subscribers /></AdminPage>} />
               <Route path="/admin/user-activity" element={<AdminPage><UserActivity /></AdminPage>} />
