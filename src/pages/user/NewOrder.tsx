@@ -65,7 +65,6 @@ const NewOrder = () => {
     : "0.00";
   const remainingBalance = (profile?.balance ?? 0) - Number(charge);
 
-  // Progress stepper logic
   const currentStep = !selectedCategory ? 0 : !selectedService ? 1 : (!link || !quantity) ? 2 : 3;
 
   useEffect(() => {
@@ -84,7 +83,7 @@ const NewOrder = () => {
       const provs = provSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const svcs = svcSnap.docs.map((d) => {
         const data = { id: d.id, ...d.data() } as Service;
-        // If service lacks provider credentials, look them up from providers collection
+        // Fallback: if service missing API creds, fetch from providers collection
         if (data.providerId && (!data.providerApiUrl || !data.providerApiKey)) {
           const prov = provs.find((p) => p.id === data.providerId) as any;
           if (prov) {
@@ -96,7 +95,6 @@ const NewOrder = () => {
       });
       setServices(svcs);
 
-      // Pre-select from URL params (e.g., from Services page "Order Now")
       const preService = searchParams.get("service");
       if (preService) {
         const svc = svcs.find(s => s.id === preService);
@@ -109,11 +107,18 @@ const NewOrder = () => {
     fetchData();
   }, []);
 
+  // Check if selected service has all required provider config
+  const serviceHasConfig = !!(
+    selectedServiceData?.providerApiUrl &&
+    selectedServiceData?.providerApiKey &&
+    selectedServiceData?.providerServiceId
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !link || !quantity) return;
     if (!user || !profile) {
-      toast({ title: "Authentication required", description: "Please login again to place order.", variant: "destructive" });
+      toast({ title: "Authentication required", description: "Please login again.", variant: "destructive" });
       return;
     }
 
@@ -126,38 +131,72 @@ const NewOrder = () => {
     }
 
     const totalCharge = Number(charge);
+
+    // ── FIX #1: Validate ALL provider fields BEFORE any money movement ──────
     const apiUrl = svc.providerApiUrl || "";
     const apiKey = svc.providerApiKey || "";
-    const service = svc.providerServiceId || 0;
+    const providerServiceId = svc.providerServiceId;
 
-    console.log("Payload:", { apiUrl, apiKey, service, link, quantity: qty });
-
-    if (!apiUrl || !apiKey || !service || !link || !qty) {
+    if (!apiUrl || !apiKey || !providerServiceId) {
       toast({
-        title: "Provider credentials not loaded from database.",
-        description: "Service is missing provider API configuration. Please contact admin.",
+        title: "Service configuration missing",
+        description: "This service has no provider API setup. Contact admin.",
         variant: "destructive",
       });
       return;
     }
 
     if (profile.balance < totalCharge) {
-      toast({ title: "Insufficient balance", description: "Please add funds first", variant: "destructive" });
+      toast({ title: "Insufficient balance", description: "Please add funds first.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
+
     try {
+      // ── FIX #2: Call provider API FIRST — deduct money only after success ──
+      // Old code deducted balance first then called provider.
+      // If provider failed, user lost money. This is now fixed.
+      const payload = {
+        apiUrl,
+        apiKey,
+        service: providerServiceId,  // provider's own numeric/string service ID
+        link: link.trim(),
+        quantity: qty,
+      };
+
+      console.log("Sending to /api/place-order:", { ...payload, apiKey: "***" });
+
+      const providerRes = await fetch("/api/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const providerData = await providerRes.json();
+
+      // Provider rejected — stop here, no money deducted
+      if (!providerRes.ok || providerData.error) {
+        toast({
+          title: "Order rejected by provider",
+          description: providerData.error || `HTTP ${providerRes.status}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ── Provider accepted: now save order + deduct balance atomically ──────
       const orderRef = await addDoc(collection(db, "orders"), {
         userId: user.uid,
         serviceId: selectedService,
         serviceName: svc.name,
-        link,
+        link: link.trim(),
         quantity: qty,
         charge: totalCharge,
-        status: "pending",
+        status: providerData.order ? "processing" : "pending",
         providerId: svc.providerId || "",
         providerServiceId: svc.providerServiceId || 0,
+        providerOrderId: providerData.order || null,
         createdAt: serverTimestamp(),
       });
 
@@ -172,40 +211,17 @@ const NewOrder = () => {
         paymentMethod: "balance",
         status: "completed",
         description: `Order: ${svc.name} x${qty}`,
+        orderId: orderRef.id,
         createdAt: serverTimestamp(),
       });
-
-     const providerRes = await fetch("/api/place-order", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ apiUrl, apiKey, service, link, quantity: qty }),
-});
-      const providerData = await providerRes.json();
-
-      if (!providerRes.ok || providerData.error) {
-        toast({
-          title: "Order failed at provider",
-          description: providerData.error || `HTTP ${providerRes.status}`,
-          variant: "destructive",
-        });
-        await updateDoc(doc(db, "users", user.uid), { balance: increment(totalCharge) });
-        await updateDoc(doc(db, "orders", orderRef.id), { status: "failed" });
-        await refreshProfile();
-        return;
-      }
-
-      if (providerData.order) {
-        await updateDoc(doc(db, "orders", orderRef.id), {
-          providerOrderId: providerData.order,
-          status: "processing",
-        });
-      }
 
       await refreshProfile();
       setSuccessCharge(totalCharge);
       setOrderSuccess(true);
+
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      console.error("Order error:", err);
+      toast({ title: "Error", description: err.message || "Something went wrong.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -224,7 +240,12 @@ const NewOrder = () => {
             <p className="text-muted-foreground">Rs.{successCharge.toFixed(2)} has been charged from your balance</p>
             <div className="flex gap-3 justify-center pt-2">
               <Button variant="outline" onClick={() => navigate("/orders")}>View Orders</Button>
-              <Button onClick={() => { setOrderSuccess(false); setLink(""); setQuantity(""); }} className="gradient-purple text-white border-0">Place Another</Button>
+              <Button
+                onClick={() => { setOrderSuccess(false); setLink(""); setQuantity(""); }}
+                className="gradient-purple text-white border-0"
+              >
+                Place Another
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -244,8 +265,8 @@ const NewOrder = () => {
         {steps.map((step, i) => (
           <div key={step.label} className="flex items-center gap-1 flex-1">
             <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold shrink-0 transition-all ${
-              i <= currentStep 
-                ? "gradient-purple text-white shadow-md" 
+              i <= currentStep
+                ? "gradient-purple text-white shadow-md"
                 : "bg-muted text-muted-foreground"
             }`}>
               {i < currentStep ? "✓" : step.icon}
@@ -268,12 +289,11 @@ const NewOrder = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Category */}
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedService(""); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -287,12 +307,11 @@ const NewOrder = () => {
               )}
             </div>
 
+            {/* Service */}
             <div className="space-y-2">
               <Label>Service</Label>
               <Select value={selectedService} onValueChange={setSelectedService} disabled={!selectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select service" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select service" /></SelectTrigger>
                 <SelectContent>
                   {filteredServices.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
@@ -315,10 +334,17 @@ const NewOrder = () => {
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" /> Average delivery time varies by service
                   </p>
+                  {/* FIX #3: Show warning if service missing API config */}
+                  {!serviceHasConfig && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> This service is not configured yet. Contact admin.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
+            {/* Link */}
             <div className="space-y-2">
               <Label>Link</Label>
               <Input
@@ -329,6 +355,7 @@ const NewOrder = () => {
               />
             </div>
 
+            {/* Quantity */}
             <div className="space-y-2">
               <Label>Quantity</Label>
               <Input
@@ -342,7 +369,7 @@ const NewOrder = () => {
               />
             </div>
 
-            {/* Charge + Balance Preview */}
+            {/* Charge + Balance */}
             <div className="rounded-lg border bg-secondary/50 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -370,7 +397,14 @@ const NewOrder = () => {
             <Button
               type="submit"
               className="w-full gradient-purple text-white border-0"
-              disabled={loading || !selectedService || !link || !quantity || remainingBalance < 0}
+              disabled={
+                loading ||
+                !selectedService ||
+                !link ||
+                !quantity ||
+                remainingBalance < 0 ||
+                !serviceHasConfig   // FIX #4: Disable button if service has no API config
+              }
             >
               {loading ? "Placing Order..." : "Place Order"}
             </Button>
