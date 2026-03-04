@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,12 @@ import { Server, Plus, Pencil, Trash2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { TableSkeleton } from "@/components/TableSkeleton";
+
+const CACHE_KEY = "cache_services_admin";
+const CACHE_KEY_CATS = "cache_categories_admin";
+const CACHE_KEY_PROVS = "cache_providers_admin";
+const CACHE_TTL = 5 * 60 * 1000;
 
 interface Provider {
   id: string;
@@ -19,6 +25,24 @@ interface Provider {
   apiUrl: string;
   apiKey: string;
 }
+
+const clearCache = () => {
+  sessionStorage.removeItem(CACHE_KEY);
+  sessionStorage.removeItem(CACHE_KEY_CATS);
+  sessionStorage.removeItem(CACHE_KEY_PROVS);
+};
+
+const getCache = (key: string) => {
+  const cached = sessionStorage.getItem(key);
+  if (!cached) return null;
+  const { data, timestamp } = JSON.parse(cached);
+  if (Date.now() - timestamp > CACHE_TTL) return null;
+  return data;
+};
+
+const setCache = (key: string, data: any) => {
+  sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+};
 
 const ServiceManagement = () => {
   const { toast } = useToast();
@@ -33,20 +57,39 @@ const ServiceManagement = () => {
     description: "", status: "active", providerId: "", providerServiceId: "",
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
+    const cachedSvc = getCache(CACHE_KEY);
+    const cachedCats = getCache(CACHE_KEY_CATS);
+    const cachedProvs = getCache(CACHE_KEY_PROVS);
+
+    if (cachedSvc && cachedCats && cachedProvs) {
+      setServices(cachedSvc);
+      setCategories(cachedCats);
+      setProviders(cachedProvs);
+      setLoading(false);
+      return;
+    }
+
     const [svcSnap, catSnap, provSnap] = await Promise.all([
       getDocs(collection(db, "services")),
       getDocs(collection(db, "categories")),
       getDocs(collection(db, "providers")),
     ]);
-    setServices(svcSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-    setCategories(catSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-    setProviders(provSnap.docs.map(d => ({ id: d.id, ...d.data() } as Provider)));
-    setLoading(false);
-  };
+    const svcData = svcSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const catData = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const provData = provSnap.docs.map(d => ({ id: d.id, ...d.data() } as Provider));
 
-  useEffect(() => { fetchData(); }, []);
+    setServices(svcData);
+    setCategories(catData);
+    setProviders(provData);
+    setCache(CACHE_KEY, svcData);
+    setCache(CACHE_KEY_CATS, catData);
+    setCache(CACHE_KEY_PROVS, provData);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const emptyForm = { name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "", description: "", status: "active", providerId: "", providerServiceId: "" };
 
@@ -90,21 +133,23 @@ const ServiceManagement = () => {
         toast({ title: "Service added" });
       }
       setDialogOpen(false);
+      clearCache();
       fetchData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Delete this service?")) return;
     await deleteDoc(doc(db, "services", id));
     toast({ title: "Service deleted" });
+    clearCache();
     fetchData();
-  };
+  }, [toast, fetchData]);
 
-  const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || "—";
-  const getProviderName = (id: string) => providers.find(p => p.id === id)?.name || "—";
+  const getCategoryName = useCallback((id: string) => categories.find(c => c.id === id)?.name || "—", [categories]);
+  const getProviderName = useCallback((id: string) => providers.find(p => p.id === id)?.name || "—", [providers]);
 
   return (
     <div className="space-y-6">
@@ -114,44 +159,34 @@ const ServiceManagement = () => {
       </div>
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
-          ) : (
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Rate/1k</TableHead>
-                    <TableHead>Min</TableHead>
-                    <TableHead>Max</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead>Provider</TableHead><TableHead>Rate/1k</TableHead><TableHead>Min</TableHead><TableHead>Max</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? <TableSkeleton rows={5} cols={8} /> : services.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>
+                ) : services.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{getCategoryName(s.categoryId)}</TableCell>
+                    <TableCell>{getProviderName(s.providerId)}</TableCell>
+                    <TableCell>Rs.{s.rate}</TableCell>
+                    <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
+                    <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
+                    <TableCell><Badge variant="outline" className={s.status === "active" ? "text-green-600" : "text-red-600"}>{s.status}</Badge></TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(s.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {services.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell>{getCategoryName(s.categoryId)}</TableCell>
-                      <TableCell>{getProviderName(s.providerId)}</TableCell>
-                      <TableCell>Rs.{s.rate}</TableCell>
-                      <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
-                      <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
-                      <TableCell><Badge variant="outline" className={s.status === "active" ? "text-green-600" : "text-red-600"}>{s.status}</Badge></TableCell>
-                      <TableCell className="flex gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(s.id)}><Trash2 className="h-4 w-4" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {services.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

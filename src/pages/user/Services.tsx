@@ -9,24 +9,23 @@ import { Server, Search, ShoppingCart } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { TableSkeleton } from "@/components/TableSkeleton";
 
-interface Category {
-  id: string;
-  name: string;
-  sortOrder: number;
-  status: string;
-}
+const CACHE_KEY_SVC = "cache_user_services";
+const CACHE_KEY_CAT = "cache_user_categories";
+const CACHE_TTL = 10 * 60 * 1000;
 
-interface Service {
-  id: string;
-  name: string;
-  categoryId: string;
-  rate: number;
-  minQuantity: number;
-  maxQuantity: number;
-  description: string;
-  status: string;
-}
+interface Category { id: string; name: string; sortOrder: number; status: string; }
+interface Service { id: string; name: string; categoryId: string; rate: number; minQuantity: number; maxQuantity: number; description: string; status: string; }
+
+const getCache = (key: string) => {
+  const cached = sessionStorage.getItem(key);
+  if (!cached) return null;
+  const { data, timestamp } = JSON.parse(cached);
+  if (Date.now() - timestamp > CACHE_TTL) return null;
+  return data;
+};
+const setCache = (key: string, data: any) => sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 
 const Services = () => {
   const navigate = useNavigate();
@@ -38,38 +37,43 @@ const Services = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const catSnap = await getDocs(collection(db, "categories"));
-      const cats = catSnap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as Category))
-        .filter((c) => c.status === "active")
-        .sort((a, b) => a.sortOrder - b.sortOrder);
-      setCategories(cats);
+      const cachedSvc = getCache(CACHE_KEY_SVC);
+      const cachedCat = getCache(CACHE_KEY_CAT);
+      if (cachedSvc && cachedCat) {
+        setServices(cachedSvc);
+        setCategories(cachedCat);
+        setLoading(false);
+        return;
+      }
 
-      const svcSnap = await getDocs(collection(db, "services"));
-      const svcs = svcSnap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as Service))
-        .filter((s) => s.status === "active");
+      const [catSnap, svcSnap] = await Promise.all([
+        getDocs(collection(db, "categories")),
+        getDocs(collection(db, "services")),
+      ]);
+      const cats = catSnap.docs.map(d => ({ id: d.id, ...d.data() } as Category)).filter(c => c.status === "active").sort((a, b) => a.sortOrder - b.sortOrder);
+      const svcs = svcSnap.docs.map(d => ({ id: d.id, ...d.data() } as Service)).filter(s => s.status === "active");
+      setCategories(cats);
       setServices(svcs);
+      setCache(CACHE_KEY_SVC, svcs);
+      setCache(CACHE_KEY_CAT, cats);
       setLoading(false);
     };
     fetchData();
   }, []);
 
-  // Service counts per category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     services.forEach(s => { counts[s.categoryId] = (counts[s.categoryId] || 0) + 1; });
     return counts;
   }, [services]);
 
-  const filtered = services.filter((s) => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.description?.toLowerCase().includes(search.toLowerCase());
+  const filtered = useMemo(() => services.filter((s) => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.description?.toLowerCase().includes(search.toLowerCase());
     const matchCategory = categoryFilter === "all" || s.categoryId === categoryFilter;
     return matchSearch && matchCategory;
-  });
+  }), [services, search, categoryFilter]);
 
-  const getCategoryName = (catId: string) => categories.find((c) => c.id === catId)?.name ?? "—";
+  const getCategoryName = (catId: string) => categories.find(c => c.id === catId)?.name ?? "—";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -89,15 +93,11 @@ const Services = () => {
           <Input className="pl-9" placeholder="Search services..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-56">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories ({services.length})</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name} ({categoryCounts[c.id] || 0})
-              </SelectItem>
+            {categories.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.name} ({categoryCounts[c.id] || 0})</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -106,8 +106,15 @@ const Services = () => {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead><TableHead>Service</TableHead><TableHead>Category</TableHead><TableHead>Rate / 1K</TableHead><TableHead>Min</TableHead><TableHead>Max</TableHead><TableHead>Description</TableHead><TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody><TableSkeleton rows={5} cols={8} /></TableBody>
+              </Table>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -121,14 +128,7 @@ const Services = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Rate / 1K</TableHead>
-                    <TableHead>Min</TableHead>
-                    <TableHead>Max</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead>ID</TableHead><TableHead>Service</TableHead><TableHead>Category</TableHead><TableHead>Rate / 1K</TableHead><TableHead>Min</TableHead><TableHead>Max</TableHead><TableHead>Description</TableHead><TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -136,20 +136,13 @@ const Services = () => {
                     <TableRow key={s.id}>
                       <TableCell className="font-mono text-xs">{i + 1}</TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{getCategoryName(s.categoryId)}</Badge>
-                      </TableCell>
+                      <TableCell><Badge variant="outline">{getCategoryName(s.categoryId)}</Badge></TableCell>
                       <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
                       <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                       <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{s.description}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1 text-xs h-7"
-                          onClick={() => navigate(`/new-order?service=${s.id}`)}
-                        >
+                        <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => navigate(`/new-order?service=${s.id}`)}>
                           <ShoppingCart className="h-3 w-3" /> Order
                         </Button>
                       </TableCell>
@@ -161,7 +154,7 @@ const Services = () => {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y">
-              {filtered.map((s, i) => (
+              {filtered.map((s) => (
                 <div key={s.id} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -172,12 +165,7 @@ const Services = () => {
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Min: {s.minQuantity?.toLocaleString()} — Max: {s.maxQuantity?.toLocaleString()}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1 text-xs h-7"
-                      onClick={() => navigate(`/new-order?service=${s.id}`)}
-                    >
+                    <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => navigate(`/new-order?service=${s.id}`)}>
                       <ShoppingCart className="h-3 w-3" /> Order
                     </Button>
                   </div>
