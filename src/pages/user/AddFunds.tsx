@@ -120,7 +120,7 @@ const AddFunds = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !method || !amount || !transactionId) return;
+    if (!user || !method || !amount) return;
 
     const parsedAmount = Number(amount);
     if (parsedAmount <= 0 || parsedAmount > 1000000) {
@@ -295,7 +295,6 @@ const AddFunds = () => {
                   placeholder="Enter your payment transaction ID"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
-                  required
                 />
               </div>
 
