@@ -1,50 +1,74 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, FileText } from "lucide-react";
+import { Search, FileText, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { TableSkeleton } from "@/components/TableSkeleton";
+
+const PAGE_SIZE = 25;
 
 const TransactionLogs = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let txList: any[];
-        try {
-          const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
-          txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } catch {
-          const snap = await getDocs(collection(db, "transactions"));
-          txList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          txList.sort((a, b) => {
-            const aT = a.createdAt?.toDate?.()?.getTime() || 0;
-            const bT = b.createdAt?.toDate?.()?.getTime() || 0;
-            return bT - aT;
-          });
-        }
-        setTransactions(txList);
-      } catch (err) {
-        console.error("Transaction fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchFirstPage = useCallback(async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setTransactions(data);
+      setLastDoc(snap.docs[snap.docs.length - 1] ?? null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+    } catch {
+      const snap = await getDocs(collection(db, "transactions"));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a: any, b: any) => {
+        const aT = a.createdAt?.toDate?.()?.getTime() || 0;
+        const bT = b.createdAt?.toDate?.()?.getTime() || 0;
+        return bT - aT;
+      });
+      setTransactions(data);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filtered = transactions.filter(t => {
+  const fetchNextPage = useCallback(async () => {
+    if (!hasMore || loadingMore || !lastDoc) return;
+    setLoadingMore(true);
+    try {
+      const q = query(collection(db, "transactions"), orderBy("createdAt", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setTransactions(prev => [...prev, ...data]);
+      setLastDoc(snap.docs[snap.docs.length - 1] ?? null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+    } catch (err) {
+      console.error("Load more error:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, lastDoc]);
+
+  useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
+
+  const filtered = useMemo(() => transactions.filter(t => {
     const matchSearch = !search || t.description?.toLowerCase().includes(search.toLowerCase()) || t.userId?.includes(search);
     const matchType = typeFilter === "all" || t.type === typeFilter;
     return matchSearch && matchType;
-  });
+  }), [transactions, search, typeFilter]);
 
   const formatDate = (ts: any) => ts?.toDate ? ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -67,37 +91,45 @@ const TransactionLogs = () => {
       </div>
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <FileText className="h-8 w-8 mb-2" />
-              <p>No transactions found</p>
-            </div>
-          ) : (
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow><TableHead>User</TableHead><TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead><TableHead>Description</TableHead><TableHead>Date</TableHead></TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-mono text-xs">{t.userId?.slice(0, 10)}</TableCell>
-                      <TableCell><Badge variant="outline">{t.type}</Badge></TableCell>
-                      <TableCell className="font-medium">Rs.{t.amount?.toFixed(2)}</TableCell>
-                      <TableCell>{t.paymentMethod}</TableCell>
-                      <TableCell><Badge variant="outline" className={t.status === "completed" ? "text-green-600" : t.status === "pending" ? "text-yellow-600" : "text-red-600"}>{t.status}</Badge></TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm">{t.description}</TableCell>
-                      <TableCell className="text-xs">{formatDate(t.createdAt)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow><TableHead>User</TableHead><TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead><TableHead>Description</TableHead><TableHead>Date</TableHead></TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? <TableSkeleton rows={5} cols={7} /> : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12">
+                    <div className="flex flex-col items-center text-muted-foreground">
+                      <FileText className="h-8 w-8 mb-2" />
+                      <p>No transactions found</p>
+                    </div>
+                  </TableCell></TableRow>
+                ) : filtered.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-mono text-xs">{t.userId?.slice(0, 10)}</TableCell>
+                    <TableCell><Badge variant="outline">{t.type}</Badge></TableCell>
+                    <TableCell className="font-medium">Rs.{t.amount?.toFixed(2)}</TableCell>
+                    <TableCell>{t.paymentMethod}</TableCell>
+                    <TableCell><Badge variant="outline" className={t.status === "completed" ? "text-green-600" : t.status === "pending" ? "text-yellow-600" : "text-red-600"}>{t.status}</Badge></TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm">{t.description}</TableCell>
+                    <TableCell className="text-xs">{formatDate(t.createdAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+      {hasMore && !loading && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={fetchNextPage} disabled={loadingMore}>
+            {loadingMore ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : "Load More"}
+          </Button>
+        </div>
+      )}
+      {!hasMore && transactions.length > 0 && !loading && (
+        <p className="text-center text-sm text-muted-foreground">All records loaded ({transactions.length} total)</p>
+      )}
     </div>
   );
 };

@@ -1,16 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { TableSkeleton } from "@/components/TableSkeleton";
+import { CardSkeleton } from "@/components/TableSkeleton";
 
 interface Order {
   id: string;
@@ -35,7 +37,7 @@ const statusColor: Record<string, string> = {
   refunded: "bg-muted text-muted-foreground border-border",
 };
 
-const ITEMS_PER_PAGE = 20;
+const PAGE_SIZE = 20;
 
 const OrderLogs = () => {
   const { user } = useAuth();
@@ -43,47 +45,65 @@ const OrderLogs = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage] = useState(1);
 
-  useEffect(() => {
+  const fetchFirstPage = useCallback(async () => {
     if (!user) return;
-    const fetchOrders = async () => {
-      try {
-        try {
-          const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-          const snap = await getDocs(q);
-          setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order)));
-        } catch {
-          const q = query(collection(db, "orders"), where("userId", "==", user.uid));
-          const snap = await getDocs(q);
-          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
-          docs.sort((a, b) => {
-            const aTime = a.createdAt?.toDate?.()?.getTime() || 0;
-            const bTime = b.createdAt?.toDate?.()?.getTime() || 0;
-            return bTime - aTime;
-          });
-          setOrders(docs);
-        }
-      } catch (err: any) {
-        console.error("Failed to fetch orders:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+    setLoading(true);
+    try {
+      const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      setOrders(data);
+      setLastDoc(snap.docs[snap.docs.length - 1] ?? null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+    } catch {
+      const q = query(collection(db, "orders"), where("userId", "==", user.uid));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      data.sort((a, b) => {
+        const aT = (a.createdAt as any)?.toDate?.()?.getTime() || 0;
+        const bT = (b.createdAt as any)?.toDate?.()?.getTime() || 0;
+        return bT - aT;
+      });
+      setOrders(data);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
-  const filtered = orders.filter((o) => {
+  const fetchNextPage = useCallback(async () => {
+    if (!hasMore || loadingMore || !lastDoc || !user) return;
+    setLoadingMore(true);
+    try {
+      const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      setOrders(prev => [...prev, ...data]);
+      setLastDoc(snap.docs[snap.docs.length - 1] ?? null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+    } catch (err) {
+      console.error("Load more error:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, lastDoc, user]);
+
+  useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
+
+  const filtered = useMemo(() => orders.filter((o) => {
     const matchSearch = o.serviceName?.toLowerCase().includes(search.toLowerCase()) ||
       o.link?.toLowerCase().includes(search.toLowerCase()) ||
       o.id.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || o.status === statusFilter;
     return matchSearch && matchStatus;
-  });
+  }), [orders, search, statusFilter]);
 
-  // Stats
   const stats = useMemo(() => {
     const total = orders.length;
     const completed = orders.filter(o => o.status === "completed").length;
@@ -97,16 +117,10 @@ const OrderLogs = () => {
     ];
   }, [orders]);
 
-  // Pagination
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedOrders = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-  useEffect(() => { setPage(1); }, [search, statusFilter]);
-
-  const copyId = (id: string) => {
+  const copyId = useCallback((id: string) => {
     navigator.clipboard.writeText(id);
     toast({ title: "Copied!", description: `Order ID: ${id.slice(0, 8)}...` });
-  };
+  }, [toast]);
 
   const formatDate = (ts: any) => {
     if (!ts?.toDate) return "—";
@@ -122,7 +136,7 @@ const OrderLogs = () => {
 
       {/* Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        {stats.map(s => (
+        {loading ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />) : stats.map(s => (
           <Card key={s.label} className={`${s.gradient} text-white border-0 shadow-md`}>
             <CardContent className="flex items-center gap-3 p-4">
               <s.icon className="h-5 w-5 shrink-0" />
@@ -141,9 +155,7 @@ const OrderLogs = () => {
           <Input className="pl-9" placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
@@ -160,8 +172,15 @@ const OrderLogs = () => {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead><TableHead>Service</TableHead><TableHead>Link</TableHead><TableHead>Quantity</TableHead><TableHead>Start/Remains</TableHead><TableHead>Charge</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody><TableSkeleton rows={5} cols={8} /></TableBody>
+              </Table>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -179,18 +198,11 @@ const OrderLogs = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Link</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Start/Remains</TableHead>
-                      <TableHead>Charge</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>ID</TableHead><TableHead>Service</TableHead><TableHead>Link</TableHead><TableHead>Quantity</TableHead><TableHead>Start/Remains</TableHead><TableHead>Charge</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedOrders.map((o) => (
+                    {filtered.map((o) => (
                       <TableRow key={o.id}>
                         <TableCell>
                           <button onClick={() => copyId(o.id)} className="font-mono text-xs flex items-center gap-1 hover:text-primary transition-colors" title="Copy ID">
@@ -199,20 +211,14 @@ const OrderLogs = () => {
                         </TableCell>
                         <TableCell className="font-medium max-w-[150px] truncate">{o.serviceName}</TableCell>
                         <TableCell className="max-w-[120px] truncate">
-                          <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
-                            {o.link}
-                          </a>
+                          <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">{o.link}</a>
                         </TableCell>
                         <TableCell>{o.quantity?.toLocaleString()}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {o.startCount != null ? o.startCount.toLocaleString() : "—"} / {o.remains != null ? o.remains.toLocaleString() : "—"}
                         </TableCell>
                         <TableCell>Rs.{o.charge?.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={statusColor[o.status] || ""}>
-                            {o.status}
-                          </Badge>
-                        </TableCell>
+                        <TableCell><Badge variant="outline" className={statusColor[o.status] || ""}>{o.status}</Badge></TableCell>
                         <TableCell className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
                       </TableRow>
                     ))}
@@ -222,13 +228,11 @@ const OrderLogs = () => {
 
               {/* Mobile Cards */}
               <div className="md:hidden divide-y">
-                {paginatedOrders.map((o) => (
+                {filtered.map((o) => (
                   <div key={o.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-sm leading-tight flex-1 min-w-0 truncate">{o.serviceName}</p>
-                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-xs shrink-0`}>
-                        {o.status}
-                      </Badge>
+                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-xs shrink-0`}>{o.status}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Qty: {o.quantity?.toLocaleString()} • Rs.{o.charge?.toFixed(2)}</span>
@@ -239,35 +243,26 @@ const OrderLogs = () => {
                         <Copy className="h-3 w-3" /> {o.id.slice(0, 8)}
                       </button>
                       {o.link && (
-                        <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[150px]">
-                          {o.link}
-                        </a>
+                        <a href={o.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[150px]">{o.link}</a>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between p-4 border-t">
-                  <p className="text-xs text-muted-foreground">
-                    Showing {(page - 1) * ITEMS_PER_PAGE + 1}-{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
-                  </p>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </CardContent>
       </Card>
+      {hasMore && !loading && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={fetchNextPage} disabled={loadingMore}>
+            {loadingMore ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : "Load More"}
+          </Button>
+        </div>
+      )}
+      {!hasMore && orders.length > 0 && !loading && (
+        <p className="text-center text-sm text-muted-foreground">All records loaded ({orders.length} total)</p>
+      )}
     </div>
   );
 };
