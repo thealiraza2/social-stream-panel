@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,7 @@ const UserManagement = () => {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ balance: "", role: "user", status: "active" });
+  const [form, setForm] = useState({ balance: "", role: "user", status: "active", banReason: "" });
 
   const fetchFirstPage = useCallback(async () => {
     setLoading(true);
@@ -64,11 +65,17 @@ const UserManagement = () => {
 
   useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
 
-  const openEdit = (u: any) => { setEditing(u); setForm({ balance: String(u.balance || 0), role: u.role, status: u.status }); setDialogOpen(true); };
+  const openEdit = (u: any) => { setEditing(u); setForm({ balance: String(u.balance || 0), role: u.role, status: u.status, banReason: u.banReason || "" }); setDialogOpen(true); };
 
   const handleSave = async () => {
     try {
-      await updateDoc(doc(db, "users", editing.id), { balance: Number(form.balance), role: form.role, status: form.status });
+      const updateData: any = { balance: Number(form.balance), role: form.role, status: form.status };
+      if (form.status === "banned") {
+        updateData.banReason = form.banReason || "Violation of terms of service.";
+      } else {
+        updateData.banReason = "";
+      }
+      await updateDoc(doc(db, "users", editing.id), updateData);
       toast({ title: "User updated" });
       setDialogOpen(false);
       fetchFirstPage();
@@ -143,6 +150,19 @@ const UserManagement = () => {
                 <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent>
               </Select>
             </div>
+            {form.status === "banned" && (
+              <div className="space-y-2">
+                <Label>Ban Reason</Label>
+                <Textarea
+                  placeholder="Enter reason for banning this user..."
+                  value={form.banReason}
+                  onChange={e => setForm({ ...form, banReason: e.target.value })}
+                  rows={3}
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground">This will be shown to the user on the banned page.</p>
+              </div>
+            )}
             <Button onClick={handleSave} className="w-full gradient-purple text-white border-0">Update User</Button>
           </div>
         </DialogContent>

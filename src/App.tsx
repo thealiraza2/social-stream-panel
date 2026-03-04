@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import Banned from "./pages/Banned";
 import ReferralRedirect from "./pages/ReferralRedirect";
 
 import UserDashboard from "./pages/user/Dashboard";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/banned" element={<Banned />} />
               <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
               {/* User Routes */}
