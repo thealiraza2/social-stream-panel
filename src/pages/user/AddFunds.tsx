@@ -4,18 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Upload, Smartphone, Bitcoin, Copy, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Wallet, Upload, Smartphone, Bitcoin, CreditCard, Copy, CheckCircle2, Clock, XCircle, QrCode } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { uploadToImgBB } from "@/lib/imgbb";
 import { useToast } from "@/hooks/use-toast";
 
-const paymentMethods = [
-  { id: "easypaisa", name: "Easypaisa", icon: Smartphone, info: "Send to: 03XX-XXXXXXX" },
-  { id: "jazzcash", name: "JazzCash", icon: Smartphone, info: "Send to: 03XX-XXXXXXX" },
-  { id: "crypto", name: "Crypto (USDT)", icon: Bitcoin, info: "TRC20 Address: TXXXXXXXX" },
-];
+interface PaymentMethodData {
+  id: string;
+  name: string;
+  type: string;
+  accountNumber: string;
+  accountTitle: string;
+  instructions: string;
+  qrCodeUrl: string;
+  enabled: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+}
+
+const typeIcons: Record<string, any> = {
+  mobile: Smartphone,
+  crypto: Bitcoin,
+  bank: CreditCard,
+  other: CreditCard,
+};
 
 const presetAmounts = [100, 500, 1000, 5000];
 
@@ -34,15 +49,36 @@ const depositStatusColor: Record<string, string> = {
 const AddFunds = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [method, setMethod] = useState("");
   const [amount, setAmount] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [methodsLoading, setMethodsLoading] = useState(true);
   const [recentDeposits, setRecentDeposits] = useState<any[]>([]);
   const [promoCode, setPromoCode] = useState("");
+  const [viewQr, setViewQr] = useState("");
 
   const selectedMethod = paymentMethods.find((m) => m.id === method);
+
+  // Fetch payment methods from Firestore
+  useEffect(() => {
+    const fetchMethods = async () => {
+      try {
+        const snap = await getDocs(collection(db, "paymentMethods"));
+        const data = snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as PaymentMethodData))
+          .filter(m => m.enabled)
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        setPaymentMethods(data);
+      } catch (err) {
+        console.error("Error fetching payment methods:", err);
+      }
+      setMethodsLoading(false);
+    };
+    fetchMethods();
+  }, []);
 
   // Fetch recent deposits
   useEffect(() => {
@@ -77,10 +113,9 @@ const AddFunds = () => {
     fetchDeposits();
   }, [user]);
 
-  const copyInfo = (text: string) => {
-    const value = text.split(": ")[1] || text;
-    navigator.clipboard.writeText(value);
-    toast({ title: "Copied!", description: value });
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied!", description: text });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,7 +135,6 @@ const AddFunds = () => {
         screenshotUrl = await uploadToImgBB(screenshot);
       }
 
-      // Validate promo code if provided
       let validPromo = "";
       if (promoCode.trim()) {
         const pq = query(collection(db, "influencers"), where("promoCode", "==", promoCode.trim().toUpperCase()), where("status", "==", "approved"));
@@ -165,34 +199,64 @@ const AddFunds = () => {
       </Card>
 
       {/* Payment Method Selection */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {paymentMethods.map((pm) => (
-          <Card
-            key={pm.id}
-            className={`cursor-pointer transition-all hover:shadow-md hover-scale ${
-              method === pm.id ? "ring-2 ring-primary border-primary" : ""
-            }`}
-            onClick={() => setMethod(pm.id)}
-          >
-            <CardContent className="flex flex-col items-center gap-2 p-4">
-              <pm.icon className={`h-8 w-8 ${method === pm.id ? "text-primary" : "text-muted-foreground"}`} />
-              <span className="font-medium text-sm">{pm.name}</span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {methodsLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : paymentMethods.length === 0 ? (
+        <Card><CardContent className="py-8 text-center text-muted-foreground">No payment methods available at the moment.</CardContent></Card>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {paymentMethods.map((pm) => {
+            const Icon = typeIcons[pm.type] || CreditCard;
+            const isComingSoon = pm.comingSoon;
+            return (
+              <Card
+                key={pm.id}
+                className={`relative transition-all ${isComingSoon ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover-scale"} ${
+                  method === pm.id ? "ring-2 ring-primary border-primary" : ""
+                }`}
+                onClick={() => !isComingSoon && setMethod(pm.id)}
+              >
+                {isComingSoon && (
+                  <Badge className="absolute top-2 right-2 text-[10px]" variant="secondary">Coming Soon</Badge>
+                )}
+                <CardContent className="flex flex-col items-center gap-2 p-4">
+                  <Icon className={`h-8 w-8 ${method === pm.id ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="font-medium text-sm">{pm.name}</span>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-      {method && (
+      {method && selectedMethod && !selectedMethod.comingSoon && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" /> Deposit via {selectedMethod?.name}
+              <Wallet className="h-5 w-5 text-primary" /> Deposit via {selectedMethod.name}
             </CardTitle>
-            <CardDescription className="flex items-center justify-between">
-              <span>{selectedMethod?.info}</span>
-              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyInfo(selectedMethod?.info || "")}>
-                <Copy className="h-3 w-3" /> Copy
-              </Button>
+            <CardDescription className="space-y-2">
+              {selectedMethod.accountNumber && (
+                <div className="flex items-center justify-between">
+                  <span>Account: <span className="font-mono font-semibold">{selectedMethod.accountNumber}</span></span>
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyText(selectedMethod.accountNumber)}>
+                    <Copy className="h-3 w-3" /> Copy
+                  </Button>
+                </div>
+              )}
+              {selectedMethod.accountTitle && (
+                <div className="text-sm">Title: <span className="font-semibold">{selectedMethod.accountTitle}</span></div>
+              )}
+              {selectedMethod.instructions && (
+                <div className="text-sm text-muted-foreground">{selectedMethod.instructions}</div>
+              )}
+              {selectedMethod.qrCodeUrl && (
+                <Button variant="outline" size="sm" className="gap-2 mt-1" onClick={() => setViewQr(selectedMethod.qrCodeUrl)}>
+                  <QrCode className="h-3.5 w-3.5" /> View QR Code
+                </Button>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -272,6 +336,14 @@ const AddFunds = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* QR Code View Dialog */}
+      <Dialog open={!!viewQr} onOpenChange={() => setViewQr("")}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>QR Code</DialogTitle></DialogHeader>
+          {viewQr && <img src={viewQr} alt="QR Code" className="w-full rounded-lg" />}
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Deposits */}
       {recentDeposits.length > 0 && (
