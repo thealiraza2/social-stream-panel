@@ -121,6 +121,9 @@ const Signup = () => {
           </div>
 
           <div className="mb-8">
+            <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+              <ChevronRight className="h-4 w-4 rotate-180" /> Back to Home
+            </Link>
             <h2 className="text-3xl font-bold font-display text-foreground mb-2">Create account</h2>
             <p className="text-muted-foreground">Join thousands of users growing their social presence</p>
           </div>
