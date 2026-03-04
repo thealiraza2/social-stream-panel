@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 interface SiteSettings {
   whatsappNumber?: string;
   telegramUsername?: string;
+  maintenanceEndTime?: string;
 }
 
 export const useSiteSettings = () => {

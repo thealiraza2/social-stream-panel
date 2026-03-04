@@ -1,9 +1,31 @@
-import { Construction, Clock, Wrench, ShieldCheck, MessageCircle, Send } from "lucide-react";
+import { Construction, Clock, Wrench, ShieldCheck, MessageCircle, Send, Timer } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useEffect, useState } from "react";
+
+const useCountdown = (endTime?: string) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    if (!endTime) return;
+    const update = () => {
+      const diff = new Date(endTime).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("Coming back any moment!"); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${h > 0 ? `${h}h ` : ""}${m}m ${s}s`);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  return timeLeft;
+};
 
 const Maintenance = () => {
-  const { whatsappUrl, telegramUrl } = useSiteSettings();
-
+  const { whatsappUrl, telegramUrl, maintenanceEndTime } = useSiteSettings();
+  const countdown = useCountdown(maintenanceEndTime);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden relative">
       {/* Animated background grid */}
@@ -51,6 +73,17 @@ const Maintenance = () => {
         <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">
           We're working hard to improve your experience. Our team is performing scheduled maintenance to bring you exciting updates.
         </p>
+
+        {/* Countdown timer */}
+        {countdown && (
+          <div className="flex items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-6 py-4 max-w-sm mx-auto animate-scale-in">
+            <Timer className="h-5 w-5 text-primary shrink-0" />
+            <div className="text-left">
+              <p className="text-xs text-muted-foreground font-medium">Estimated return</p>
+              <p className="text-lg font-bold text-foreground tabular-nums">{countdown}</p>
+            </div>
+          </div>
+        )}
 
         {/* Status cards */}
         <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
