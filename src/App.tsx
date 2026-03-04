@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import Banned from "./pages/Banned";
+import Maintenance from "./pages/Maintenance";
 import ReferralRedirect from "./pages/ReferralRedirect";
 
 import UserDashboard from "./pages/user/Dashboard";
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/banned" element={<Banned />} />
+              <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
               {/* User Routes */}
