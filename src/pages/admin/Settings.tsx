@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { toast } = useToast();
-  const [form, setForm] = useState({ siteName: "", siteUrl: "", logo: "", favicon: "", metaTitle: "", metaDescription: "", maintenanceMode: false, registrationEnabled: true, defaultCurrency: "USD", termsUrl: "", privacyUrl: "", whatsappNumber: "", telegramUsername: "" });
+  const [form, setForm] = useState({ siteName: "", siteUrl: "", logo: "", favicon: "", metaTitle: "", metaDescription: "", maintenanceMode: false, maintenanceEndTime: "", registrationEnabled: true, defaultCurrency: "USD", termsUrl: "", privacyUrl: "", whatsappNumber: "", telegramUsername: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +68,13 @@ const Settings = () => {
             <div><Label>Maintenance Mode</Label><p className="text-xs text-muted-foreground">Disable access for users</p></div>
             <Switch checked={form.maintenanceMode} onCheckedChange={v => setForm({ ...form, maintenanceMode: v })} />
           </div>
+          {form.maintenanceMode && (
+            <div className="space-y-2 rounded-lg border p-4 bg-muted/30">
+              <Label>Estimated Back Time</Label>
+              <Input type="datetime-local" value={form.maintenanceEndTime} onChange={e => setForm({ ...form, maintenanceEndTime: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Users ko dikhaya jayega ke kab tak site wapas aayegi</p>
+            </div>
+          )}
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div><Label>User Registration</Label><p className="text-xs text-muted-foreground">Allow new signups</p></div>
             <Switch checked={form.registrationEnabled} onCheckedChange={v => setForm({ ...form, registrationEnabled: v })} />
