@@ -5,15 +5,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShieldX, Send, CheckCircle2, LogOut } from "lucide-react";
+import { ShieldX, Send, CheckCircle2, LogOut, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Banned = () => {
   const { user, profile, logout, loading } = useAuth();
+  const { whatsappUrl, telegramUrl } = useSiteSettings();
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -173,6 +175,24 @@ const Banned = () => {
               </form>
             </CardContent>
           </Card>
+        )}
+
+        {/* Support channels */}
+        {(whatsappUrl || telegramUrl) && (
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 px-4 py-2 text-sm font-medium text-[#25D366] hover:bg-[#25D366]/20 transition-colors">
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
+            )}
+            {telegramUrl && (
+              <a href={telegramUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-[#0088cc]/10 border border-[#0088cc]/30 px-4 py-2 text-sm font-medium text-[#0088cc] hover:bg-[#0088cc]/20 transition-colors">
+                <Send className="h-4 w-4" /> Telegram
+              </a>
+            )}
+          </div>
         )}
 
         {/* Logout */}
