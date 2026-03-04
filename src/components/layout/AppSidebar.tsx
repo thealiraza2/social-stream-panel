@@ -164,19 +164,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="px-4 py-5">
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-purple text-white text-sm font-bold">S</div>
-            <span className="text-lg font-bold text-gradient">SMM Panel</span>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">S</div>
+            <span className="text-lg font-bold font-display text-gradient tracking-tight">SMM Panel</span>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-purple text-white text-sm font-bold">S</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">S</div>
           </div>
         )}
       </SidebarHeader>
-      <Separator />
+      <Separator className="opacity-50" />
       <SidebarContent>
         <ScrollArea className="flex-1">
           {isAdmin ? (
@@ -184,9 +184,9 @@ export function AppSidebar() {
               <Collapsible key={group.label} defaultOpen className="group/collapsible">
                 <SidebarGroup>
                   <CollapsibleTrigger asChild>
-                    <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent/30 rounded-md transition-colors">
+                    <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent/40 rounded-lg transition-colors text-[11px] uppercase tracking-wider font-semibold text-muted-foreground/70 px-3 py-1.5">
                       {group.label}
-                      <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
+                      <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform duration-200 group-data-[state=closed]/collapsible:rotate-[-90deg]" />
                     </SidebarGroupLabel>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -198,10 +198,10 @@ export function AppSidebar() {
                               <NavLink
                                 to={item.url}
                                 end={item.url === "/admin"}
-                                className="hover:bg-sidebar-accent/50"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-150"
+                                activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold shadow-sm"
                               >
-                                <item.icon className="mr-2 h-4 w-4" />
+                                <item.icon className="h-[18px] w-[18px] shrink-0" />
                                 {!collapsed && <span>{item.title}</span>}
                                 {getTicketBadge(item.url)}
                               </NavLink>
@@ -215,20 +215,20 @@ export function AppSidebar() {
               </Collapsible>
             ))
           ) : (
-            <SidebarGroup>
-              <SidebarGroupLabel>Menu</SidebarGroupLabel>
+            <SidebarGroup className="px-2 pt-3">
+              <SidebarGroupLabel className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground/70 px-3 mb-1">Menu</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-0.5">
                   {userItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink
                           to={item.url}
                           end={item.url === "/dashboard"}
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-150"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold shadow-sm"
                         >
-                          <item.icon className="mr-2 h-4 w-4" />
+                          <item.icon className="h-[18px] w-[18px] shrink-0" />
                           {!collapsed && <span>{item.title}</span>}
                           {getTicketBadge(item.url)}
                         </NavLink>
@@ -243,7 +243,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3">
         {!collapsed && (
-          <div className="rounded-lg bg-sidebar-accent/50 p-3 text-xs text-muted-foreground text-center">
+          <div className="rounded-xl bg-sidebar-accent/60 border border-sidebar-border p-3.5 text-xs text-muted-foreground text-center font-medium">
             {isAdmin ? "Admin Panel" : `Balance: Rs.${profile?.balance?.toFixed(2) ?? "0.00"}`}
           </div>
         )}
