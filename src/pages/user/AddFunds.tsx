@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Upload, Smartphone, Bitcoin, CreditCard, Copy, CheckCircle2, Clock, XCircle, QrCode } from "lucide-react";
+import { Wallet, Upload, Smartphone, Bitcoin, CreditCard, Copy, CheckCircle2, Clock, XCircle, QrCode, ArrowRight, Sparkles, Shield } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
@@ -32,7 +32,7 @@ const typeIcons: Record<string, any> = {
   other: CreditCard,
 };
 
-const presetAmounts = [100, 500, 1000, 5000];
+const presetAmounts = [100, 500, 1000, 5000, 10000];
 
 const depositStatusIcon: Record<string, any> = {
   pending: Clock,
@@ -59,10 +59,10 @@ const AddFunds = () => {
   const [recentDeposits, setRecentDeposits] = useState<any[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [viewQr, setViewQr] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   const selectedMethod = paymentMethods.find((m) => m.id === method);
 
-  // Fetch payment methods from Firestore
   useEffect(() => {
     const fetchMethods = async () => {
       try {
@@ -80,31 +80,20 @@ const AddFunds = () => {
     fetchMethods();
   }, []);
 
-  // Fetch recent deposits
   useEffect(() => {
     if (!user) return;
     const fetchDeposits = async () => {
       try {
         try {
-          const q = query(
-            collection(db, "transactions"),
-            where("userId", "==", user.uid),
-            where("type", "==", "deposit"),
-            orderBy("createdAt", "desc"),
-            limit(3)
-          );
+          const q = query(collection(db, "transactions"), where("userId", "==", user.uid), where("type", "==", "deposit"), orderBy("createdAt", "desc"), limit(5));
           const snap = await getDocs(q);
           setRecentDeposits(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch {
-          const q = query(
-            collection(db, "transactions"),
-            where("userId", "==", user.uid),
-            where("type", "==", "deposit")
-          );
+          const q = query(collection(db, "transactions"), where("userId", "==", user.uid), where("type", "==", "deposit"));
           const snap = await getDocs(q);
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           docs.sort((a: any, b: any) => (b.createdAt?.toDate?.()?.getTime() || 0) - (a.createdAt?.toDate?.()?.getTime() || 0));
-          setRecentDeposits(docs.slice(0, 3));
+          setRecentDeposits(docs.slice(0, 5));
         }
       } catch (err) {
         console.error("Recent deposits error:", err);
@@ -160,7 +149,7 @@ const AddFunds = () => {
         createdAt: serverTimestamp(),
       });
 
-      toast({ title: "Deposit submitted!", description: "Your deposit will be reviewed by admin shortly." });
+      setSubmitted(true);
       setAmount("");
       setTransactionId("");
       setScreenshot(null);
@@ -178,99 +167,160 @@ const AddFunds = () => {
     return ts.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
+  if (submitted) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
+        <Card className="w-full max-w-md border-0 shadow-2xl overflow-hidden">
+          <div className="h-2 w-full bg-gradient-to-r from-primary via-accent to-primary" />
+          <CardContent className="pt-10 pb-10 text-center space-y-6">
+            <div className="relative inline-block">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              <div className="relative rounded-full bg-primary/10 p-5">
+                <CheckCircle2 className="h-14 w-14 text-primary animate-scale-in" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black tracking-tight">Deposit Submitted! ✅</h2>
+              <p className="text-muted-foreground text-lg">Your deposit will be reviewed by admin shortly.</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground flex items-center gap-2 justify-center">
+              <Clock className="h-4 w-4" /> Usually approved within a few minutes
+            </div>
+            <Button size="lg" onClick={() => setSubmitted(false)} className="gradient-purple text-white border-0 gap-2">
+              <Sparkles className="h-4 w-4" /> Add More Funds
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-2xl animate-fade-in">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Add Funds</h1>
-        <p className="text-muted-foreground">Deposit money to your account</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Wallet className="h-6 w-6 text-primary" /> Add Funds
+        </h1>
+        <p className="text-muted-foreground mt-1">Deposit money to your account</p>
       </div>
 
-      {/* Current Balance */}
-      <Card className="gradient-purple text-white border-0">
-        <CardContent className="flex items-center gap-4 p-5">
-          <div className="rounded-xl bg-white/20 p-3">
-            <Wallet className="h-6 w-6" />
+      {/* Balance Card */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="gradient-purple p-6 text-white">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-white/15 backdrop-blur-sm p-4">
+              <Wallet className="h-7 w-7" />
+            </div>
+            <div>
+              <p className="text-sm text-white/70 font-medium">Current Balance</p>
+              <p className="text-3xl font-black tabular-nums">Rs.{profile?.balance?.toFixed(2) ?? "0.00"}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-white/80">Current Balance</p>
-            <p className="text-2xl font-bold">Rs.{profile?.balance?.toFixed(2) ?? "0.00"}</p>
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Payment Method Selection */}
-      {methodsLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      ) : paymentMethods.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">No payment methods available at the moment.</CardContent></Card>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {paymentMethods.map((pm) => {
-            const Icon = typeIcons[pm.type] || CreditCard;
-            const isComingSoon = pm.comingSoon;
-            return (
-              <Card
-                key={pm.id}
-                className={`relative transition-all ${isComingSoon ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover-scale"} ${
-                  method === pm.id ? "ring-2 ring-primary border-primary" : ""
-                }`}
-                onClick={() => !isComingSoon && setMethod(pm.id)}
-              >
-                {isComingSoon && (
-                  <Badge className="absolute top-2 right-2 text-[10px]" variant="secondary">Coming Soon</Badge>
-                )}
-                <CardContent className="flex flex-col items-center gap-2 p-4">
-                  <Icon className={`h-8 w-8 ${method === pm.id ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="font-medium text-sm">{pm.name}</span>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold flex items-center gap-1.5">
+          <span className="flex items-center justify-center h-5 w-5 rounded bg-primary/10 text-primary text-[10px] font-bold">1</span>
+          Select Payment Method
+        </Label>
+        {methodsLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : paymentMethods.length === 0 ? (
+          <Card><CardContent className="py-8 text-center text-muted-foreground">No payment methods available at the moment.</CardContent></Card>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {paymentMethods.map((pm) => {
+              const Icon = typeIcons[pm.type] || CreditCard;
+              const isComingSoon = pm.comingSoon;
+              const isSelected = method === pm.id;
+              return (
+                <Card
+                  key={pm.id}
+                  className={`relative transition-all duration-200 ${isComingSoon ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover-scale"} ${
+                    isSelected ? "ring-2 ring-primary border-primary shadow-lg shadow-primary/10" : "hover:border-primary/30"
+                  }`}
+                  onClick={() => !isComingSoon && setMethod(pm.id)}
+                >
+                  {isComingSoon && (
+                    <Badge className="absolute top-2 right-2 text-[10px]" variant="secondary">Soon</Badge>
+                  )}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    </div>
+                  )}
+                  <CardContent className="flex flex-col items-center gap-2.5 p-5">
+                    <div className={`rounded-xl p-2.5 transition-colors ${isSelected ? "bg-primary/10" : "bg-muted"}`}>
+                      <Icon className={`h-7 w-7 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <span className={`font-semibold text-sm ${isSelected ? "text-primary" : ""}`}>{pm.name}</span>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
+      {/* Deposit Form */}
       {method && selectedMethod && !selectedMethod.comingSoon && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" /> Deposit via {selectedMethod.name}
+        <Card className="overflow-hidden border-0 shadow-lg animate-fade-in">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="rounded-lg bg-primary/10 p-1.5">
+                <Wallet className="h-4 w-4 text-primary" />
+              </div>
+              Deposit via {selectedMethod.name}
             </CardTitle>
-            <CardDescription className="space-y-2">
+            <CardDescription className="space-y-3 mt-3">
               {selectedMethod.accountNumber && (
-                <div className="flex items-center justify-between">
-                  <span>Account: <span className="font-mono font-semibold">{selectedMethod.accountNumber}</span></span>
-                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyText(selectedMethod.accountNumber)}>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Account Number</p>
+                    <p className="font-mono font-bold text-foreground text-sm">{selectedMethod.accountNumber}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => copyText(selectedMethod.accountNumber)}>
                     <Copy className="h-3 w-3" /> Copy
                   </Button>
                 </div>
               )}
               {selectedMethod.accountTitle && (
-                <div className="text-sm">Title: <span className="font-semibold">{selectedMethod.accountTitle}</span></div>
+                <div className="rounded-xl bg-muted/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Account Title</p>
+                  <p className="font-semibold text-foreground text-sm">{selectedMethod.accountTitle}</p>
+                </div>
               )}
               {selectedMethod.instructions && (
-                <div className="text-sm text-muted-foreground">{selectedMethod.instructions}</div>
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">{selectedMethod.instructions}</div>
               )}
               {selectedMethod.qrCodeUrl && (
-                <Button variant="outline" size="sm" className="gap-2 mt-1" onClick={() => setViewQr(selectedMethod.qrCodeUrl)}>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => setViewQr(selectedMethod.qrCodeUrl)}>
                   <QrCode className="h-3.5 w-3.5" /> View QR Code
                 </Button>
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label>Amount (PKR)</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
+              {/* Amount */}
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-primary/10 text-primary text-[10px] font-bold">2</span>
+                  Amount (PKR)
+                </Label>
+                <div className="flex flex-wrap gap-2">
                   {presetAmounts.map(a => (
                     <Button
                       key={a}
                       type="button"
                       variant={amount === String(a) ? "default" : "outline"}
                       size="sm"
-                      className={amount === String(a) ? "gradient-purple text-white border-0" : ""}
+                      className={`rounded-full ${amount === String(a) ? "gradient-purple text-white border-0 shadow-md" : "hover:border-primary/50"}`}
                       onClick={() => setAmount(String(a))}
                     >
                       Rs.{a.toLocaleString()}
@@ -279,6 +329,7 @@ const AddFunds = () => {
                 </div>
                 <Input
                   type="number"
+                  className="h-11"
                   placeholder="Or enter custom amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -289,54 +340,88 @@ const AddFunds = () => {
                 />
               </div>
 
+              {/* Transaction ID */}
               <div className="space-y-2">
-                <Label>Transaction ID / Reference</Label>
+                <Label className="text-sm font-semibold">Transaction ID / Reference</Label>
                 <Input
+                  className="h-11"
                   placeholder="Enter your payment transaction ID"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                 />
               </div>
 
+              {/* Screenshot */}
               <div className="space-y-2">
-                <Label>Payment Screenshot</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
-                  className="cursor-pointer"
-                />
+                <Label className="text-sm font-semibold">Payment Screenshot</Label>
+                <div className="relative">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
+                    className="cursor-pointer h-11"
+                  />
+                </div>
                 {screenshot && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Upload className="h-3 w-3" /> {screenshot.name} selected
+                  <p className="text-xs text-primary flex items-center gap-1 font-medium">
+                    <Upload className="h-3 w-3" /> {screenshot.name}
                   </p>
                 )}
               </div>
 
+              {/* Promo Code */}
               <div className="space-y-2">
-                <Label>Promo Code (Optional)</Label>
+                <Label className="text-sm font-semibold">Promo Code (Optional)</Label>
                 <Input
-                  placeholder="Enter promo code for 2% bonus"
+                  className="h-11"
+                  placeholder="Enter promo code for bonus"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   maxLength={20}
                 />
-                {promoCode && <p className="text-xs text-green-600">You'll get 2% extra balance if valid!</p>}
+                {promoCode && (
+                  <p className="text-xs text-primary flex items-center gap-1 font-medium animate-fade-in">
+                    <Sparkles className="h-3 w-3" /> You'll get 2% extra balance if valid!
+                  </p>
+                )}
               </div>
+
+              {/* Summary */}
+              {amount && Number(amount) > 0 && (
+                <div className="rounded-xl border-2 border-primary/10 bg-gradient-to-br from-primary/5 to-transparent p-5 space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Deposit Amount</span>
+                    <span className="text-2xl font-black text-primary tabular-nums">Rs.{Number(amount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-t border-border/50 pt-3">
+                    <span className="text-muted-foreground">New Balance (after approval)</span>
+                    <span className="font-bold text-foreground">Rs.{((profile?.balance ?? 0) + Number(amount)).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
 
               <Button
                 type="submit"
-                className="w-full gradient-teal text-white border-0"
-                disabled={loading}
+                size="lg"
+                className="w-full gradient-purple text-white border-0 h-12 text-base font-semibold gap-2"
+                disabled={loading || !method || !amount}
               >
-                {loading ? "Submitting..." : "Submit Deposit Request"}
+                {loading ? (
+                  <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Submitting...</>
+                ) : (
+                  <><ArrowRight className="h-4 w-4" /> Submit Deposit Request</>
+                )}
               </Button>
+
+              <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Shield className="h-3 w-3" /> Secure & encrypted payment processing
+              </p>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {/* QR Code View Dialog */}
+      {/* QR Code Dialog */}
       <Dialog open={!!viewQr} onOpenChange={() => setViewQr("")}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>QR Code</DialogTitle></DialogHeader>
@@ -346,20 +431,30 @@ const AddFunds = () => {
 
       {/* Recent Deposits */}
       {recentDeposits.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Recent Deposits</CardTitle>
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <CardHeader className="border-b bg-muted/30 pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" /> Recent Deposits
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="pt-3 divide-y">
             {recentDeposits.map((d: any) => {
               const StatusIcon = depositStatusIcon[d.status] || Clock;
               return (
-                <div key={d.id} className="flex items-center justify-between p-3 rounded-lg border">
+                <div key={d.id} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
-                    <StatusIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className={`rounded-lg p-2 ${
+                      d.status === "approved" ? "bg-primary/10" : 
+                      d.status === "rejected" ? "bg-destructive/10" : "bg-muted"
+                    }`}>
+                      <StatusIcon className={`h-4 w-4 ${
+                        d.status === "approved" ? "text-primary" : 
+                        d.status === "rejected" ? "text-destructive" : "text-muted-foreground"
+                      }`} />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium">Rs.{d.amount?.toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">{d.paymentMethod} · {formatDate(d.createdAt)}</p>
+                      <p className="text-sm font-semibold">Rs.{d.amount?.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(d.createdAt)}</p>
                     </div>
                   </div>
                   <Badge variant="outline" className={depositStatusColor[d.status] || ""}>
