@@ -19,6 +19,7 @@ export interface UserProfile {
   role: "admin" | "user";
   balance: number;
   status: "active" | "banned";
+  banReason?: string;
   createdAt: any;
 }
 
@@ -46,12 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const snap = await getDoc(doc(db, "users", u.uid));
     if (snap.exists()) {
       const data = { uid: u.uid, ...snap.data() } as UserProfile;
-      if (data.status === "banned") {
-        await signOut(auth);
-        setUser(null);
-        setProfile(null);
-        throw new Error("Your account has been banned. Please contact support.");
-      }
       setProfile(data);
       return data;
     }
@@ -62,11 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        try {
-          await fetchProfile(u);
-        } catch {
-          // banned user — already signed out in fetchProfile
-        }
+        await fetchProfile(u);
       } else {
         setProfile(null);
       }
