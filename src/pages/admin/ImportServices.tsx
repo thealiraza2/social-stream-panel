@@ -41,7 +41,6 @@ const ImportServices = () => {
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [search, setSearch] = useState("");
 
-  // Load providers + categories
   useEffect(() => {
     const load = async () => {
       try {
@@ -60,14 +59,16 @@ const ImportServices = () => {
 
   const provider = providers.find(p => p.id === selectedProvider);
 
-  // Fetch services through secure server-side Vercel API route
   const handleFetch = async () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
 
     try {
-      const res = await fetch('https://social-stream-panel-nine.vercel.app/api/fetch-services', {
+      // FIX #1: Use relative URL instead of hardcoded Vercel domain
+      // Old: fetch('https://social-stream-panel-nine.vercel.app/api/fetch-services', ...)
+      // This broke if the domain changed. Relative path always works.
+      const res = await fetch('/api/fetch-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiUrl: provider.apiUrl, apiKey: provider.apiKey }),
@@ -100,14 +101,12 @@ const ImportServices = () => {
     }
   };
 
-  // Filtered rows
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
     return rows.filter(r => r.svc.name.toLowerCase().includes(q) || String(r.svc.service).includes(q));
   }, [rows, search]);
 
-  // Toggle selection
   const toggleRow = (idx: number) => {
     setRows(prev => {
       const next = [...prev];
@@ -122,7 +121,6 @@ const ImportServices = () => {
     setRows(prev => prev.map(r => filteredSet.has(r.svc.service) ? { ...r, selected: checked } : r));
   };
 
-  // Update row field
   const updateRow = (filteredIdx: number, field: Partial<ImportRow>) => {
     setRows(prev => {
       const next = [...prev];
@@ -132,7 +130,6 @@ const ImportServices = () => {
     });
   };
 
-  // Calc selling rate
   const calcSelling = (row: ImportRow) => {
     const base = parseFloat(row.svc.rate) || 0;
     const margin = parseFloat(row.marginValue) || 0;
@@ -142,7 +139,6 @@ const ImportServices = () => {
 
   const selectedRows = rows.filter(r => r.selected);
 
-  // Add single service
   const handleAddSingle = async (row: ImportRow, filteredIdx: number) => {
     if (!row.categoryId) {
       toast({ title: "Category required", description: "Please assign a category first.", variant: "destructive" });
@@ -179,7 +175,6 @@ const ImportServices = () => {
     }
   };
 
-  // Import selected
   const handleImport = async () => {
     const toImport = selectedRows.filter(r => r.categoryId);
     if (toImport.length === 0) {
@@ -210,9 +205,14 @@ const ImportServices = () => {
       );
       await Promise.all(batch);
       toast({ title: `${toImport.length} services imported successfully!` });
-      // Unselect imported
+
+      // FIX #2: Mark imported rows as added:true (old code only unselected them)
       const importedIds = new Set(toImport.map(r => r.svc.service));
-      setRows(prev => prev.map(r => importedIds.has(r.svc.service) ? { ...r, selected: false } : r));
+      setRows(prev => prev.map(r =>
+        importedIds.has(r.svc.service)
+          ? { ...r, selected: false, added: true }  // Now shows green "Added" badge
+          : r
+      ));
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
     } finally {
@@ -220,7 +220,6 @@ const ImportServices = () => {
     }
   };
 
-  // Bulk update for selected rows
   const bulkSetCategory = (catId: string) => {
     const selectedSet = new Set(selectedRows.map(r => r.svc.service));
     setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, categoryId: catId } : r));
@@ -432,7 +431,7 @@ const ImportServices = () => {
         </Card>
       )}
 
-      {/* Import button — always visible when rows exist */}
+      {/* Import button */}
       {rows.length > 0 && (
         <div className="flex justify-end sticky bottom-4">
           <Button
