@@ -6,6 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -26,6 +28,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -79,6 +82,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile({ uid: cred.user.uid, ...userProfile });
   };
 
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    if (!snap.exists()) {
+      const userProfile: Omit<UserProfile, "uid"> = {
+        displayName: cred.user.displayName || "User",
+        email: cred.user.email || "",
+        role: "user",
+        balance: 0,
+        status: "active",
+        createdAt: serverTimestamp(),
+      };
+      await setDoc(doc(db, "users", cred.user.uid), userProfile);
+      setProfile({ uid: cred.user.uid, ...userProfile });
+    } else {
+      setProfile({ uid: cred.user.uid, ...snap.data() } as UserProfile);
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setProfile(null);
@@ -89,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, signup, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, signup, loginWithGoogle, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
