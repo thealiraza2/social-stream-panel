@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon, MessageCircle, Send as SendIcon } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { toast } = useToast();
-  const [form, setForm] = useState({ siteName: "", siteUrl: "", logo: "", favicon: "", metaTitle: "", metaDescription: "", maintenanceMode: false, registrationEnabled: true, defaultCurrency: "USD", termsUrl: "", privacyUrl: "" });
+  const [form, setForm] = useState({ siteName: "", siteUrl: "", logo: "", favicon: "", metaTitle: "", metaDescription: "", maintenanceMode: false, registrationEnabled: true, defaultCurrency: "USD", termsUrl: "", privacyUrl: "", whatsappNumber: "", telegramUsername: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +54,16 @@ const Settings = () => {
             <div className="space-y-2"><Label>Terms URL</Label><Input value={form.termsUrl} onChange={e => setForm({ ...form, termsUrl: e.target.value })} /></div>
             <div className="space-y-2"><Label>Privacy URL</Label><Input value={form.privacyUrl} onChange={e => setForm({ ...form, privacyUrl: e.target.value })} /></div>
           </div>
+          <Card className="mt-6">
+            <CardHeader><CardTitle className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" /> Support Channels</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>WhatsApp Number</Label><Input placeholder="+923001234567" value={form.whatsappNumber} onChange={e => setForm({ ...form, whatsappNumber: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Telegram Username</Label><Input placeholder="@username or t.me/username" value={form.telegramUsername} onChange={e => setForm({ ...form, telegramUsername: e.target.value })} /></div>
+              </div>
+              <p className="text-xs text-muted-foreground">These will be shown on Maintenance & Banned pages for user support.</p>
+            </CardContent>
+          </Card>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div><Label>Maintenance Mode</Label><p className="text-xs text-muted-foreground">Disable access for users</p></div>
             <Switch checked={form.maintenanceMode} onCheckedChange={v => setForm({ ...form, maintenanceMode: v })} />
