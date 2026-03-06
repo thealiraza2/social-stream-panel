@@ -124,7 +124,7 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Real-time overview of your SMM panel</p>
+          <p className="text-muted-foreground">Real-time overview of your BudgetSMM panel</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Activity className="h-3.5 w-3.5 text-green-500 animate-pulse" />

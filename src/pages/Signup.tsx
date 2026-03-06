@@ -53,7 +53,7 @@ const Signup = () => {
     try {
       await signup(email, password, displayName);
       await handleReferral();
-      toast({ title: "Account created!", description: "Welcome to SMM Panel" });
+      toast({ title: "Account created!", description: "Welcome to BudgetSMM!" });
       navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
@@ -67,7 +67,7 @@ const Signup = () => {
     try {
       await loginWithGoogle();
       await handleReferral();
-      toast({ title: "Account created!", description: "Welcome to SMM Panel" });
+      toast({ title: "Account created!", description: "Welcome to BudgetSMM!" });
       navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Google signup failed", description: err.message, variant: "destructive" });

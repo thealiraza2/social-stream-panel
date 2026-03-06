@@ -231,7 +231,7 @@ export default function LandingPage() {
           {/* Left — Copy */}
           <div className="max-w-xl">
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
-              <Zap className="h-3.5 w-3.5" /> #1 Trusted SMM Panel
+              <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
             </span>
             <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Real Social Growth.{" "}
@@ -392,7 +392,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
             <img
               src={heroImg}
-              alt="SMM Panel Dashboard Preview"
+              alt="BudgetSMM Dashboard Preview"
               className="relative w-full rounded-2xl shadow-2xl shadow-primary/10"
               style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
             />
@@ -474,9 +474,9 @@ export default function LandingPage() {
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { name: "Ali R.", role: "Reseller", text: "Best SMM panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!" },
+            { name: "Ali R.", role: "Reseller", text: "BudgetSMM is the best panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!" },
             { name: "Sarah M.", role: "Influencer", text: "Grew my Instagram by 50k followers in just 2 months. The quality is top-notch and support is amazing." },
-            { name: "David K.", role: "Agency Owner", text: "The API integration saved us hours of manual work. Our clients love the results we deliver." },
+            { name: "David K.", role: "Agency Owner", text: "BudgetSMM's API integration saved us hours of manual work. Our clients love the results we deliver." },
             { name: "Fatima Z.", role: "Content Creator", text: "JazzCash payment option is a game-changer for me. Fast, reliable, and affordable services." },
           ].map((t) => (
             <div key={t.name} className="card-hover-lift rounded-2xl border border-border bg-card p-6">
@@ -530,7 +530,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
                   <Zap className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="text-gradient">SMMPanel</span>
+                <span className="text-gradient">BudgetSMM</span>
               </div>
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                 The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.
@@ -575,7 +575,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            Copyright © 2026 SMMPanel. All rights reserved.
+            Copyright © 2026 BudgetSMM. All rights reserved.
           </div>
         </div>
       </footer>
