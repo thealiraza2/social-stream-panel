@@ -523,7 +523,7 @@ export default function LandingPage() {
               </Button>
             </div>
             <div className="mx-auto max-w-xs">
-              <img src={paymentsImg} alt="Secure Payments" className="w-full drop-shadow-2xl animate-float" />
+              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl animate-float" loading="lazy" />
             </div>
           </div>
         </div>
