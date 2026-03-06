@@ -231,7 +231,7 @@ export default function LandingPage() {
           {/* Left — Copy */}
           <div className="max-w-xl">
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
-              <Zap className="h-3.5 w-3.5" /> #1 Trusted SMM Panel
+              <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
             </span>
             <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Real Social Growth.{" "}
