@@ -158,7 +158,7 @@ export default function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
               <Zap className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-gradient">SMMPanel</span>
+            <span className="text-gradient">BudgetSMM</span>
           </button>
 
           <div className="hidden items-center gap-8 md:flex">

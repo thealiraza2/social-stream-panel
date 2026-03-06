@@ -117,7 +117,7 @@ const Signup = () => {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
               <Zap className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-extrabold tracking-tight font-display text-gradient">SMMPanel</span>
+            <span className="text-xl font-extrabold tracking-tight font-display text-gradient">BudgetSMM</span>
           </div>
 
           <div className="mb-8">
