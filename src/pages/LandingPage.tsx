@@ -510,7 +510,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ==================== CTA BANNER ==================== */}
-      <Section className="text-center">
+      <Section id="how-it-works" className="text-center">
         <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
           <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
             <div className="text-left">
