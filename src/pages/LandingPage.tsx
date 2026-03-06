@@ -453,7 +453,7 @@ export default function LandingPage() {
 
       {/* ==================== WHY CHOOSE US ==================== */}
       <Section id="features">
-        <SectionTitle badge="Why Us" title="Why 54K+ Users Trust Us" description="We don't just sell services. We deliver growth you can measure." />
+        <SectionTitle badge="Why Us" title="Why Choose Us" description="We don't just sell services. We deliver growth you can measure." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: Zap, title: "Instant Delivery", desc: "Orders start processing within seconds. No delays, no waiting around.", gradient: "gradient-primary" },
