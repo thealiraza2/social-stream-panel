@@ -147,6 +147,7 @@ export default function LandingPage() {
 
   return (
     <div className="font-body min-h-screen bg-background text-foreground scroll-smooth">
+      {/* Skip to main content for accessibility */}
       {/* ==================== NAVBAR ==================== */}
       <nav
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
