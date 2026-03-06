@@ -147,8 +147,12 @@ export default function LandingPage() {
 
   return (
     <div className="font-body min-h-screen bg-background text-foreground scroll-smooth">
+      {/* Skip to main content for accessibility */}
       {/* ==================== NAVBAR ==================== */}
+      <header>
       <nav
+        role="navigation"
+        aria-label="Main navigation"
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled ? "bg-background/90 shadow-lg backdrop-blur-xl border-b border-border" : "bg-transparent"
         }`}
@@ -221,6 +225,9 @@ export default function LandingPage() {
           </div>
         )}
       </nav>
+      </header>
+
+      <main>
 
       {/* ==================== HERO (Asymmetrical) ==================== */}
       <Section id="hero" className="relative overflow-hidden pt-32 md:pt-40">
@@ -234,8 +241,8 @@ export default function LandingPage() {
               <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
             </span>
             <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Real Social Growth.{" "}
-              <span className="text-gradient">Zero Fake Promises.</span>
+              BudgetSMM - The #1 Cheapest SMM Panel.{" "}
+              <span className="text-gradient">Real Growth, Zero Fake Promises.</span>
             </h1>
             <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
               High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
@@ -392,8 +399,9 @@ export default function LandingPage() {
             <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
             <img
               src={heroImg}
-              alt="BudgetSMM Dashboard Preview"
+              alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
               className="relative w-full rounded-2xl shadow-2xl shadow-primary/10"
+              loading="lazy"
               style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
             />
           </div>
@@ -404,7 +412,7 @@ export default function LandingPage() {
       <Section id="services" className="bg-secondary/30">
         <SectionTitle
           badge="Top Services"
-          title="Services That Deliver Results"
+          title="Our Services"
           description="Hover over any service to see detailed specs. All services start instantly."
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -445,7 +453,7 @@ export default function LandingPage() {
 
       {/* ==================== WHY CHOOSE US ==================== */}
       <Section id="features">
-        <SectionTitle badge="Why Us" title="Why 54K+ Users Trust Us" description="We don't just sell services. We deliver growth you can measure." />
+        <SectionTitle badge="Why Us" title="Why Choose Us" description="We don't just sell services. We deliver growth you can measure." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: Zap, title: "Instant Delivery", desc: "Orders start processing within seconds. No delays, no waiting around.", gradient: "gradient-primary" },
@@ -502,7 +510,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ==================== CTA BANNER ==================== */}
-      <Section className="text-center">
+      <Section id="how-it-works" className="text-center">
         <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
           <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
             <div className="text-left">
@@ -515,11 +523,13 @@ export default function LandingPage() {
               </Button>
             </div>
             <div className="mx-auto max-w-xs">
-              <img src={paymentsImg} alt="Secure Payments" className="w-full drop-shadow-2xl animate-float" />
+              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl animate-float" loading="lazy" />
             </div>
           </div>
         </div>
       </Section>
+
+      </main>
 
       {/* ==================== FOOTER ==================== */}
       <footer className="border-t border-border bg-card">
@@ -535,32 +545,40 @@ export default function LandingPage() {
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                 The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.
               </p>
-              <div className="flex gap-3">
-                {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                  <a key={i} href="#" className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
+              <nav aria-label="Social media links" className="flex gap-3">
+                {[
+                  { Icon: Facebook, label: "Facebook" },
+                  { Icon: Twitter, label: "Twitter" },
+                  { Icon: Instagram, label: "Instagram" },
+                  { Icon: Youtube, label: "YouTube" },
+                ].map(({ Icon, label }) => (
+                  <a key={label} href="#" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
                     <Icon className="h-4 w-4" />
                   </a>
                 ))}
-              </div>
+              </nav>
             </div>
 
-            <div>
+            <nav aria-label="Quick links">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Quick Links</h4>
               <ul className="space-y-2.5 text-sm">
-                {["Home", "Services", "API Documentation", "Blog", "Contact Us"].map((l) => (
-                  <li key={l}><a href="#" className="text-muted-foreground transition-colors hover:text-primary">{l}</a></li>
-                ))}
+                <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
+                <li><Link to="/services" className="text-muted-foreground transition-colors hover:text-primary">Services</Link></li>
+                <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
+                <li><Link to="/login" className="text-muted-foreground transition-colors hover:text-primary">Login</Link></li>
+                <li><a href="#services" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
               </ul>
-            </div>
+            </nav>
 
-            <div>
+            <nav aria-label="Legal links">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Legal & Policies</h4>
               <ul className="space-y-2.5 text-sm">
-                {["Terms of Service", "Privacy Policy", "Refund Policy", "Data Protection"].map((l) => (
-                  <li key={l}><a href="#" className="text-muted-foreground transition-colors hover:text-primary">{l}</a></li>
-                ))}
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Terms of Service</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Privacy Policy</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Refund Policy</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">API Documentation</a></li>
               </ul>
-            </div>
+            </nav>
 
             <div>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Payment Methods</h4>
