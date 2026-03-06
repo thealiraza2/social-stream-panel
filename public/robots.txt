@@ -12,5 +12,16 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /user/
+Disallow: /orders/
+Disallow: /profile/
+Disallow: /tickets/
+Disallow: /add-funds/
+Disallow: /new-order/
+Disallow: /bulk-order/
+Disallow: /private/
 
 Sitemap: https://budgetsmm.store/sitemap.xml
