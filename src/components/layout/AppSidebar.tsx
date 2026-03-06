@@ -167,8 +167,8 @@ export function AppSidebar() {
       <SidebarHeader className="px-4 py-5">
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">S</div>
-            <span className="text-lg font-bold font-display text-gradient tracking-tight">SMM Panel</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">B</div>
+            <span className="text-lg font-bold font-display text-gradient tracking-tight">BudgetSMM</span>
           </div>
         ) : (
           <div className="flex justify-center">
