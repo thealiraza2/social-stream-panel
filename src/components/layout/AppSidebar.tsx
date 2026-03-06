@@ -172,7 +172,7 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">S</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-purple text-primary-foreground text-sm font-bold shadow-md">B</div>
           </div>
         )}
       </SidebarHeader>

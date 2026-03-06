@@ -575,7 +575,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            Copyright © 2026 SMMPanel. All rights reserved.
+            Copyright © 2026 BudgetSMM. All rights reserved.
           </div>
         </div>
       </footer>
