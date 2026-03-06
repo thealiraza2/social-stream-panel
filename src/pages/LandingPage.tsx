@@ -241,8 +241,8 @@ export default function LandingPage() {
               <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
             </span>
             <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Real Social Growth.{" "}
-              <span className="text-gradient">Zero Fake Promises.</span>
+              BudgetSMM - The #1 Cheapest SMM Panel.{" "}
+              <span className="text-gradient">Real Growth, Zero Fake Promises.</span>
             </h1>
             <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
               High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
