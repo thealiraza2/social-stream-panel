@@ -530,7 +530,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
                   <Zap className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="text-gradient">SMMPanel</span>
+                <span className="text-gradient">BudgetSMM</span>
               </div>
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                 The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.
