@@ -225,6 +225,9 @@ export default function LandingPage() {
           </div>
         )}
       </nav>
+      </header>
+
+      <main>
 
       {/* ==================== HERO (Asymmetrical) ==================== */}
       <Section id="hero" className="relative overflow-hidden pt-32 md:pt-40">
