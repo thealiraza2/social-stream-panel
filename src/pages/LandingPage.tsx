@@ -474,9 +474,9 @@ export default function LandingPage() {
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { name: "Ali R.", role: "Reseller", text: "Best SMM panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!" },
+            { name: "Ali R.", role: "Reseller", text: "BudgetSMM is the best panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!" },
             { name: "Sarah M.", role: "Influencer", text: "Grew my Instagram by 50k followers in just 2 months. The quality is top-notch and support is amazing." },
-            { name: "David K.", role: "Agency Owner", text: "The API integration saved us hours of manual work. Our clients love the results we deliver." },
+            { name: "David K.", role: "Agency Owner", text: "BudgetSMM's API integration saved us hours of manual work. Our clients love the results we deliver." },
             { name: "Fatima Z.", role: "Content Creator", text: "JazzCash payment option is a game-changer for me. Fast, reliable, and affordable services." },
           ].map((t) => (
             <div key={t.name} className="card-hover-lift rounded-2xl border border-border bg-card p-6">
