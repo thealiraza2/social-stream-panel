@@ -529,6 +529,8 @@ export default function LandingPage() {
         </div>
       </Section>
 
+      </main>
+
       {/* ==================== FOOTER ==================== */}
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -543,32 +545,40 @@ export default function LandingPage() {
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                 The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.
               </p>
-              <div className="flex gap-3">
-                {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                  <a key={i} href="#" className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
+              <nav aria-label="Social media links" className="flex gap-3">
+                {[
+                  { Icon: Facebook, label: "Facebook" },
+                  { Icon: Twitter, label: "Twitter" },
+                  { Icon: Instagram, label: "Instagram" },
+                  { Icon: Youtube, label: "YouTube" },
+                ].map(({ Icon, label }) => (
+                  <a key={label} href="#" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
                     <Icon className="h-4 w-4" />
                   </a>
                 ))}
-              </div>
+              </nav>
             </div>
 
-            <div>
+            <nav aria-label="Quick links">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Quick Links</h4>
               <ul className="space-y-2.5 text-sm">
-                {["Home", "Services", "API Documentation", "Blog", "Contact Us"].map((l) => (
-                  <li key={l}><a href="#" className="text-muted-foreground transition-colors hover:text-primary">{l}</a></li>
-                ))}
+                <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
+                <li><Link to="/services" className="text-muted-foreground transition-colors hover:text-primary">Services</Link></li>
+                <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
+                <li><Link to="/login" className="text-muted-foreground transition-colors hover:text-primary">Login</Link></li>
+                <li><a href="#services" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
               </ul>
-            </div>
+            </nav>
 
-            <div>
+            <nav aria-label="Legal links">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Legal & Policies</h4>
               <ul className="space-y-2.5 text-sm">
-                {["Terms of Service", "Privacy Policy", "Refund Policy", "Data Protection"].map((l) => (
-                  <li key={l}><a href="#" className="text-muted-foreground transition-colors hover:text-primary">{l}</a></li>
-                ))}
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Terms of Service</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Privacy Policy</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Refund Policy</a></li>
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">API Documentation</a></li>
               </ul>
-            </div>
+            </nav>
 
             <div>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Payment Methods</h4>
