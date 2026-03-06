@@ -412,7 +412,7 @@ export default function LandingPage() {
       <Section id="services" className="bg-secondary/30">
         <SectionTitle
           badge="Top Services"
-          title="Services That Deliver Results"
+          title="Our Services"
           description="Hover over any service to see detailed specs. All services start instantly."
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
