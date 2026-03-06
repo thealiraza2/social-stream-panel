@@ -149,7 +149,10 @@ export default function LandingPage() {
     <div className="font-body min-h-screen bg-background text-foreground scroll-smooth">
       {/* Skip to main content for accessibility */}
       {/* ==================== NAVBAR ==================== */}
+      <header>
       <nav
+        role="navigation"
+        aria-label="Main navigation"
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled ? "bg-background/90 shadow-lg backdrop-blur-xl border-b border-border" : "bg-transparent"
         }`}
