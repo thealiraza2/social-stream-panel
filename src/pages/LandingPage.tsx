@@ -6,7 +6,9 @@ import {
   Menu, X, Moon, Sun, ChevronRight, UserPlus, LogIn,
   CheckCircle2, Quote, Clock, TrendingUp, RefreshCw,
   Facebook, Twitter, Instagram, Youtube, Send, Play,
-  Users, ShoppingCart, Timer, Eye, Heart, MessageCircle
+  Users, ShoppingCart, Timer, Eye, Heart, MessageCircle,
+  CreditCard, Smartphone, ChevronDown, ArrowRight,
+  HelpCircle, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,38 @@ function useCountUp(end: number, duration = 2000) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Live order ticker hook                                             */
+/* ------------------------------------------------------------------ */
+function useLiveOrderTicker() {
+  const [recentOrders, setRecentOrders] = useState<{ platform: string; service: string; qty: number; time: string }[]>([]);
+
+  useEffect(() => {
+    const platforms = ["Instagram", "YouTube", "TikTok", "Twitter", "Telegram", "Facebook"];
+    const services = ["Followers", "Likes", "Views", "Comments", "Shares", "Subscribers"];
+
+    const generate = () => ({
+      platform: platforms[Math.floor(Math.random() * platforms.length)],
+      service: services[Math.floor(Math.random() * services.length)],
+      qty: Math.floor(Math.random() * 9500) + 500,
+      time: "Just now",
+    });
+
+    setRecentOrders([generate(), generate(), generate()]);
+
+    const interval = setInterval(() => {
+      setRecentOrders((prev) => {
+        const updated = [generate(), ...prev.slice(0, 2)];
+        return updated;
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return recentOrders;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Price data                                                         */
 /* ------------------------------------------------------------------ */
 const PRICE_MAP: Record<string, Record<string, number>> = {
@@ -83,6 +117,48 @@ const SERVICE_CARDS = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  FAQ data                                                           */
+/* ------------------------------------------------------------------ */
+const FAQ_ITEMS = [
+  {
+    q: "What is drop protection and how does it work?",
+    a: "Drop protection means if any of your followers, likes, or views drop after delivery, we automatically refill them for free within the refill period (30-60 days depending on the service). Our system monitors all orders 24/7 to ensure maximum retention."
+  },
+  {
+    q: "What is BudgetSMM's refill policy?",
+    a: "We offer automatic refill on most services ranging from 30 days to lifetime depending on the service type. If your order drops within the refill period, simply open a ticket and we'll refill it within 24 hours — no extra charge."
+  },
+  {
+    q: "What payment methods does BudgetSMM accept?",
+    a: "We accept JazzCash, Easypaisa, bank transfers, Visa/Mastercard, cryptocurrency (BTC, USDT, ETH), and Perfect Money. Pakistani users can conveniently pay via JazzCash and Easypaisa for instant balance top-ups."
+  },
+  {
+    q: "How fast is delivery on BudgetSMM?",
+    a: "Most orders start within 0-30 minutes of placing them. Some high-demand services may take up to 1-2 hours to begin. Our average completion time is under 2 minutes for small orders and within 24 hours for large bulk orders."
+  },
+  {
+    q: "Is BudgetSMM safe for my social media accounts?",
+    a: "Absolutely. We use safe, gradual delivery methods that comply with each platform's guidelines. We never ask for your passwords, and all services are delivered through secure API methods that don't put your accounts at risk."
+  },
+  {
+    q: "Does BudgetSMM offer API access for resellers?",
+    a: "Yes! We offer a full REST API that allows resellers and developers to automate order placement, check order status, and manage their accounts programmatically. API documentation is available in your dashboard after sign-up."
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Testimonials data                                                  */
+/* ------------------------------------------------------------------ */
+const TESTIMONIALS = [
+  { name: "Ali R.", role: "Reseller", country: "🇵🇰 Pakistan", text: "BudgetSMM is the best panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!", rating: 5, avatar: "A" },
+  { name: "Sarah M.", role: "Influencer", country: "🇺🇸 USA", text: "Grew my Instagram by 50k followers in just 2 months. The quality is top-notch and support is amazing.", rating: 5, avatar: "S" },
+  { name: "David K.", role: "Agency Owner", country: "🇬🇧 UK", text: "BudgetSMM's API integration saved us hours of manual work. Our clients love the results we deliver.", rating: 5, avatar: "D" },
+  { name: "Fatima Z.", role: "Content Creator", country: "🇵🇰 Pakistan", text: "JazzCash payment option is a game-changer for me. Fast, reliable, and affordable services.", rating: 5, avatar: "F" },
+  { name: "Ahmed H.", role: "YouTuber", country: "🇮🇳 India", text: "Got 100K YouTube views overnight. The retention rate is amazing — no drops at all!", rating: 4, avatar: "A" },
+  { name: "Maria L.", role: "Digital Marketer", country: "🇧🇷 Brazil", text: "I've tried 10+ SMM panels and BudgetSMM has the best price-to-quality ratio. Period.", rating: 5, avatar: "M" },
+];
+
+/* ------------------------------------------------------------------ */
 /*  Section helpers                                                    */
 /* ------------------------------------------------------------------ */
 function Section({ id, children, className = "" }: { id?: string; children: React.ReactNode; className?: string }) {
@@ -112,6 +188,7 @@ export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   /* Calculator state */
   const [platform, setPlatform] = useState("Instagram");
@@ -138,6 +215,7 @@ export default function LandingPage() {
     { label: "Home", id: "hero" },
     { label: "Services", id: "services" },
     { label: "Features", id: "features" },
+    { label: "FAQ", id: "faq" },
     { label: "Testimonials", id: "testimonials" },
   ];
 
@@ -145,10 +223,12 @@ export default function LandingPage() {
   const orders = useCountUp(1_200_000);
   const users = useCountUp(54_000);
 
+  /* Live order ticker */
+  const liveOrders = useLiveOrderTicker();
+
   return (
     <div className="font-body min-h-screen bg-background text-foreground scroll-smooth">
-      {/* Skip to main content for accessibility */}
-      {/* ==================== NAVBAR ==================== */}
+      {/* ==================== NAVBAR (Sticky) ==================== */}
       <header>
       <nav
         role="navigation"
@@ -185,7 +265,7 @@ export default function LandingPage() {
             <Button variant="outline" asChild>
               <Link to="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
             </Button>
-            <Button className="gradient-primary text-primary-foreground border-0" asChild>
+            <Button className="gradient-primary text-primary-foreground border-0 hover:opacity-90 transition-opacity" asChild>
               <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
             </Button>
           </div>
@@ -248,11 +328,11 @@ export default function LandingPage() {
               High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="gradient-primary text-primary-foreground border-0 px-8 text-base" asChild>
-                <Link to="/signup">Get Started <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              <Button size="lg" className="gradient-primary text-primary-foreground border-0 px-8 text-base group hover:opacity-90 hover:shadow-xl hover:shadow-primary/25 transition-all duration-300" asChild>
+                <Link to="/signup">Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
-              <Button size="lg" variant="outline" className="px-8 text-base" onClick={() => scrollTo("services")}>
-                View Live Prices
+              <Button size="lg" variant="outline" className="px-8 text-base group hover:border-primary hover:text-primary transition-all duration-300" onClick={() => scrollTo("services")}>
+                View Live Prices <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
 
@@ -368,6 +448,42 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* ==================== LIVE ORDER COUNTER ==================== */}
+      <Section className="!py-12">
+        <div className="mx-auto max-w-2xl">
+          <div className="flex items-center gap-2 mb-4 justify-center">
+            <Activity className="h-4 w-4 text-success animate-pulse" />
+            <span className="text-sm font-semibold text-foreground">Live Orders Feed</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+            </span>
+          </div>
+          <div className="space-y-2">
+            {liveOrders.map((order, i) => (
+              <div
+                key={`${order.platform}-${order.service}-${i}`}
+                className={`flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm transition-all duration-500 ${i === 0 ? "animate-fade-in" : ""}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    {PLATFORM_ICONS[order.platform] || <Zap className="h-4 w-4 text-primary" />}
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">{order.platform}</span>
+                    <span className="text-muted-foreground"> — {order.service}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="font-semibold text-foreground">{order.qty.toLocaleString()}</span>
+                  <span className="text-xs text-muted-foreground">{order.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* ==================== DASHBOARD MOCKUP ==================== */}
       <Section className="relative overflow-hidden">
         <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -421,7 +537,6 @@ export default function LandingPage() {
               key={`${s.platform}-${s.service}-${i}`}
               className="card-hover-lift group relative rounded-2xl border border-border bg-card p-5 overflow-hidden"
             >
-              {/* Main content */}
               <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient}`}>
                 <s.icon className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -477,32 +592,55 @@ export default function LandingPage() {
         </div>
       </Section>
 
+      {/* ==================== FAQ ==================== */}
+      <Section id="faq" className="bg-secondary/30">
+        <SectionTitle badge="FAQ" title="Frequently Asked Questions" description="Got questions? We've got answers. Here are the most common ones." />
+        <div className="mx-auto max-w-3xl space-y-3">
+          {FAQ_ITEMS.map((item, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200">
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="flex w-full items-center justify-between gap-4 p-5 text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">{item.q}</span>
+                </div>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
+              </button>
+              {openFaq === i && (
+                <div className="px-5 pb-5 pl-13 animate-fade-in">
+                  <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* ==================== TESTIMONIALS ==================== */}
-      <Section id="testimonials" className="bg-secondary/30">
+      <Section id="testimonials">
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { name: "Ali R.", role: "Reseller", text: "BudgetSMM is the best panel I've ever used. Prices are unbeatable and delivery is instant. Highly recommend!" },
-            { name: "Sarah M.", role: "Influencer", text: "Grew my Instagram by 50k followers in just 2 months. The quality is top-notch and support is amazing." },
-            { name: "David K.", role: "Agency Owner", text: "BudgetSMM's API integration saved us hours of manual work. Our clients love the results we deliver." },
-            { name: "Fatima Z.", role: "Content Creator", text: "JazzCash payment option is a game-changer for me. Fast, reliable, and affordable services." },
-          ].map((t) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {TESTIMONIALS.map((t) => (
             <div key={t.name} className="card-hover-lift rounded-2xl border border-border bg-card p-6">
-              <Quote className="mb-4 h-8 w-8 text-primary/30" />
+              {/* Star rating */}
+              <div className="mb-4 flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`h-4 w-4 ${i < t.rating ? "fill-warning text-warning" : "fill-muted text-muted"}`} />
+                ))}
+              </div>
+              <Quote className="mb-3 h-6 w-6 text-primary/20" />
               <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
-                  {t.name[0]}
+                {/* Avatar placeholder */}
+                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
+                  {t.avatar}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                  <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
                 </div>
-              </div>
-              <div className="mt-3 flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-warning text-warning" />
-                ))}
               </div>
             </div>
           ))}
@@ -518,8 +656,8 @@ export default function LandingPage() {
               <p className="mb-8 max-w-lg text-base text-primary-foreground/80">
                 Join thousands of satisfied users and start boosting your presence today.
               </p>
-              <Button size="lg" className="bg-background text-foreground hover:bg-background/90 border-0 px-10 text-base font-semibold" asChild>
-                <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              <Button size="lg" className="bg-background text-foreground hover:bg-background/90 border-0 px-10 text-base font-semibold group transition-all duration-300 hover:shadow-xl" asChild>
+                <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
             </div>
             <div className="mx-auto max-w-xs">
@@ -567,6 +705,7 @@ export default function LandingPage() {
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
                 <li><Link to="/login" className="text-muted-foreground transition-colors hover:text-primary">Login</Link></li>
                 <li><a href="#services" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
+                <li><a href="#faq" className="text-muted-foreground transition-colors hover:text-primary">FAQ</a></li>
               </ul>
             </nav>
 
@@ -582,9 +721,22 @@ export default function LandingPage() {
 
             <div>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Payment Methods</h4>
-              <div className="flex flex-wrap gap-3">
-                {["Visa", "Mastercard", "Crypto", "Easypaisa", "JazzCash"].map((p) => (
-                  <span key={p} className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {/* Highlighted Pakistani payment methods */}
+                {[
+                  { name: "JazzCash", highlight: true },
+                  { name: "Easypaisa", highlight: true },
+                ].map((p) => (
+                  <span key={p.name} className="inline-flex items-center gap-1.5 rounded-lg border-2 border-success/30 bg-success/10 px-3 py-2 text-xs font-bold text-success">
+                    <Smartphone className="h-3.5 w-3.5" />
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["Visa", "Mastercard", "Crypto"].map((p) => (
+                  <span key={p} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                    <CreditCard className="h-3 w-3" />
                     {p}
                   </span>
                 ))}
@@ -593,10 +745,22 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            Copyright © 2026 BudgetSMM. All rights reserved.
+            Copyright © 2024-2025 BudgetSMM. All rights reserved.
           </div>
         </div>
       </footer>
+
+      {/* ==================== FLOATING WHATSAPP BUTTON ==================== */}
+      <a
+        href="https://wa.me/923000000000"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contact BudgetSMM support on WhatsApp"
+        className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+        style={{ backgroundColor: "#25D366" }}
+      >
+        <MessageCircle className="h-6 w-6 text-white" />
+      </a>
     </div>
   );
 }
