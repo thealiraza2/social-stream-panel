@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,19 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const ruleResults = useMemo(() => passwordRules.map((r) => ({ ...r, passed: r.test(password) })), [password]);
-  const allPassed = ruleResults.every((r) => r.passed);
+  const passedCount = ruleResults.filter((r) => r.passed).length;
+  const allPassed = passedCount === ruleResults.length;
+
+  // Strength meter: 0-2 weak, 3-4 fair, 5 strong
+  const strengthPercent = (passedCount / ruleResults.length) * 100;
+  const strengthLabel = passedCount <= 2 ? "Weak" : passedCount <= 4 ? "Fair" : "Strong";
+  const strengthColor = passedCount <= 2 ? "hsl(var(--strength-weak))" : passedCount <= 4 ? "hsl(var(--strength-fair))" : "hsl(var(--strength-strong))";
 
   const handleReferral = async () => {
     const refSlug = localStorage.getItem("referralSlug");
@@ -62,10 +69,16 @@ const Signup = () => {
     return !!domain && ALLOWED_DOMAINS.includes(domain);
   };
 
+  const startCooldown = () => {
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 2000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmailDomain(email)) {
       toast({ title: "Invalid Email", description: "Please use a valid personal email (Gmail, Hotmail, Yahoo, etc.) to register.", variant: "destructive" });
+      startCooldown();
       return;
     }
     if (!allPassed) return;
@@ -77,6 +90,7 @@ const Signup = () => {
       navigate("/verify-email");
     } catch (err: any) {
       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
+      startCooldown();
     } finally {
       setLoading(false);
     }
@@ -204,32 +218,47 @@ const Signup = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {/* Real-time password rules */}
+
+              {/* Strength meter bar */}
               {password.length > 0 && (
-                <div className="mt-2 space-y-1.5 rounded-lg border border-border bg-muted/50 p-3">
-                  {ruleResults.map((r) => (
-                    <div key={r.label} className="flex items-center gap-2 text-xs">
-                      {r.passed ? (
-                        <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                      ) : (
-                        <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      )}
-                      <span className={r.passed ? "text-muted-foreground line-through" : "text-foreground font-medium"}>
-                        {r.label}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-2 mt-2">
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full strength-bar"
+                      style={{ width: `${strengthPercent}%`, backgroundColor: strengthColor }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium" style={{ color: strengthColor }}>{strengthLabel}</span>
+                    <span className="text-xs text-muted-foreground">{passedCount}/{ruleResults.length} requirements</span>
+                  </div>
+
+                  {/* Rule checklist */}
+                  <div className="space-y-1 rounded-lg border border-border bg-muted/30 p-3">
+                    {ruleResults.map((r) => (
+                      <div key={r.label} className="flex items-center gap-2 text-xs">
+                        {r.passed ? (
+                          <Check className="h-3.5 w-3.5 text-success shrink-0" />
+                        ) : (
+                          <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                        )}
+                        <span className={r.passed ? "text-muted-foreground line-through" : "text-foreground font-medium"}>
+                          {r.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold"
-              disabled={loading || !allPassed}
+              className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold btn-glow"
+              disabled={loading || !allPassed || cooldown}
             >
-              {loading ? "Creating account..." : "Create Account"}
-              {!loading && <ChevronRight className="ml-1 h-4 w-4" />}
+              {loading ? "Creating account..." : cooldown ? "Please wait..." : "Create Account"}
+              {!loading && !cooldown && <ChevronRight className="ml-1 h-4 w-4" />}
             </Button>
           </form>
 
