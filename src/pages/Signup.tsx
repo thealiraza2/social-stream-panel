@@ -43,8 +43,19 @@ const Signup = () => {
     localStorage.removeItem("referralSlug");
   };
 
+  const ALLOWED_DOMAINS = ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com"];
+
+  const validateEmailDomain = (email: string): boolean => {
+    const domain = email.split("@")[1]?.toLowerCase();
+    return !!domain && ALLOWED_DOMAINS.includes(domain);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmailDomain(email)) {
+      toast({ title: "Invalid Email", description: "Please use a valid personal email (Gmail, Hotmail, Yahoo, etc.) to register.", variant: "destructive" });
+      return;
+    }
     if (password.length < 6) {
       toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
       return;
@@ -53,8 +64,8 @@ const Signup = () => {
     try {
       await signup(email, password, displayName);
       await handleReferral();
-      toast({ title: "Account created!", description: "Welcome to BudgetSMM!" });
-      navigate("/dashboard");
+      toast({ title: "Account created!", description: "Please verify your email to continue." });
+      navigate("/verify-email");
     } catch (err: any) {
       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
     } finally {
