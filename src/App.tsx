@@ -83,6 +83,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/banned" element={<Banned />} />
               <Route path="/maintenance" element={<Maintenance />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
               {/* User Routes */}
