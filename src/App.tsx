@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import Banned from "./pages/Banned";
 import Maintenance from "./pages/Maintenance";
+import VerifyEmail from "./pages/VerifyEmail";
 import ReferralRedirect from "./pages/ReferralRedirect";
 
 import UserDashboard from "./pages/user/Dashboard";
