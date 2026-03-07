@@ -3,8 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, ShoppingCart, Plus, Banknote, ClipboardList, ArrowRight, Layers, MessageSquare, TrendingUp, Clock, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { Wallet, ShoppingCart, Plus, Banknote, ClipboardList, ArrowRight, Layers, MessageSquare, TrendingUp, Clock, CheckCircle2, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -226,8 +227,15 @@ const UserDashboard = () => {
             )}
           </div>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+              ))}
             </div>
           ) : recentOrders.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">

@@ -4,26 +4,35 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Zap, CheckCircle2, ChevronRight } from "lucide-react";
+import { LogIn, Zap, CheckCircle2, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const startCooldown = () => {
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
+      toast({ title: "Welcome back!", description: "You've been signed in successfully." });
       navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Login failed", description: err.message, variant: "destructive" });
+      startCooldown();
     } finally {
       setLoading(false);
     }
@@ -33,6 +42,7 @@ const Login = () => {
     setGoogleLoading(true);
     try {
       await loginWithGoogle();
+      toast({ title: "Welcome back!", description: "Signed in with Google successfully." });
       navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Google login failed", description: err.message, variant: "destructive" });
@@ -126,12 +136,34 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-12" />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-              {!loading && <ChevronRight className="ml-1 h-4 w-4" />}
+            <Button
+              type="submit"
+              className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold btn-glow"
+              disabled={loading || cooldown}
+            >
+              {loading ? "Signing in..." : cooldown ? "Please wait..." : "Sign In"}
+              {!loading && !cooldown && <ChevronRight className="ml-1 h-4 w-4" />}
             </Button>
           </form>
 

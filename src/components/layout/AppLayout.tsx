@@ -6,7 +6,7 @@ import { FloatingSupport } from "@/components/FloatingSupport";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full transition-colors duration-700">
+      <div className="min-h-screen flex w-full transition-colors duration-500">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <TopNavbar />

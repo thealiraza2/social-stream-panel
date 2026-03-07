@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 body {
-  transition: background-color 0.7s ease, color 0.7s ease;
+  transition: background-color 0.5s ease, color 0.4s ease;
 }
 
 @layer base {
   :root {
-    --background: 240 20% 99%;
+    --background: 0 0% 99%;
     --foreground: 240 10% 10%;
 
     --card: 0 0% 100%;
@@ -38,7 +38,7 @@ body {
 
     --radius: 0.75rem;
 
-    --sidebar-background: 240 20% 98%;
+    --sidebar-background: 240 10% 98%;
     --sidebar-foreground: 240 5% 26%;
     --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -57,26 +57,30 @@ body {
     --warning-foreground: 0 0% 100%;
     --info: 220 90% 56%;
     --info-foreground: 0 0% 100%;
+
+    --strength-weak: 0 84% 60%;
+    --strength-fair: 38 92% 50%;
+    --strength-strong: 152 69% 45%;
   }
 
   .dark {
-    --background: 240 10% 6%;
-    --foreground: 0 0% 95%;
+    --background: 240 10% 4%;
+    --foreground: 240 6% 90%;
 
-    --card: 240 10% 9%;
-    --card-foreground: 0 0% 95%;
+    --card: 240 8% 8%;
+    --card-foreground: 240 6% 90%;
 
-    --popover: 240 10% 9%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 240 8% 8%;
+    --popover-foreground: 240 6% 90%;
 
     --primary: 262 83% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 16%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 240 6% 90%;
 
-    --muted: 240 5% 16%;
-    --muted-foreground: 240 4% 64%;
+    --muted: 240 6% 12%;
+    --muted-foreground: 240 4% 55%;
 
     --accent: 174 72% 46%;
     --accent-foreground: 0 0% 100%;
@@ -84,17 +88,17 @@ body {
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 95%;
 
-    --border: 240 5% 18%;
-    --input: 240 5% 18%;
+    --border: 240 5% 14%;
+    --input: 240 5% 14%;
     --ring: 262 83% 65%;
 
-    --sidebar-background: 240 10% 8%;
-    --sidebar-foreground: 240 5% 85%;
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 240 5% 75%;
     --sidebar-primary: 262 83% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 262 40% 16%;
+    --sidebar-accent: 262 40% 12%;
     --sidebar-accent-foreground: 262 60% 80%;
-    --sidebar-border: 240 5% 15%;
+    --sidebar-border: 240 5% 12%;
     --sidebar-ring: 262 83% 65%;
 
     --gradient-start: 262 83% 65%;
@@ -107,6 +111,10 @@ body {
     --warning-foreground: 0 0% 100%;
     --info: 220 90% 60%;
     --info-foreground: 0 0% 100%;
+
+    --strength-weak: 0 72% 55%;
+    --strength-fair: 38 85% 55%;
+    --strength-strong: 152 69% 50%;
   }
 }
 
@@ -166,5 +174,34 @@ body {
   }
   .font-body {
     font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Premium CTA glow */
+  .btn-glow {
+    box-shadow: 0 4px 24px -4px hsl(var(--primary) / 0.35);
+    transition: box-shadow 0.3s ease, transform 0.15s ease;
+  }
+  .btn-glow:hover {
+    box-shadow: 0 8px 32px -4px hsl(var(--primary) / 0.5);
+  }
+  .btn-glow:active {
+    transform: scale(0.96);
+  }
+  .dark .btn-glow {
+    box-shadow: 0 4px 28px -4px hsl(var(--primary) / 0.45);
+  }
+  .dark .btn-glow:hover {
+    box-shadow: 0 8px 36px -4px hsl(var(--primary) / 0.6);
+  }
+
+  /* Glass effect */
+  .glass {
+    backdrop-filter: blur(12px) saturate(1.8);
+    -webkit-backdrop-filter: blur(12px) saturate(1.8);
+  }
+
+  /* Password strength bar */
+  .strength-bar {
+    transition: width 0.4s ease, background-color 0.4s ease;
   }
 }
