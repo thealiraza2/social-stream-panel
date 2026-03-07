@@ -752,7 +752,7 @@ export default function LandingPage() {
 
       {/* ==================== FLOATING WHATSAPP BUTTON ==================== */}
       <a
-        href="https://wa.me/923000000000"
+        href="https://wa.me/923064482383"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contact BudgetSMM support on WhatsApp"
