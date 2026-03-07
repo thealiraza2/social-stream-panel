@@ -1,23 +1,35 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Zap, CheckCircle2, ChevronRight } from "lucide-react";
+import { UserPlus, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+
+const passwordRules = [
+  { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+  { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  { label: "One special character (!@#$%^&*)", test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+];
 
 const Signup = () => {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const ruleResults = useMemo(() => passwordRules.map((r) => ({ ...r, passed: r.test(password) })), [password]);
+  const allPassed = ruleResults.every((r) => r.passed);
 
   const handleReferral = async () => {
     const refSlug = localStorage.getItem("referralSlug");
@@ -56,10 +68,7 @@ const Signup = () => {
       toast({ title: "Invalid Email", description: "Please use a valid personal email (Gmail, Hotmail, Yahoo, etc.) to register.", variant: "destructive" });
       return;
     }
-    if (password.length < 6) {
-      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
-      return;
-    }
+    if (!allPassed) return;
     setLoading(true);
     try {
       await signup(email, password, displayName);
@@ -176,10 +185,49 @@ const Signup = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-12" />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {/* Real-time password rules */}
+              {password.length > 0 && (
+                <div className="mt-2 space-y-1.5 rounded-lg border border-border bg-muted/50 p-3">
+                  {ruleResults.map((r) => (
+                    <div key={r.label} className="flex items-center gap-2 text-xs">
+                      {r.passed ? (
+                        <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      )}
+                      <span className={r.passed ? "text-muted-foreground line-through" : "text-foreground font-medium"}>
+                        {r.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <Button type="submit" className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold"
+              disabled={loading || !allPassed}
+            >
               {loading ? "Creating account..." : "Create Account"}
               {!loading && <ChevronRight className="ml-1 h-4 w-4" />}
             </Button>
