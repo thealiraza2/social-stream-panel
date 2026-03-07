@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import Banned from "./pages/Banned";
 import Maintenance from "./pages/Maintenance";
+import VerifyEmail from "./pages/VerifyEmail";
 import ReferralRedirect from "./pages/ReferralRedirect";
 
 import UserDashboard from "./pages/user/Dashboard";
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/banned" element={<Banned />} />
               <Route path="/maintenance" element={<Maintenance />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
               {/* User Routes */}
