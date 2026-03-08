@@ -237,6 +237,7 @@ body {
       radial-gradient(ellipse at 80% 20%, hsl(220 90% 56% / 0.1) 0%, transparent 50%),
       radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.08) 0%, transparent 50%);
     animation: mesh-move 20s ease-in-out infinite alternate;
+    will-change: transform;
   }
   .dark .mesh-gradient::before {
     background:
