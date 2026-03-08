@@ -70,6 +70,15 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // TICKET MESSAGES COLLECTION
+    // ==========================================
+    match /ticket_messages/{msgId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // ==========================================
     // SERVICES COLLECTION (public read, admin write)
     // ==========================================
     match /services/{serviceId} {
