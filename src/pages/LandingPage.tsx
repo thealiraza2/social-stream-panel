@@ -639,7 +639,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== DASHBOARD MOCKUP ==================== */}
-      <AnimatedSection className="relative overflow-hidden">
+      <AnimatedSection className="relative overflow-hidden" isMobile={isMobile}>
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="max-w-lg">
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
