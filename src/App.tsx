@@ -20,6 +20,7 @@ const Banned = lazy(() => import("./pages/Banned"));
 const Maintenance = lazy(() => import("./pages/Maintenance"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
+const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // User pages — lazy loaded
