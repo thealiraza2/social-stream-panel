@@ -858,7 +858,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== CTA BANNER ==================== */}
-      <AnimatedSection id="how-it-works" className="text-center">
+      <AnimatedSection id="how-it-works" className="text-center" isMobile={isMobile}>
         <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{
