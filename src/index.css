@@ -233,17 +233,28 @@ body {
     width: 200%;
     height: 200%;
     background:
-      radial-gradient(ellipse at 20% 50%, hsl(262 83% 58% / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, hsl(220 90% 56% / 0.1) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.08) 0%, transparent 50%);
+      radial-gradient(ellipse at 15% 50%, hsl(0 80% 50% / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 20%, hsl(350 70% 40% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 85%, hsl(0 60% 35% / 0.05) 0%, transparent 50%);
     animation: mesh-move 20s ease-in-out infinite alternate;
     will-change: transform;
   }
   .dark .mesh-gradient::before {
     background:
-      radial-gradient(ellipse at 20% 50%, hsl(262 83% 58% / 0.18) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, hsl(220 90% 56% / 0.14) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.1) 0%, transparent 50%);
+      radial-gradient(ellipse at 10% 40%, hsl(0 80% 50% / 0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 90% 15%, hsl(350 70% 40% / 0.14) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 90%, hsl(0 60% 30% / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, hsl(10 70% 35% / 0.08) 0%, transparent 40%);
+  }
+  .mesh-gradient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, transparent 30%, hsl(0 0% 0% / 0.15) 100%);
+    pointer-events: none;
+  }
+  .dark .mesh-gradient::after {
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, hsl(0 0% 0% / 0.4) 100%);
   }
   @keyframes mesh-move {
     0% { transform: translate(0, 0); }
@@ -268,15 +279,15 @@ body {
     inset: 0;
     z-index: -1;
     background-image:
-      linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+      linear-gradient(hsl(var(--foreground) / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.02) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%);
   }
   .dark .grid-pattern {
     background-image:
-      linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+      linear-gradient(hsl(0 0% 100% / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.025) 1px, transparent 1px);
   }
 }
