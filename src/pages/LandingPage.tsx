@@ -505,7 +505,7 @@ export default function LandingPage() {
                           }`}
                         >
                           {PLATFORM_ICONS[p]}
-                          <span className="hidden sm:inline">{p.slice(0, 5)}</span>
+                          <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
                         </button>
                       ))}
                     </div>
