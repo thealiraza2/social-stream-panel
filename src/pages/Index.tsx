@@ -1,28 +1,45 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import { PageLoader } from "@/components/PageLoader";
 
 const LandingPage = lazy(() => import("./LandingPage"));
 
-const Index = () => {
-  const { user, loading } = useAuth();
+// Lazy-load the auth check only when we have a cached session
+const AuthRedirect = lazy(() =>
+  import("@/contexts/AuthContext").then((mod) => ({
+    default: function AuthRedirectInner() {
+      const { user, loading } = mod.useAuth();
+      if (loading) return <PageLoader />;
+      if (user) return <Navigate to="/dashboard" replace />;
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <LandingPage />
+        </Suspense>
+      );
+    },
+  }))
+);
 
-  if (loading) {
+const Index = () => {
+  // Fast path: check if Firebase has any cached auth user
+  // Firebase persists auth in indexedDB, but also sets a key pattern in localStorage
+  const hasSession = Object.keys(localStorage).some(
+    (key) => key.startsWith("firebase:authUser:")
+  );
+
+  if (!hasSession) {
+    // No cached user — render landing page immediately without loading Firebase auth
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <Suspense fallback={<PageLoader />}>
+        <LandingPage />
+      </Suspense>
     );
   }
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // Has cached session — load auth context to check if still valid
   return (
     <Suspense fallback={<PageLoader />}>
-      <LandingPage />
+      <AuthRedirect />
     </Suspense>
   );
 };
