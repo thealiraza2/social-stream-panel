@@ -550,7 +550,7 @@ export default function LandingPage() {
                     <p className="text-3xl font-extrabold text-primary-foreground font-display">
                       Rs. {estimatedPrice.toFixed(2)}
                     </p>
-                    <p className="mt-1 text-xs text-primary-foreground/60">
+                    <p className="mt-1 text-xs text-primary-foreground/80">
                       Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
                     </p>
                   </div>
