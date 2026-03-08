@@ -666,23 +666,39 @@ export default function LandingPage() {
               ))}
             </ul>
           </div>
-          <motion.div
-            className="relative mx-auto w-full max-w-lg lg:max-w-none"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
-            <img
-              src={heroImg}
-              alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
-              className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
-              width={800}
-              height={500}
-              fetchPriority="high"
-              loading="eager"
-              style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
-            />
-          </motion.div>
+          {isMobile ? (
+            <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+              <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
+              <img
+                src={heroImg}
+                alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
+                className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
+                width={800}
+                height={500}
+                fetchPriority="high"
+                loading="eager"
+                style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
+              />
+            </div>
+          ) : (
+            <motion.div
+              className="relative mx-auto w-full max-w-lg lg:max-w-none"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
+              <img
+                src={heroImg}
+                alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
+                className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
+                width={800}
+                height={500}
+                fetchPriority="high"
+                loading="eager"
+                style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
+              />
+            </motion.div>
+          )}
         </div>
       </AnimatedSection>
 
