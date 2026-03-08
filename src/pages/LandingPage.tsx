@@ -343,7 +343,7 @@ export default function LandingPage() {
           }`}
         >
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <button onClick={() => scrollTo("hero")}>
+            <button onClick={() => scrollTo("hero")} aria-label="Go to homepage">
               <BrandLogo />
             </button>
 
@@ -360,7 +360,7 @@ export default function LandingPage() {
             </div>
 
             <div className="hidden items-center gap-3 md:flex">
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full" aria-label="Toggle theme">
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
                 <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
               </Button>
@@ -373,11 +373,11 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center gap-2 md:hidden">
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full" aria-label="Toggle theme">
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
                 <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle mobile menu">
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </div>
@@ -418,8 +418,8 @@ export default function LandingPage() {
       {/* ==================== HERO (Staggered Reveal) ==================== */}
       <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
         {/* Ambient orbs */}
-        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px] animate-float-slow" />
-        <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px] animate-float" />
+        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
+        <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-accent/6 blur-[100px]" />
 
         <div className="mx-auto max-w-7xl">
@@ -546,11 +546,11 @@ export default function LandingPage() {
 
                   {/* Estimated Price */}
                   <div className="rounded-2xl gradient-primary p-4 text-center">
-                    <p className="text-xs font-medium text-primary-foreground/70">Estimated Price</p>
+                    <p className="text-xs font-medium text-primary-foreground/80">Estimated Price</p>
                     <p className="text-3xl font-extrabold text-primary-foreground font-display">
                       Rs. {estimatedPrice.toFixed(2)}
                     </p>
-                    <p className="mt-1 text-xs text-primary-foreground/60">
+                    <p className="mt-1 text-xs text-primary-foreground/80">
                       Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
                     </p>
                   </div>
@@ -579,7 +579,7 @@ export default function LandingPage() {
                   <p className="text-2xl font-extrabold font-display sm:text-3xl">
                     {s.static ?? `${s.data!.count.toLocaleString()}${s.suffix}`}
                   </p>
-                  <p className="text-xs font-medium text-primary-foreground/70">{s.label}</p>
+                  <p className="text-xs font-medium text-primary-foreground/80">{s.label}</p>
                 </div>
               </div>
             ))}
@@ -594,7 +594,7 @@ export default function LandingPage() {
             <Activity className="h-4 w-4 text-success animate-pulse" />
             <span className="text-sm font-semibold text-foreground">Live Orders Feed</span>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-pulse" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
             </span>
           </div>
@@ -655,7 +655,7 @@ export default function LandingPage() {
             </ul>
           </div>
           <motion.div
-            className="relative mx-auto w-full max-w-lg lg:max-w-none animate-float-slow"
+            className="relative mx-auto w-full max-w-lg lg:max-w-none"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           >
@@ -664,7 +664,10 @@ export default function LandingPage() {
               src={heroImg}
               alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
               className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
-              loading="lazy"
+              width={800}
+              height={500}
+              fetchPriority="high"
+              loading="eager"
               style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
             />
           </motion.div>
@@ -699,7 +702,7 @@ export default function LandingPage() {
               <p className="relative text-xs text-muted-foreground">{s.service}</p>
 
               {/* Hover reveal */}
-              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100 max-h-0 group-hover:max-h-24 overflow-hidden">
+              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
                 <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
                   <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
                   <p className="text-[10px] font-medium text-muted-foreground">Start</p>
@@ -775,16 +778,16 @@ export default function LandingPage() {
                 </div>
                 <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
               </button>
-              <motion.div
-                initial={false}
-                animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden"
+              <div
+                className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
               >
-                <div className="px-5 pb-5 pl-13">
-                  <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                <div className="overflow-hidden">
+                  <div className="px-5 pb-5 pl-13">
+                    <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -844,8 +847,8 @@ export default function LandingPage() {
                 <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
             </div>
-            <motion.div className="mx-auto max-w-xs animate-float" whileHover={{ scale: 1.05 }}>
-              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" />
+            <motion.div className="mx-auto max-w-xs" whileHover={{ scale: 1.05 }}>
+              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" width={400} height={300} />
             </motion.div>
           </div>
         </div>
