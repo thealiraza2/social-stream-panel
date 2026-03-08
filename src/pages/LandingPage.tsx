@@ -79,14 +79,24 @@ function AnimatedSection({
   className = "",
   id,
   delay = 0,
+  isMobile = false,
 }: {
   children: React.ReactNode;
   className?: string;
   id?: string;
   delay?: number;
+  isMobile?: boolean;
 }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  if (isMobile) {
+    return (
+      <section ref={ref} id={id} className={`py-20 md:py-28 px-4 sm:px-6 lg:px-8 ${className}`}>
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </section>
+    );
+  }
 
   return (
     <motion.section
