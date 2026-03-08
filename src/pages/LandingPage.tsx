@@ -546,7 +546,7 @@ export default function LandingPage() {
 
                   {/* Estimated Price */}
                   <div className="rounded-2xl gradient-primary p-4 text-center">
-                    <p className="text-xs font-medium text-primary-foreground/70">Estimated Price</p>
+                    <p className="text-xs font-medium text-primary-foreground/80">Estimated Price</p>
                     <p className="text-3xl font-extrabold text-primary-foreground font-display">
                       Rs. {estimatedPrice.toFixed(2)}
                     </p>
