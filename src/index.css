@@ -246,8 +246,8 @@ body {
       radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.1) 0%, transparent 50%);
   }
   @keyframes mesh-move {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(-5%, 3%) rotate(3deg); }
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-5%, 3%); }
   }
 
   /* Grid pattern overlay */

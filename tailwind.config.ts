@@ -97,8 +97,8 @@ export default {
           "50%": { boxShadow: "0 0 25px -3px hsl(262 83% 58% / 0.5)" },
         },
         "float-slow": {
-          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
-          "50%": { transform: "translateY(-8px) rotate(1deg)" },
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
         },
       },
       animation: {
