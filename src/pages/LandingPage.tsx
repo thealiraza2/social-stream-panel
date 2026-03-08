@@ -365,10 +365,10 @@ export default function LandingPage() {
                 <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
               </Button>
               <Button variant="outline" className="rounded-full border-border/50" asChild>
-                <Link to="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
+                <Link to="/login" {...prefetch("/login")}><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
               </Button>
               <Button className="rounded-full gradient-primary text-primary-foreground border-0 btn-glow" asChild>
-                <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
+                <Link to="/signup" {...prefetch("/signup")}><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
               </Button>
             </div>
 
