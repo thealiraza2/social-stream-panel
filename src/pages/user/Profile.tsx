@@ -14,7 +14,7 @@ import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCre
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { toast } = useToast();
 
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
@@ -25,6 +25,9 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const initials = profile?.displayName
     ?.split(" ")
