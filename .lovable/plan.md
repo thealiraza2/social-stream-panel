@@ -1,38 +1,92 @@
 
 
-# Fix: Fully Automated Provider Order Routing
+## Dashboard Slow Load Fix — Fast First Paint
 
-## The Problem
+### Problem
+When navigating to `/dashboard` or `/admin`, the user sees a **spinner for 3-5+ seconds** because of this sequential blocking chain:
 
-The proxy endpoint (`api/proxy-provider.ts`) is broken for order placement. It **hardcodes** `action: "services"` and ignores all other parameters sent from the frontend (like `action: "add"`, `service`, `link`, `quantity`). So when a user places an order, the proxy fetches the service list instead of placing the actual order with the provider.
+1. `AuthProvider` → Firebase SDK init + `onAuthStateChanged` (network) → `fetchProfile` getDoc (network)
+2. `ProtectedRoute` → `useMaintenanceMode` onSnapshot (network) — blocks until loaded
+3. Only THEN does the dashboard component mount
+4. Dashboard does its OWN data fetch (orders, transactions, etc.)
+5. **recharts** (80KB+) is eagerly imported in both dashboards
 
-## The Fix
+That's **3 sequential network calls** before ANY UI renders — on mobile with slow connections this is brutal.
 
-Update `api/proxy-provider.ts` to be a **generic proxy** that forwards ALL parameters from the request body to the provider API as form data.
+### Solution: Cache + Optimistic Rendering
 
-### Changes to `api/proxy-provider.ts`
+#### 1. Cache auth profile in localStorage (`src/contexts/AuthContext.tsx`)
+- On successful profile fetch, save to `localStorage` as `cached_profile`
+- On mount, immediately set profile from cache (so `loading` can be false faster)
+- Background-refresh the real profile from Firestore
+- This eliminates the spinner wait for returning users
 
-Instead of hardcoding `action: "services"`, the proxy will:
-1. Extract `apiUrl` and `apiKey` from the request body
-2. Forward **all remaining fields** (`action`, `service`, `link`, `quantity`, etc.) as URL-encoded form data to the provider
-3. This makes it work for ALL SMM panel API actions: `services`, `add`, `status`, `cancel`, `refill`, etc.
+#### 2. Cache maintenance mode (`src/components/ProtectedRoute.tsx`)
+- Cache the maintenance boolean in `sessionStorage`
+- Initialize state from cache so `loaded` is `true` immediately
+- Still subscribe via `onSnapshot` to get real-time updates
+- This removes the second blocking network call
 
-```text
-Before (broken):
-  formData.append("key", apiKey);
-  formData.append("action", "services");  // <-- always "services"
+#### 3. Show dashboard skeleton instantly (`src/pages/user/Dashboard.tsx` + `src/pages/admin/Dashboard.tsx`)
+- Show stat cards with skeleton placeholders immediately (no spinner)
+- Data loads in background and fills in
+- User sees the layout structure within milliseconds
 
-After (fixed):
-  formData.append("key", apiKey);
-  // Forward all other fields dynamically
-  for (const [key, value] of Object.entries(rest)) {
-    formData.append(key, String(value));
+#### 4. Lazy-load recharts (`src/pages/user/Dashboard.tsx` + `src/pages/admin/Dashboard.tsx`)
+- The spending chart is below the fold — wrap it in `lazy()` + `Suspense`
+- Saves ~80KB from the initial chunk parse
+
+#### 5. Parallel data fetches (`src/pages/admin/Dashboard.tsx`)
+- Admin dashboard fetches 5 collections sequentially with individual `getDocs` — already uses separate calls but they're in one async function. Ensure `Promise.all` is used (it already is implicitly since they're `await`ed separately — need to parallelize them).
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/contexts/AuthContext.tsx` | Cache profile in localStorage, load cached on mount |
+| `src/components/ProtectedRoute.tsx` | Cache maintenance mode in sessionStorage |
+| `src/pages/user/Dashboard.tsx` | Skeleton-first UI, lazy-load recharts |
+| `src/pages/admin/Dashboard.tsx` | Skeleton-first UI, lazy-load recharts, parallelize fetches |
+
+### Key Logic
+
+**AuthContext — Cached profile for instant load:**
+```tsx
+// On mount: load cached profile immediately
+const cached = localStorage.getItem("cached_profile");
+const [profile, setProfile] = useState<UserProfile | null>(cached ? JSON.parse(cached) : null);
+const [loading, setLoading] = useState(!cached); // if cached, not loading!
+
+// On fetch: update cache
+const fetchProfile = async (u: User) => {
+  const snap = await getDoc(doc(db, "users", u.uid));
+  if (snap.exists()) {
+    const data = { uid: u.uid, ...snap.data() } as UserProfile;
+    setProfile(data);
+    localStorage.setItem("cached_profile", JSON.stringify(data));
+    return data;
   }
+  return null;
+};
 ```
 
-### Files Modified
-1. **`api/proxy-provider.ts`** -- Make it a generic forwarder instead of hardcoded "services" only
+**ProtectedRoute — Cached maintenance:**
+```tsx
+const [maintenance, setMaintenance] = useState(() => {
+  const cached = sessionStorage.getItem("maintenance_mode");
+  return cached === "true";
+});
+const [loaded, setLoaded] = useState(() => sessionStorage.getItem("maintenance_mode") !== null);
+```
 
-### No Frontend Changes Needed
-Both `NewOrder.tsx` and `BulkOrder.tsx` already send the correct parameters (`action: "add"`, `service`, `link`, `quantity`). Once the proxy forwards them properly, orders will automatically go to the provider API and come back with a `providerOrderId`.
+**Admin Dashboard — Parallel fetches:**
+```tsx
+const [usersSnap, ordersSnap, txSnap, svcSnap, ticketSnap] = await Promise.all([
+  getDocs(collection(db, "users")),
+  getDocs(collection(db, "orders")),
+  getDocs(collection(db, "transactions")),
+  getDocs(collection(db, "services")),
+  getDocs(collection(db, "tickets")),
+]);
+```
 
