@@ -458,7 +458,7 @@ export default function LandingPage() {
                   className="rounded-full gradient-primary text-primary-foreground border-0 px-8 text-base group btn-glow"
                   asChild
                 >
-                  <Link to="/signup">
+                  <Link to="/signup" {...prefetch("/signup")}>
                     Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
