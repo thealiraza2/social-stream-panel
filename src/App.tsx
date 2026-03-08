@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,61 +8,67 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PageLoader } from "@/components/PageLoader";
 
+// Critical path — loaded eagerly
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import NotFound from "./pages/NotFound";
-import Banned from "./pages/Banned";
-import Maintenance from "./pages/Maintenance";
-import VerifyEmail from "./pages/VerifyEmail";
-import ReferralRedirect from "./pages/ReferralRedirect";
 
-import UserDashboard from "./pages/user/Dashboard";
-import NewOrder from "./pages/user/NewOrder";
-import BulkOrder from "./pages/user/BulkOrder";
-import OrderLogs from "./pages/user/OrderLogs";
-import AddFunds from "./pages/user/AddFunds";
-import Services from "./pages/user/Services";
-import Tickets from "./pages/user/Tickets";
-import Profile from "./pages/user/Profile";
-import Influencer from "./pages/user/Influencer";
-import InfluencerAssets from "./pages/user/InfluencerAssets";
-import InfluencerPayouts from "./pages/user/InfluencerPayouts";
+// Auth pages — lazy loaded
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Banned = lazy(() => import("./pages/Banned"));
+const Maintenance = lazy(() => import("./pages/Maintenance"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-import AdminDashboard from "./pages/admin/Dashboard";
-import ServiceManagement from "./pages/admin/ServiceManagement";
-import CategoryManagement from "./pages/admin/CategoryManagement";
-import UserManagement from "./pages/admin/UserManagement";
-import OrderManagement from "./pages/admin/OrderManagement";
-import PaymentManagement from "./pages/admin/PaymentManagement";
-import TicketManagement from "./pages/admin/TicketManagement";
-import TransactionLogs from "./pages/admin/TransactionLogs";
-import DripFeed from "./pages/admin/DripFeed";
-import Subscriptions from "./pages/admin/Subscriptions";
-import CancelledOrders from "./pages/admin/CancelledOrders";
-import BlacklistIP from "./pages/admin/BlacklistIP";
-import BlacklistLink from "./pages/admin/BlacklistLink";
-import BlacklistEmail from "./pages/admin/BlacklistEmail";
-import BlogCategories from "./pages/admin/BlogCategories";
-import BlogPosts from "./pages/admin/BlogPosts";
-import Subscribers from "./pages/admin/Subscribers";
-import UserActivity from "./pages/admin/UserActivity";
-import StaffManagement from "./pages/admin/StaffManagement";
-import StaffActivity from "./pages/admin/StaffActivity";
-import ChildPanels from "./pages/admin/ChildPanels";
-import Settings from "./pages/admin/Settings";
-import Providers from "./pages/admin/Providers";
-import ImportServices from "./pages/admin/ImportServices";
-import Modules from "./pages/admin/Modules";
-import News from "./pages/admin/News";
-import LanguagesPage from "./pages/admin/Languages";
-import FAQs from "./pages/admin/FAQs";
-import SystemLogs from "./pages/admin/SystemLogs";
-import PaymentBonuses from "./pages/admin/PaymentBonuses";
-import PaymentMethodsAdmin from "./pages/admin/PaymentMethods";
-import InfluencerManagement from "./pages/admin/InfluencerManagement";
-import MarketingAssetsAdmin from "./pages/admin/MarketingAssets";
+// User pages — lazy loaded
+const UserDashboard = lazy(() => import("./pages/user/Dashboard"));
+const NewOrder = lazy(() => import("./pages/user/NewOrder"));
+const BulkOrder = lazy(() => import("./pages/user/BulkOrder"));
+const OrderLogs = lazy(() => import("./pages/user/OrderLogs"));
+const AddFunds = lazy(() => import("./pages/user/AddFunds"));
+const Services = lazy(() => import("./pages/user/Services"));
+const Tickets = lazy(() => import("./pages/user/Tickets"));
+const Profile = lazy(() => import("./pages/user/Profile"));
+const Influencer = lazy(() => import("./pages/user/Influencer"));
+const InfluencerAssets = lazy(() => import("./pages/user/InfluencerAssets"));
+const InfluencerPayouts = lazy(() => import("./pages/user/InfluencerPayouts"));
+
+// Admin pages — lazy loaded
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const ServiceManagement = lazy(() => import("./pages/admin/ServiceManagement"));
+const CategoryManagement = lazy(() => import("./pages/admin/CategoryManagement"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const OrderManagement = lazy(() => import("./pages/admin/OrderManagement"));
+const PaymentManagement = lazy(() => import("./pages/admin/PaymentManagement"));
+const TicketManagement = lazy(() => import("./pages/admin/TicketManagement"));
+const TransactionLogs = lazy(() => import("./pages/admin/TransactionLogs"));
+const DripFeed = lazy(() => import("./pages/admin/DripFeed"));
+const Subscriptions = lazy(() => import("./pages/admin/Subscriptions"));
+const CancelledOrders = lazy(() => import("./pages/admin/CancelledOrders"));
+const BlacklistIP = lazy(() => import("./pages/admin/BlacklistIP"));
+const BlacklistLink = lazy(() => import("./pages/admin/BlacklistLink"));
+const BlacklistEmail = lazy(() => import("./pages/admin/BlacklistEmail"));
+const BlogCategories = lazy(() => import("./pages/admin/BlogCategories"));
+const BlogPosts = lazy(() => import("./pages/admin/BlogPosts"));
+const Subscribers = lazy(() => import("./pages/admin/Subscribers"));
+const UserActivity = lazy(() => import("./pages/admin/UserActivity"));
+const StaffManagement = lazy(() => import("./pages/admin/StaffManagement"));
+const StaffActivity = lazy(() => import("./pages/admin/StaffActivity"));
+const ChildPanels = lazy(() => import("./pages/admin/ChildPanels"));
+const Settings = lazy(() => import("./pages/admin/Settings"));
+const Providers = lazy(() => import("./pages/admin/Providers"));
+const ImportServices = lazy(() => import("./pages/admin/ImportServices"));
+const Modules = lazy(() => import("./pages/admin/Modules"));
+const News = lazy(() => import("./pages/admin/News"));
+const LanguagesPage = lazy(() => import("./pages/admin/Languages"));
+const FAQs = lazy(() => import("./pages/admin/FAQs"));
+const SystemLogs = lazy(() => import("./pages/admin/SystemLogs"));
+const PaymentBonuses = lazy(() => import("./pages/admin/PaymentBonuses"));
+const PaymentMethodsAdmin = lazy(() => import("./pages/admin/PaymentMethods"));
+const InfluencerManagement = lazy(() => import("./pages/admin/InfluencerManagement"));
+const MarketingAssetsAdmin = lazy(() => import("./pages/admin/MarketingAssets"));
 
 const queryClient = new QueryClient();
 
@@ -77,65 +84,67 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/banned" element={<Banned />} />
-              <Route path="/maintenance" element={<Maintenance />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/ref/:slug" element={<ReferralRedirect />} />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/banned" element={<Banned />} />
+                <Route path="/maintenance" element={<Maintenance />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/ref/:slug" element={<ReferralRedirect />} />
 
-              {/* User Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
-              <Route path="/new-order" element={<ProtectedRoute><AppLayout><NewOrder /></AppLayout></ProtectedRoute>} />
-              <Route path="/bulk-order" element={<ProtectedRoute><AppLayout><BulkOrder /></AppLayout></ProtectedRoute>} />
-              <Route path="/orders" element={<ProtectedRoute><AppLayout><OrderLogs /></AppLayout></ProtectedRoute>} />
-              <Route path="/add-funds" element={<ProtectedRoute><AppLayout><AddFunds /></AppLayout></ProtectedRoute>} />
-              <Route path="/services" element={<ProtectedRoute><AppLayout><Services /></AppLayout></ProtectedRoute>} />
-              <Route path="/tickets" element={<ProtectedRoute><AppLayout><Tickets /></AppLayout></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
-              <Route path="/influencer" element={<ProtectedRoute><AppLayout><Influencer /></AppLayout></ProtectedRoute>} />
-              <Route path="/influencer/assets" element={<ProtectedRoute><AppLayout><InfluencerAssets /></AppLayout></ProtectedRoute>} />
-              <Route path="/influencer/payouts" element={<ProtectedRoute><AppLayout><InfluencerPayouts /></AppLayout></ProtectedRoute>} />
+                {/* User Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
+                <Route path="/new-order" element={<ProtectedRoute><AppLayout><NewOrder /></AppLayout></ProtectedRoute>} />
+                <Route path="/bulk-order" element={<ProtectedRoute><AppLayout><BulkOrder /></AppLayout></ProtectedRoute>} />
+                <Route path="/orders" element={<ProtectedRoute><AppLayout><OrderLogs /></AppLayout></ProtectedRoute>} />
+                <Route path="/add-funds" element={<ProtectedRoute><AppLayout><AddFunds /></AppLayout></ProtectedRoute>} />
+                <Route path="/services" element={<ProtectedRoute><AppLayout><Services /></AppLayout></ProtectedRoute>} />
+                <Route path="/tickets" element={<ProtectedRoute><AppLayout><Tickets /></AppLayout></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+                <Route path="/influencer" element={<ProtectedRoute><AppLayout><Influencer /></AppLayout></ProtectedRoute>} />
+                <Route path="/influencer/assets" element={<ProtectedRoute><AppLayout><InfluencerAssets /></AppLayout></ProtectedRoute>} />
+                <Route path="/influencer/payouts" element={<ProtectedRoute><AppLayout><InfluencerPayouts /></AppLayout></ProtectedRoute>} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
-              <Route path="/admin/orders" element={<AdminPage><OrderManagement /></AdminPage>} />
-              <Route path="/admin/drip-feed" element={<AdminPage><DripFeed /></AdminPage>} />
-              <Route path="/admin/subscriptions" element={<AdminPage><Subscriptions /></AdminPage>} />
-              <Route path="/admin/cancelled" element={<AdminPage><CancelledOrders /></AdminPage>} />
-              <Route path="/admin/services" element={<AdminPage><ServiceManagement /></AdminPage>} />
-              <Route path="/admin/categories" element={<AdminPage><CategoryManagement /></AdminPage>} />
-              <Route path="/admin/transactions" element={<AdminPage><TransactionLogs /></AdminPage>} />
-              <Route path="/admin/payments" element={<AdminPage><PaymentManagement /></AdminPage>} />
-              <Route path="/admin/payment-bonuses" element={<AdminPage><PaymentBonuses /></AdminPage>} />
-              <Route path="/admin/payment-methods" element={<AdminPage><PaymentMethodsAdmin /></AdminPage>} />
-              <Route path="/admin/users" element={<AdminPage><UserManagement /></AdminPage>} />
-              <Route path="/admin/subscribers" element={<AdminPage><Subscribers /></AdminPage>} />
-              <Route path="/admin/user-activity" element={<AdminPage><UserActivity /></AdminPage>} />
-              <Route path="/admin/tickets" element={<AdminPage><TicketManagement /></AdminPage>} />
-              <Route path="/admin/blacklist-ip" element={<AdminPage><BlacklistIP /></AdminPage>} />
-              <Route path="/admin/blacklist-link" element={<AdminPage><BlacklistLink /></AdminPage>} />
-              <Route path="/admin/blacklist-email" element={<AdminPage><BlacklistEmail /></AdminPage>} />
-              <Route path="/admin/blog-categories" element={<AdminPage><BlogCategories /></AdminPage>} />
-              <Route path="/admin/blog-posts" element={<AdminPage><BlogPosts /></AdminPage>} />
-              <Route path="/admin/news" element={<AdminPage><News /></AdminPage>} />
-              <Route path="/admin/faqs" element={<AdminPage><FAQs /></AdminPage>} />
-              <Route path="/admin/staff" element={<AdminPage><StaffManagement /></AdminPage>} />
-              <Route path="/admin/staff-activity" element={<AdminPage><StaffActivity /></AdminPage>} />
-              <Route path="/admin/child-panels" element={<AdminPage><ChildPanels /></AdminPage>} />
-              <Route path="/admin/settings" element={<AdminPage><Settings /></AdminPage>} />
-              <Route path="/admin/providers" element={<AdminPage><Providers /></AdminPage>} />
-              <Route path="/admin/import-services" element={<AdminPage><ImportServices /></AdminPage>} />
-              <Route path="/admin/modules" element={<AdminPage><Modules /></AdminPage>} />
-              <Route path="/admin/languages" element={<AdminPage><LanguagesPage /></AdminPage>} />
-              <Route path="/admin/logs" element={<AdminPage><SystemLogs /></AdminPage>} />
-              <Route path="/admin/influencers" element={<AdminPage><InfluencerManagement /></AdminPage>} />
-              <Route path="/admin/marketing-assets" element={<AdminPage><MarketingAssetsAdmin /></AdminPage>} />
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+                <Route path="/admin/orders" element={<AdminPage><OrderManagement /></AdminPage>} />
+                <Route path="/admin/drip-feed" element={<AdminPage><DripFeed /></AdminPage>} />
+                <Route path="/admin/subscriptions" element={<AdminPage><Subscriptions /></AdminPage>} />
+                <Route path="/admin/cancelled" element={<AdminPage><CancelledOrders /></AdminPage>} />
+                <Route path="/admin/services" element={<AdminPage><ServiceManagement /></AdminPage>} />
+                <Route path="/admin/categories" element={<AdminPage><CategoryManagement /></AdminPage>} />
+                <Route path="/admin/transactions" element={<AdminPage><TransactionLogs /></AdminPage>} />
+                <Route path="/admin/payments" element={<AdminPage><PaymentManagement /></AdminPage>} />
+                <Route path="/admin/payment-bonuses" element={<AdminPage><PaymentBonuses /></AdminPage>} />
+                <Route path="/admin/payment-methods" element={<AdminPage><PaymentMethodsAdmin /></AdminPage>} />
+                <Route path="/admin/users" element={<AdminPage><UserManagement /></AdminPage>} />
+                <Route path="/admin/subscribers" element={<AdminPage><Subscribers /></AdminPage>} />
+                <Route path="/admin/user-activity" element={<AdminPage><UserActivity /></AdminPage>} />
+                <Route path="/admin/tickets" element={<AdminPage><TicketManagement /></AdminPage>} />
+                <Route path="/admin/blacklist-ip" element={<AdminPage><BlacklistIP /></AdminPage>} />
+                <Route path="/admin/blacklist-link" element={<AdminPage><BlacklistLink /></AdminPage>} />
+                <Route path="/admin/blacklist-email" element={<AdminPage><BlacklistEmail /></AdminPage>} />
+                <Route path="/admin/blog-categories" element={<AdminPage><BlogCategories /></AdminPage>} />
+                <Route path="/admin/blog-posts" element={<AdminPage><BlogPosts /></AdminPage>} />
+                <Route path="/admin/news" element={<AdminPage><News /></AdminPage>} />
+                <Route path="/admin/faqs" element={<AdminPage><FAQs /></AdminPage>} />
+                <Route path="/admin/staff" element={<AdminPage><StaffManagement /></AdminPage>} />
+                <Route path="/admin/staff-activity" element={<AdminPage><StaffActivity /></AdminPage>} />
+                <Route path="/admin/child-panels" element={<AdminPage><ChildPanels /></AdminPage>} />
+                <Route path="/admin/settings" element={<AdminPage><Settings /></AdminPage>} />
+                <Route path="/admin/providers" element={<AdminPage><Providers /></AdminPage>} />
+                <Route path="/admin/import-services" element={<AdminPage><ImportServices /></AdminPage>} />
+                <Route path="/admin/modules" element={<AdminPage><Modules /></AdminPage>} />
+                <Route path="/admin/languages" element={<AdminPage><LanguagesPage /></AdminPage>} />
+                <Route path="/admin/logs" element={<AdminPage><SystemLogs /></AdminPage>} />
+                <Route path="/admin/influencers" element={<AdminPage><InfluencerManagement /></AdminPage>} />
+                <Route path="/admin/marketing-assets" element={<AdminPage><MarketingAssetsAdmin /></AdminPage>} />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
