@@ -76,9 +76,45 @@ const UserManagement = () => {
       } else {
         updateData.banReason = "";
       }
+      if (form.status === "deleted") {
+        updateData.deletedAt = serverTimestamp();
+      }
+      if (form.status === "active") {
+        updateData.deletedAt = null;
+      }
       await updateDoc(doc(db, "users", editing.id), updateData);
       toast({ title: "User updated" });
       setDialogOpen(false);
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSoftDelete = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, "users", userId), { status: "deleted", deletedAt: serverTimestamp() });
+      toast({ title: "User soft-deleted" });
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleHardDelete = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      toast({ title: "User permanently deleted" });
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleRecover = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, "users", userId), { status: "active", deletedAt: null, banReason: "" });
+      toast({ title: "User recovered" });
       fetchFirstPage();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
