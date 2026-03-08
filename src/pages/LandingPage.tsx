@@ -600,7 +600,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== LIVE ORDER COUNTER ==================== */}
-      <AnimatedSection className="!py-12">
+      <AnimatedSection className="!py-12" isMobile={isMobile}>
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Activity className="h-4 w-4 text-success animate-pulse" />
