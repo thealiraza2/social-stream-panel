@@ -19,8 +19,9 @@ export interface UserProfile {
   email: string;
   role: "admin" | "user";
   balance: number;
-  status: "active" | "banned";
+  status: "active" | "banned" | "deleted";
   banReason?: string;
+  deletedAt?: any;
   createdAt: any;
 }
 

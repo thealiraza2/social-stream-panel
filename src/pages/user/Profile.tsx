@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Shield, Calendar, Save, KeyRound, Wallet, ShoppingCart, Clock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { User, Mail, Shield, Calendar, Save, KeyRound, Wallet, ShoppingCart, Clock, Trash2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { toast } = useToast();
 
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
@@ -24,6 +25,9 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const initials = profile?.displayName
     ?.split(" ")
@@ -181,6 +185,72 @@ const Profile = () => {
             <KeyRound className="mr-2 h-4 w-4" />
             {changingPassword ? "Changing..." : "Change Password"}
           </Button>
+        </CardContent>
+      </Card>
+      {/* Danger Zone — Delete Account */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" /> Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your account. This action cannot be undone by you — only an admin can recover your account.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2">
+                <Trash2 className="h-4 w-4" /> Delete My Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your account will be deactivated and you will lose access immediately. Contact support to recover your account.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 py-2">
+                <Label>Enter your password to confirm</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeletePassword("")}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={!deletePassword || deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (!user || !user.email) return;
+                    setDeleting(true);
+                    try {
+                      const cred = EmailAuthProvider.credential(user.email, deletePassword);
+                      await reauthenticateWithCredential(user, cred);
+                      await updateDoc(doc(db, "users", user.uid), {
+                        status: "deleted",
+                        deletedAt: serverTimestamp(),
+                      });
+                      toast({ title: "Account deleted", description: "Your account has been deactivated." });
+                      await logout();
+                    } catch (err: any) {
+                      toast({ title: "Error", description: err.message, variant: "destructive" });
+                    } finally {
+                      setDeleting(false);
+                      setDeletePassword("");
+                    }
+                  }}
+                >
+                  {deleting ? "Deleting..." : "Delete Account"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>

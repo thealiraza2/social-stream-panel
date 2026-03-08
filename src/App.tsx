@@ -20,6 +20,7 @@ const Banned = lazy(() => import("./pages/Banned"));
 const Maintenance = lazy(() => import("./pages/Maintenance"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
+const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // User pages — lazy loaded
@@ -93,6 +94,7 @@ const App = () => (
                 <Route path="/maintenance" element={<Maintenance />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/ref/:slug" element={<ReferralRedirect />} />
+                <Route path="/account-deleted" element={<AccountDeleted />} />
 
                 {/* User Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />

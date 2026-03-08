@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Pencil, Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, query, orderBy, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, DocumentSnapshot, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
@@ -75,9 +76,45 @@ const UserManagement = () => {
       } else {
         updateData.banReason = "";
       }
+      if (form.status === "deleted") {
+        updateData.deletedAt = serverTimestamp();
+      }
+      if (form.status === "active") {
+        updateData.deletedAt = null;
+      }
       await updateDoc(doc(db, "users", editing.id), updateData);
       toast({ title: "User updated" });
       setDialogOpen(false);
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSoftDelete = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, "users", userId), { status: "deleted", deletedAt: serverTimestamp() });
+      toast({ title: "User soft-deleted" });
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleHardDelete = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      toast({ title: "User permanently deleted" });
+      fetchFirstPage();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleRecover = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, "users", userId), { status: "active", deletedAt: null, banReason: "" });
+      toast({ title: "User recovered" });
       fetchFirstPage();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -110,9 +147,46 @@ const UserManagement = () => {
                     <TableCell>{u.email}</TableCell>
                     <TableCell className="font-medium">Rs.{(u.balance || 0).toFixed(2)}</TableCell>
                     <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                    <TableCell><Badge variant="outline" className={u.status === "active" ? "text-green-600" : "text-destructive"}>{u.status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={
+                        u.status === "active" ? "text-green-600" :
+                        u.status === "deleted" ? "text-muted-foreground" : "text-destructive"
+                      }>{u.status}</Badge>
+                    </TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
-                    <TableCell><Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button></TableCell>
+                    <TableCell className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>
+                      {u.status === "deleted" ? (
+                        <Button size="icon" variant="ghost" onClick={() => handleRecover(u.id)} title="Recover">
+                          <RotateCcw className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : (
+                        <Button size="icon" variant="ghost" onClick={() => handleSoftDelete(u.id)} title="Soft Delete">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Hard Delete">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Permanently delete this user?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently remove {u.email} and all their data. This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleHardDelete(u.id)}>
+                              Delete Permanently
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -147,7 +221,7 @@ const UserManagement = () => {
               <Label>Status</Label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="banned">Banned</SelectItem><SelectItem value="deleted">Deleted</SelectItem></SelectContent>
               </Select>
             </div>
             {form.status === "banned" && (

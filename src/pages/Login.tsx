@@ -4,8 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Zap, CheckCircle2, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { LogIn, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,9 +17,27 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleResetPassword = async () => {
+    if (!resetEmail) return;
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({ title: "Email sent!", description: "Check your inbox for a password reset link." });
+      setResetOpen(false);
+      setResetEmail("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const startCooldown = () => {
     setCooldown(true);
@@ -155,6 +176,33 @@ const Login = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+                <DialogTrigger asChild>
+                  <button type="button" className="text-xs text-primary hover:underline font-medium">
+                    Forgot password?
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5 text-primary" /> Reset Password
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <p className="text-sm text-muted-foreground">Enter your email and we'll send you a link to reset your password.</p>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+                    </div>
+                    <Button onClick={handleResetPassword} disabled={resetLoading || !resetEmail} className="w-full gradient-primary text-primary-foreground border-0">
+                      {resetLoading ? "Sending..." : "Send Reset Link"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Button
