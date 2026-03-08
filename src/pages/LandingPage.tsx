@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
+import { motion, useInView } from "framer-motion";
 import {
   Zap, Shield, Headphones, DollarSign, Code2, Star,
   Menu, X, Moon, Sun, ChevronRight, UserPlus, LogIn,
@@ -8,12 +9,96 @@ import {
   Facebook, Twitter, Instagram, Youtube, Send, Play,
   Users, ShoppingCart, Timer, Eye, Heart, MessageCircle,
   CreditCard, Smartphone, ChevronDown, ArrowRight,
-  HelpCircle, Activity
+  HelpCircle, Activity, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import heroImg from "@/assets/hero.png";
 import paymentsImg from "@/assets/payments.png";
+
+/* ------------------------------------------------------------------ */
+/*  SVG Logo Component                                                  */
+/* ------------------------------------------------------------------ */
+function BrandLogo({ className = "", size = "default" }: { className?: string; size?: "default" | "small" }) {
+  const isSmall = size === "small";
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <div className="relative">
+        <svg
+          width={isSmall ? 32 : 38}
+          height={isSmall ? 32 : 38}
+          viewBox="0 0 38 38"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(262 83% 58%)" />
+              <stop offset="50%" stopColor="hsl(220 90% 56%)" />
+              <stop offset="100%" stopColor="hsl(174 72% 46%)" />
+            </linearGradient>
+          </defs>
+          <rect width="38" height="38" rx="10" fill="url(#logoGrad)" />
+          {/* Upward trending arrow */}
+          <path
+            d="M10 26L16 18L21 22L28 12"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M23 12H28V17"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Spark */}
+          <circle cx="28" cy="12" r="2" fill="white" opacity="0.8" />
+        </svg>
+      </div>
+      <span
+        className={`font-display font-extrabold tracking-tight bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent ${
+          isSmall ? "text-lg" : "text-xl"
+        }`}
+      >
+        BudgetSMM
+      </span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Scroll-animated section wrapper                                     */
+/* ------------------------------------------------------------------ */
+function AnimatedSection({
+  children,
+  className = "",
+  id,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+  delay?: number;
+}) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <motion.section
+      ref={ref}
+      id={id}
+      className={`py-20 md:py-28 px-4 sm:px-6 lg:px-8 ${className}`}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay }}
+    >
+      <div className="mx-auto max-w-7xl">{children}</div>
+    </motion.section>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Animated counter hook                                              */
@@ -159,20 +244,31 @@ const TESTIMONIALS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Section helpers                                                    */
+/*  Stagger animation variants                                          */
 /* ------------------------------------------------------------------ */
-function Section({ id, children, className = "" }: { id?: string; children: React.ReactNode; className?: string }) {
-  return (
-    <section id={id} className={`py-20 md:py-28 px-4 sm:px-6 lg:px-8 ${className}`}>
-      <div className="mx-auto max-w-7xl">{children}</div>
-    </section>
-  );
-}
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+};
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  show: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Section title helper                                                */
+/* ------------------------------------------------------------------ */
 function SectionTitle({ badge, title, description }: { badge: string; title: string; description: string }) {
   return (
     <div className="mx-auto mb-16 max-w-2xl text-center">
-      <span className="mb-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+      <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+        <Sparkles className="h-3 w-3" />
         {badge}
       </span>
       <h2 className="font-display mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{title}</h2>
@@ -227,229 +323,269 @@ export default function LandingPage() {
   const liveOrders = useLiveOrderTicker();
 
   return (
-    <div className="font-body min-h-screen bg-background text-foreground scroll-smooth">
-      {/* ==================== NAVBAR (Sticky) ==================== */}
+    <div className="font-body min-h-screen bg-background text-foreground scroll-smooth relative">
+      {/* ===== Animated Background ===== */}
+      <div className="mesh-gradient" aria-hidden="true" />
+      <div className="grid-pattern" aria-hidden="true" />
+
+      {/* ==================== NAVBAR (Glassmorphism) ==================== */}
       <header>
-      <nav
-        role="navigation"
-        aria-label="Main navigation"
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? "bg-background/90 shadow-lg backdrop-blur-xl border-b border-border" : "bg-transparent"
-        }`}
-      >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <button onClick={() => scrollTo("hero")} className="flex items-center gap-2 text-xl font-extrabold tracking-tight font-display">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-gradient">BudgetSMM</span>
-          </button>
+        <nav
+          role="navigation"
+          aria-label="Main navigation"
+          className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+            scrolled
+              ? "bg-background/60 shadow-lg shadow-background/20 backdrop-blur-xl border-b border-border/50"
+              : "bg-transparent"
+          }`}
+        >
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <button onClick={() => scrollTo("hero")}>
+              <BrandLogo />
+            </button>
 
-          <div className="hidden items-center gap-8 md:flex">
-            {navLinks.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => scrollTo(l.id)}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden items-center gap-3 md:flex">
-            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
-            </Button>
-            <Button className="gradient-primary text-primary-foreground border-0 hover:opacity-90 transition-opacity" asChild>
-              <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-
-        {mobileOpen && (
-          <div className="border-b bg-background/95 backdrop-blur-xl md:hidden">
-            <div className="space-y-1 px-4 pb-4 pt-2">
+            <div className="hidden items-center gap-8 md:flex">
               {navLinks.map((l) => (
                 <button
                   key={l.id}
                   onClick={() => scrollTo(l.id)}
-                  className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
                 >
                   {l.label}
                 </button>
               ))}
-              <div className="flex gap-3 pt-3">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to="/login">Sign In</Link>
-                </Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground border-0" asChild>
-                  <Link to="/signup">Sign Up</Link>
-                </Button>
-              </div>
+            </div>
+
+            <div className="hidden items-center gap-3 md:flex">
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
+              </Button>
+              <Button variant="outline" className="rounded-full border-border/50" asChild>
+                <Link to="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
+              </Button>
+              <Button className="rounded-full gradient-primary text-primary-foreground border-0 btn-glow" asChild>
+                <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
             </div>
           </div>
-        )}
-      </nav>
+
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border-b border-border/50 bg-background/80 backdrop-blur-xl md:hidden"
+            >
+              <div className="space-y-1 px-4 pb-4 pt-2">
+                {navLinks.map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => scrollTo(l.id)}
+                    className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  >
+                    {l.label}
+                  </button>
+                ))}
+                <div className="flex gap-3 pt-3">
+                  <Button variant="outline" className="flex-1 rounded-full" asChild>
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button className="flex-1 rounded-full gradient-primary text-primary-foreground border-0" asChild>
+                    <Link to="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </nav>
       </header>
 
       <main>
 
-      {/* ==================== HERO (Asymmetrical) ==================== */}
-      <Section id="hero" className="relative overflow-hidden pt-32 md:pt-40">
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-20 right-0 h-[400px] w-[400px] rounded-full bg-accent/10 blur-[100px]" />
+      {/* ==================== HERO (Staggered Reveal) ==================== */}
+      <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
+        {/* Ambient orbs */}
+        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px] animate-float-slow" />
+        <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px] animate-float" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-accent/6 blur-[100px]" />
 
-        <div className="relative grid items-center gap-12 lg:grid-cols-2">
-          {/* Left — Copy */}
-          <div className="max-w-xl">
-            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
-              <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
-            </span>
-            <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              BudgetSMM - The #1 Cheapest SMM Panel.{" "}
-              <span className="text-gradient">Real Growth, Zero Fake Promises.</span>
-            </h1>
-            <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
-              High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="gradient-primary text-primary-foreground border-0 px-8 text-base group hover:opacity-90 hover:shadow-xl hover:shadow-primary/25 transition-all duration-300" asChild>
-                <Link to="/signup">Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
-              </Button>
-              <Button size="lg" variant="outline" className="px-8 text-base group hover:border-primary hover:text-primary transition-all duration-300" onClick={() => scrollTo("services")}>
-                View Live Prices <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </div>
+        <div className="mx-auto max-w-7xl">
+          <motion.div
+            className="relative grid items-center gap-12 lg:grid-cols-2"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+          >
+            {/* Left — Copy */}
+            <div className="max-w-xl">
+              <motion.span
+                variants={fadeUp}
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary backdrop-blur-sm"
+              >
+                <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
+              </motion.span>
 
-            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              {["1M+ Orders", "24/7 Support", "Instant Delivery"].map((t) => (
-                <span key={t} className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-success" /> {t}
+              <motion.h1
+                variants={fadeUp}
+                className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
+              >
+                BudgetSMM - The #1 Cheapest SMM Panel.{" "}
+                <span className="bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent">
+                  Real Growth, Zero Fake Promises.
                 </span>
-              ))}
+              </motion.h1>
+
+              <motion.p variants={fadeUp} className="mb-8 text-lg leading-relaxed text-muted-foreground">
+                High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
+              </motion.p>
+
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-4">
+                <Button
+                  size="lg"
+                  className="rounded-full gradient-primary text-primary-foreground border-0 px-8 text-base group btn-glow"
+                  asChild
+                >
+                  <Link to="/signup">
+                    Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full px-8 text-base group border-border/50 hover:border-primary/50 hover:text-primary transition-all duration-300 backdrop-blur-sm"
+                  onClick={() => scrollTo("services")}
+                >
+                  View Live Prices <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </motion.div>
+
+              <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+                {["1M+ Orders", "24/7 Support", "Instant Delivery"].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-success" /> {t}
+                  </span>
+                ))}
+              </motion.div>
             </div>
-          </div>
 
-          {/* Right — Live Price Calculator */}
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="absolute -inset-1 rounded-2xl gradient-primary opacity-20 blur-xl" />
-            <div className="neon-glow relative rounded-2xl border border-border bg-card p-6 shadow-xl">
-              <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">
-                See our unbeatable prices instantly 👇
-              </p>
+            {/* Right — Live Price Calculator */}
+            <motion.div variants={scaleIn} className="relative mx-auto w-full max-w-md animate-float-slow">
+              <div className="absolute -inset-2 rounded-3xl gradient-primary opacity-15 blur-2xl" />
+              <div className="glass-card relative rounded-2xl p-6 shadow-2xl shadow-primary/5">
+                <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">
+                  See our unbeatable prices instantly 👇
+                </p>
 
-              <div className="space-y-4">
-                {/* Platform */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Platform</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {PLATFORMS.map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setPlatform(p)}
-                        className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-xs font-medium transition-all ${
-                          platform === p
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/40"
-                        }`}
-                      >
-                        {PLATFORM_ICONS[p]}
-                        <span className="hidden sm:inline">{p.slice(0, 5)}</span>
-                      </button>
-                    ))}
+                <div className="space-y-4">
+                  {/* Platform */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Platform</label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {PLATFORMS.map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPlatform(p)}
+                          className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition-all duration-200 ${
+                            platform === p
+                              ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10"
+                              : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30 hover:bg-primary/5"
+                          }`}
+                        >
+                          {PLATFORM_ICONS[p]}
+                          <span className="hidden sm:inline">{p.slice(0, 5)}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Service */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Service</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {SERVICES.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setService(s)}
-                        className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
-                          service === s
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/40"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  {/* Service */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Service</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SERVICES.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setService(s)}
+                          className={`rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200 ${
+                            service === s
+                              ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10"
+                              : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Quantity */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Quantity</label>
-                  <Input
-                    type="number"
-                    min={100}
-                    max={1000000}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(100, Number(e.target.value)))}
-                    className="bg-secondary/50"
-                  />
-                </div>
+                  {/* Quantity */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Quantity</label>
+                    <Input
+                      type="number"
+                      min={100}
+                      max={1000000}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(100, Number(e.target.value)))}
+                      className="bg-secondary/30 border-border/50 rounded-xl"
+                    />
+                  </div>
 
-                {/* Estimated Price */}
-                <div className="rounded-xl gradient-primary p-4 text-center">
-                  <p className="text-xs font-medium text-primary-foreground/70">Estimated Price</p>
-                  <p className="text-3xl font-extrabold text-primary-foreground font-display">
-                    Rs. {estimatedPrice.toFixed(2)}
-                  </p>
-                  <p className="mt-1 text-xs text-primary-foreground/60">
-                    Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
-                  </p>
+                  {/* Estimated Price */}
+                  <div className="rounded-2xl gradient-primary p-4 text-center">
+                    <p className="text-xs font-medium text-primary-foreground/70">Estimated Price</p>
+                    <p className="text-3xl font-extrabold text-primary-foreground font-display">
+                      Rs. {estimatedPrice.toFixed(2)}
+                    </p>
+                    <p className="mt-1 text-xs text-primary-foreground/60">
+                      Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </Section>
+      </section>
 
       {/* ==================== LIVE STATS BAR ==================== */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-primary opacity-90" />
-        <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-around gap-8 px-4 py-10 sm:flex-row sm:gap-4 sm:px-6 lg:px-8">
-          {[
-            { icon: ShoppingCart, label: "Total Orders", data: orders, suffix: "+" },
-            { icon: Users, label: "Active Users", data: users, suffix: "+" },
-            { icon: Timer, label: "Avg Completion", static: "< 2 min" },
-          ].map((s) => (
-            <div key={s.label} ref={s.data?.ref} className="flex items-center gap-4 text-primary-foreground">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur-sm">
-                <s.icon className="h-6 w-6" />
+      <AnimatedSection className="!py-0">
+        <div className="relative overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 gradient-primary opacity-90" />
+          <div className="relative flex flex-col items-center justify-around gap-8 px-6 py-10 sm:flex-row sm:gap-4">
+            {[
+              { icon: ShoppingCart, label: "Total Orders", data: orders, suffix: "+" },
+              { icon: Users, label: "Active Users", data: users, suffix: "+" },
+              { icon: Timer, label: "Avg Completion", static: "< 2 min" },
+            ].map((s) => (
+              <div key={s.label} ref={s.data?.ref} className="flex items-center gap-4 text-primary-foreground">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur-sm">
+                  <s.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold font-display sm:text-3xl">
+                    {s.static ?? `${s.data!.count.toLocaleString()}${s.suffix}`}
+                  </p>
+                  <p className="text-xs font-medium text-primary-foreground/70">{s.label}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-extrabold font-display sm:text-3xl">
-                  {s.static ?? `${s.data!.count.toLocaleString()}${s.suffix}`}
-                </p>
-                <p className="text-xs font-medium text-primary-foreground/70">{s.label}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </AnimatedSection>
 
       {/* ==================== LIVE ORDER COUNTER ==================== */}
-      <Section className="!py-12">
+      <AnimatedSection className="!py-12">
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Activity className="h-4 w-4 text-success animate-pulse" />
@@ -461,9 +597,12 @@ export default function LandingPage() {
           </div>
           <div className="space-y-2">
             {liveOrders.map((order, i) => (
-              <div
+              <motion.div
                 key={`${order.platform}-${order.service}-${i}`}
-                className={`flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm transition-all duration-500 ${i === 0 ? "animate-fade-in" : ""}`}
+                initial={i === 0 ? { opacity: 0, x: -20 } : {}}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4 }}
+                className="glass-card flex items-center justify-between rounded-xl px-4 py-3 text-sm"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -478,22 +617,23 @@ export default function LandingPage() {
                   <span className="font-semibold text-foreground">{order.qty.toLocaleString()}</span>
                   <span className="text-xs text-muted-foreground">{order.time}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
-      </Section>
+      </AnimatedSection>
 
       {/* ==================== DASHBOARD MOCKUP ==================== */}
-      <Section className="relative overflow-hidden">
+      <AnimatedSection className="relative overflow-hidden">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="max-w-lg">
-            <span className="mb-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+              <Sparkles className="h-3 w-3" />
               Real Platform
             </span>
             <h2 className="font-display mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Built for Speed.{" "}
-              <span className="text-gradient">Designed for Growth.</span>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Designed for Growth.</span>
             </h2>
             <p className="mb-6 text-lg text-muted-foreground">
               A powerful dashboard that puts you in control. Place orders, track delivery, manage funds — all from one place.
@@ -511,21 +651,25 @@ export default function LandingPage() {
               ))}
             </ul>
           </div>
-          <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+          <motion.div
+            className="relative mx-auto w-full max-w-lg lg:max-w-none animate-float-slow"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
             <img
               src={heroImg}
               alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
-              className="relative w-full rounded-2xl shadow-2xl shadow-primary/10"
+              className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
               loading="lazy"
               style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
             />
-          </div>
+          </motion.div>
         </div>
-      </Section>
+      </AnimatedSection>
 
-      {/* ==================== SERVICES PREVIEW (Interactive Grid) ==================== */}
-      <Section id="services" className="bg-secondary/30">
+      {/* ==================== SERVICES PREVIEW (Glassmorphism Grid) ==================== */}
+      <AnimatedSection id="services">
         <SectionTitle
           badge="Top Services"
           title="Our Services"
@@ -533,41 +677,49 @@ export default function LandingPage() {
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICE_CARDS.map((s, i) => (
-            <div
+            <motion.div
               key={`${s.platform}-${s.service}-${i}`}
-              className="card-hover-lift group relative rounded-2xl border border-border bg-card p-5 overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: i * 0.06 }}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
+              className="glass-card group relative rounded-2xl p-5 overflow-hidden cursor-default hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
             >
-              <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient}`}>
+              {/* Glow on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+
+              <div className={`relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient} transition-transform duration-300 group-hover:scale-110`}>
                 <s.icon className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h3 className="mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
-              <p className="text-xs text-muted-foreground">{s.service}</p>
+              <h3 className="relative mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
+              <p className="relative text-xs text-muted-foreground">{s.service}</p>
 
               {/* Hover reveal */}
-              <div className="mt-3 grid grid-cols-3 gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100 max-h-0 group-hover:max-h-24 overflow-hidden">
-                <div className="rounded-lg bg-secondary/80 p-2 text-center">
+              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100 max-h-0 group-hover:max-h-24 overflow-hidden">
+                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
                   <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
                   <p className="text-[10px] font-medium text-muted-foreground">Start</p>
                   <p className="text-xs font-bold text-foreground">{s.start}</p>
                 </div>
-                <div className="rounded-lg bg-secondary/80 p-2 text-center">
+                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
                   <TrendingUp className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
                   <p className="text-[10px] font-medium text-muted-foreground">Speed</p>
                   <p className="text-xs font-bold text-foreground">{s.speed}</p>
                 </div>
-                <div className="rounded-lg bg-secondary/80 p-2 text-center">
+                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
                   <RefreshCw className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
                   <p className="text-[10px] font-medium text-muted-foreground">Refill</p>
                   <p className="text-xs font-bold text-foreground">{s.refill}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </Section>
+      </AnimatedSection>
 
       {/* ==================== WHY CHOOSE US ==================== */}
-      <Section id="features">
+      <AnimatedSection id="features">
         <SectionTitle badge="Why Us" title="Why Choose Us" description="We don't just sell services. We deliver growth you can measure." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
@@ -577,27 +729,39 @@ export default function LandingPage() {
             { icon: DollarSign, title: "Unbeatable Prices", desc: "Wholesale pricing that beats every competitor. Save more, grow faster.", gradient: "gradient-orange" },
             { icon: Code2, title: "API Support", desc: "Full REST API for developers and resellers to automate orders at scale.", gradient: "gradient-purple" },
             { icon: Star, title: "High-Quality Services", desc: "Real, high-retention services that keep your accounts safe and growing.", gradient: "gradient-primary" },
-          ].map((f) => (
-            <div
+          ].map((f, i) => (
+            <motion.div
               key={f.title}
-              className="card-hover-lift group rounded-2xl border border-border bg-card p-6"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              whileHover={{ y: -6 }}
+              className="glass-card group rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
             >
-              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110`}>
+              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
                 <f.icon className="h-6 w-6 text-primary-foreground" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-foreground">{f.title}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </Section>
+      </AnimatedSection>
 
       {/* ==================== FAQ ==================== */}
-      <Section id="faq" className="bg-secondary/30">
+      <AnimatedSection id="faq">
         <SectionTitle badge="FAQ" title="Frequently Asked Questions" description="Got questions? We've got answers. Here are the most common ones." />
         <div className="mx-auto max-w-3xl space-y-3">
           {FAQ_ITEMS.map((item, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200">
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-30px" }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
+              className="glass-card rounded-2xl overflow-hidden transition-all duration-200"
+            >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="flex w-full items-center justify-between gap-4 p-5 text-left"
@@ -606,24 +770,37 @@ export default function LandingPage() {
                   <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <span className="text-sm font-semibold text-foreground">{item.q}</span>
                 </div>
-                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
               </button>
-              {openFaq === i && (
-                <div className="px-5 pb-5 pl-13 animate-fade-in">
+              <motion.div
+                initial={false}
+                animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="px-5 pb-5 pl-13">
                   <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
                 </div>
-              )}
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
-      </Section>
+      </AnimatedSection>
 
       {/* ==================== TESTIMONIALS ==================== */}
-      <Section id="testimonials">
+      <AnimatedSection id="testimonials">
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="card-hover-lift rounded-2xl border border-border bg-card p-6">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div
+              key={t.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              whileHover={{ y: -4 }}
+              className="glass-card rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+            >
               {/* Star rating */}
               <div className="mb-4 flex gap-0.5">
                 {[...Array(5)].map((_, i) => (
@@ -633,7 +810,6 @@ export default function LandingPage() {
               <Quote className="mb-3 h-6 w-6 text-primary/20" />
               <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
               <div className="flex items-center gap-3">
-                {/* Avatar placeholder */}
                 <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
                   {t.avatar}
                 </div>
@@ -642,43 +818,45 @@ export default function LandingPage() {
                   <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </Section>
+      </AnimatedSection>
 
       {/* ==================== CTA BANNER ==================== */}
-      <Section id="how-it-works" className="text-center">
+      <AnimatedSection id="how-it-works" className="text-center">
         <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 opacity-10" style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 1px)",
+            backgroundSize: "24px 24px"
+          }} />
           <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
             <div className="text-left">
               <h2 className="font-display mb-4 text-3xl font-bold text-primary-foreground sm:text-4xl">Ready to Grow Your Social Media?</h2>
               <p className="mb-8 max-w-lg text-base text-primary-foreground/80">
                 Join thousands of satisfied users and start boosting your presence today.
               </p>
-              <Button size="lg" className="bg-background text-foreground hover:bg-background/90 border-0 px-10 text-base font-semibold group transition-all duration-300 hover:shadow-xl" asChild>
+              <Button size="lg" className="rounded-full bg-background text-foreground hover:bg-background/90 border-0 px-10 text-base font-semibold group transition-all duration-300 hover:shadow-xl" asChild>
                 <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
             </div>
-            <div className="mx-auto max-w-xs">
-              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl animate-float" loading="lazy" />
-            </div>
+            <motion.div className="mx-auto max-w-xs animate-float" whileHover={{ scale: 1.05 }}>
+              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" />
+            </motion.div>
           </div>
         </div>
-      </Section>
+      </AnimatedSection>
 
       </main>
 
       {/* ==================== FOOTER ==================== */}
-      <footer className="border-t border-border bg-card">
+      <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <div className="mb-4 flex items-center gap-2 text-lg font-extrabold font-display">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
-                  <Zap className="h-4 w-4 text-primary-foreground" />
-                </div>
-                <span className="text-gradient">BudgetSMM</span>
+              <div className="mb-4">
+                <BrandLogo size="small" />
               </div>
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                 The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.
@@ -690,7 +868,7 @@ export default function LandingPage() {
                   { Icon: Instagram, label: "Instagram" },
                   { Icon: Youtube, label: "YouTube" },
                 ].map(({ Icon, label }) => (
-                  <a key={label} href="#" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
+                  <a key={label} href="#" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 text-muted-foreground transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:scale-110">
                     <Icon className="h-4 w-4" />
                   </a>
                 ))}
@@ -722,7 +900,6 @@ export default function LandingPage() {
             <div>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Payment Methods</h4>
               <div className="flex flex-wrap gap-2 mb-4">
-                {/* Highlighted Pakistani payment methods */}
                 {[
                   { name: "JazzCash", highlight: true },
                   { name: "Easypaisa", highlight: true },
@@ -735,7 +912,7 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {["Visa", "Mastercard", "Crypto"].map((p) => (
-                  <span key={p} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  <span key={p} className="inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-secondary/30 px-3 py-1.5 text-xs font-medium text-muted-foreground">
                     <CreditCard className="h-3 w-3" />
                     {p}
                   </span>
@@ -744,7 +921,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          <div className="mt-10 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
             Copyright © 2024-2025 BudgetSMM. All rights reserved.
           </div>
         </div>
