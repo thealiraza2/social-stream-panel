@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePrefetch } from "@/hooks/usePrefetch";
 import heroImg from "@/assets/hero.png";
 import paymentsImg from "@/assets/payments.png";
 
