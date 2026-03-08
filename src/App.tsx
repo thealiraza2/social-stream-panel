@@ -101,6 +101,12 @@ const App = () => (
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/ref/:slug" element={<ReferralRedirect />} />
                 <Route path="/account-deleted" element={<AccountDeleted />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/refund" element={<RefundPolicy />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/api-docs" element={<ApiDocs />} />
 
                 {/* User Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
