@@ -16,17 +16,27 @@ const TermsOfService = () => (
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-6 text-muted-foreground">
         <p className="text-sm">Last updated: March 2025</p>
         <h2 className="text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
-        <p>By accessing or using BudgetSMM ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
+        <p>By registering an account or using BudgetSMM ("the Platform"), you agree to comply with these Terms of Service. If you do not agree with any part of these terms, you must not use the Platform.</p>
         <h2 className="text-lg font-semibold text-foreground">2. Description of Service</h2>
-        <p>BudgetSMM provides social media marketing services including but not limited to followers, likes, views, and engagement across various social media platforms.</p>
-        <h2 className="text-lg font-semibold text-foreground">3. User Responsibilities</h2>
-        <p>You agree to provide accurate information, not misuse the Service, and comply with all applicable laws. Accounts found violating our policies may be suspended or terminated.</p>
-        <h2 className="text-lg font-semibold text-foreground">4. Payment & Billing</h2>
-        <p>All payments are processed securely. Funds added to your account are non-transferable. Prices are subject to change without prior notice.</p>
-        <h2 className="text-lg font-semibold text-foreground">5. Limitation of Liability</h2>
-        <p>BudgetSMM is not liable for any indirect, incidental, or consequential damages arising from the use of our services.</p>
-        <h2 className="text-lg font-semibold text-foreground">6. Contact</h2>
-        <p>For questions regarding these terms, please contact us through our support ticket system.</p>
+        <p>BudgetSMM is an SMM (Social Media Marketing) panel that provides automated social media services such as followers, likes, views, comments, and engagement across platforms including Instagram, TikTok, YouTube, Facebook, Twitter, and more. We act as a reseller platform connecting users with third-party service providers.</p>
+        <h2 className="text-lg font-semibold text-foreground">3. Account Registration</h2>
+        <p>You must provide a valid email address to create an account. You are responsible for maintaining the confidentiality of your login credentials. Sharing accounts is not permitted. BudgetSMM reserves the right to suspend or ban any account found violating our policies without prior notice.</p>
+        <h2 className="text-lg font-semibold text-foreground">4. Payments & Funds</h2>
+        <p>All funds added to your BudgetSMM wallet are <strong className="text-foreground">non-refundable and non-withdrawable</strong>. Your balance can only be used to place orders on the platform. We accept payments via cryptocurrency, bank transfer, and other supported methods. Prices for services may change at any time without prior notice.</p>
+        <h2 className="text-lg font-semibold text-foreground">5. Order Policy</h2>
+        <p>Once an order is placed and processing has started, it cannot be cancelled. Refunds are only issued for cancelled orders and are credited back to your account balance — not to external payment methods. Partial orders may receive partial refunds at our discretion. We do not guarantee specific delivery times as they depend on third-party providers.</p>
+        <h2 className="text-lg font-semibold text-foreground">6. Prohibited Use</h2>
+        <p>You agree not to use BudgetSMM for any illegal activity, to exploit or abuse the system, to create multiple accounts for bonus abuse, or to resell services in a way that violates third-party platform terms. Violation of these rules will result in immediate account suspension and forfeiture of remaining balance.</p>
+        <h2 className="text-lg font-semibold text-foreground">7. Service Guarantee</h2>
+        <p>We strive to deliver all orders as described. However, BudgetSMM does not guarantee permanent results. Drops in followers, likes, or views may occur due to third-party platform actions and are beyond our control. Refill services are available on select services as noted in the service description.</p>
+        <h2 className="text-lg font-semibold text-foreground">8. Limitation of Liability</h2>
+        <p>BudgetSMM is not responsible for any account bans, content removal, or penalties imposed by social media platforms as a result of using our services. You use the Platform at your own risk. We are not liable for any indirect, incidental, or consequential damages.</p>
+        <h2 className="text-lg font-semibold text-foreground">9. Account Termination</h2>
+        <p>We reserve the right to terminate or suspend any account at our sole discretion if we suspect fraud, abuse, or violation of these terms. Terminated accounts forfeit any remaining balance.</p>
+        <h2 className="text-lg font-semibold text-foreground">10. Changes to Terms</h2>
+        <p>BudgetSMM may update these Terms of Service at any time. Continued use of the Platform after changes constitutes acceptance of the updated terms.</p>
+        <h2 className="text-lg font-semibold text-foreground">11. Contact</h2>
+        <p>For any questions regarding these terms, please open a support ticket from your dashboard.</p>
       </div>
     </div>
   </div>

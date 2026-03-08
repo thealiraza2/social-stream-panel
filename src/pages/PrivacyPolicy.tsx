@@ -16,17 +16,25 @@ const PrivacyPolicy = () => (
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-6 text-muted-foreground">
         <p className="text-sm">Last updated: March 2025</p>
         <h2 className="text-lg font-semibold text-foreground">1. Information We Collect</h2>
-        <p>We collect your email address, display name, and payment information when you create an account and use our services.</p>
+        <p>When you register on BudgetSMM, we collect your email address, display name, and IP address. When you place orders, we collect the social media links you provide. When you add funds, we collect payment transaction details. We do not collect passwords — authentication is handled securely through Firebase.</p>
         <h2 className="text-lg font-semibold text-foreground">2. How We Use Your Information</h2>
-        <p>Your information is used to provide our services, process payments, send important notifications, and improve user experience.</p>
-        <h2 className="text-lg font-semibold text-foreground">3. Data Security</h2>
-        <p>We implement industry-standard security measures including SSL encryption and secure payment processing to protect your data.</p>
-        <h2 className="text-lg font-semibold text-foreground">4. Cookies</h2>
-        <p>We use cookies and similar technologies to maintain your session, remember preferences, and analyze usage patterns.</p>
-        <h2 className="text-lg font-semibold text-foreground">5. Third-Party Services</h2>
-        <p>We may share data with trusted third-party payment processors. We do not sell your personal information.</p>
-        <h2 className="text-lg font-semibold text-foreground">6. Contact</h2>
-        <p>For privacy-related inquiries, contact us through our support ticket system.</p>
+        <p>Your information is used to: provide and deliver our SMM services, process your orders and payments, communicate important account updates, prevent fraud and abuse, and improve the overall platform experience. We do not use your data for purposes beyond operating BudgetSMM.</p>
+        <h2 className="text-lg font-semibold text-foreground">3. Data Sharing</h2>
+        <p>We do <strong className="text-foreground">not sell</strong> your personal information to third parties. We may share limited data (such as social media links) with third-party service providers solely to fulfill your orders. Payment processing is handled by trusted third-party gateways — we do not store your full payment card details.</p>
+        <h2 className="text-lg font-semibold text-foreground">4. Data Security</h2>
+        <p>We implement industry-standard security measures including SSL/TLS encryption, secure authentication via Firebase, and restricted database access. While we take reasonable steps to protect your data, no method of electronic storage is 100% secure.</p>
+        <h2 className="text-lg font-semibold text-foreground">5. Cookies & Local Storage</h2>
+        <p>BudgetSMM uses cookies and browser local storage to maintain your login session, remember your theme preferences, and analyze basic usage patterns. You can disable cookies in your browser settings, but this may affect platform functionality.</p>
+        <h2 className="text-lg font-semibold text-foreground">6. Data Retention</h2>
+        <p>We retain your account data for as long as your account is active. If your account is deleted (soft-deleted), your data may be retained for up to 30 days for recovery purposes. Order logs and transaction records are retained indefinitely for accounting and dispute resolution.</p>
+        <h2 className="text-lg font-semibold text-foreground">7. Your Rights</h2>
+        <p>You can update your profile information at any time from your dashboard. You can request account deletion from your profile settings. For any data-related requests, please open a support ticket.</p>
+        <h2 className="text-lg font-semibold text-foreground">8. Children's Privacy</h2>
+        <p>BudgetSMM is not intended for users under the age of 13. We do not knowingly collect information from children.</p>
+        <h2 className="text-lg font-semibold text-foreground">9. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date. Continued use of the Platform constitutes acceptance of the revised policy.</p>
+        <h2 className="text-lg font-semibold text-foreground">10. Contact</h2>
+        <p>For privacy-related inquiries, please open a support ticket from your dashboard.</p>
       </div>
     </div>
   </div>
