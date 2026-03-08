@@ -303,6 +303,8 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const prefetch = usePrefetch();
+
   const scrollTo = (id: string) => {
     setMobileOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
