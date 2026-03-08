@@ -42,6 +42,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!user) return <Navigate to="/login" replace />;
   if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
   if (profile?.status === "banned") return <Navigate to="/banned" replace />;
+  if (profile?.status === "deleted") return <Navigate to="/account-deleted" replace />;
   if (maintenance && profile?.role !== "admin") return <Navigate to="/maintenance" replace />;
   return <>{children}</>;
 };

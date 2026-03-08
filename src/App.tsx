@@ -94,6 +94,7 @@ const App = () => (
                 <Route path="/maintenance" element={<Maintenance />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/ref/:slug" element={<ReferralRedirect />} />
+                <Route path="/account-deleted" element={<AccountDeleted />} />
 
                 {/* User Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
