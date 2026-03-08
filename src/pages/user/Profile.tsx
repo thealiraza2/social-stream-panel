@@ -10,7 +10,7 @@ import { User, Mail, Shield, Calendar, Save, KeyRound, Wallet, ShoppingCart, Clo
 import { useAuth } from "@/contexts/AuthContext";
 import { db, auth } from "@/lib/firebase";
 import { doc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, GoogleAuthProvider, reauthenticateWithPopup } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
