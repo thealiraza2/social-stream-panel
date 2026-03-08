@@ -778,16 +778,16 @@ export default function LandingPage() {
                 </div>
                 <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
               </button>
-              <motion.div
-                initial={false}
-                animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden"
+              <div
+                className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
               >
-                <div className="px-5 pb-5 pl-13">
-                  <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                <div className="overflow-hidden">
+                  <div className="px-5 pb-5 pl-13">
+                    <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           ))}
         </div>
