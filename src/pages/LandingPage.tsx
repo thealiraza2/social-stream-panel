@@ -482,7 +482,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right — Live Price Calculator */}
-            <motion.div variants={scaleIn} className="relative mx-auto w-full max-w-md animate-float-slow">
+            <motion.div variants={scaleIn} className="relative mx-auto w-full max-w-md">
               <div className="absolute -inset-2 rounded-3xl gradient-primary opacity-15 blur-2xl" />
               <div className="glass-card relative rounded-2xl p-6 shadow-2xl shadow-primary/5">
                 <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">
@@ -505,7 +505,7 @@ export default function LandingPage() {
                           }`}
                         >
                           {PLATFORM_ICONS[p]}
-                          <span className="hidden sm:inline">{p.slice(0, 5)}</span>
+                          <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
                         </button>
                       ))}
                     </div>

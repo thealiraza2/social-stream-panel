@@ -1,23 +1,38 @@
 
 
-## Fix: Price Calculator — Stop Animation & Fix Truncated Names
+# Fix: Fully Automated Provider Order Routing
 
-### Problems Found
-1. **Line 508**: Platform names use `p.slice(0, 5)` which produces ugly truncations: "YouTu", "TikTo", "Twitt", "Teleg"
-2. **Line 485**: The calculator card has `animate-float-slow` class making it float/move continuously — should be static
+## The Problem
 
-### Plan
+The proxy endpoint (`api/proxy-provider.ts`) is broken for order placement. It **hardcodes** `action: "services"` and ignores all other parameters sent from the frontend (like `action: "add"`, `service`, `link`, `quantity`). So when a user places an order, the proxy fetches the service list instead of placing the actual order with the provider.
 
-**File: `src/pages/LandingPage.tsx`**
+## The Fix
 
-1. **Remove floating animation** (line 485): Remove `animate-float-slow` from the calculator wrapper div so it stays perfectly still.
+Update `api/proxy-provider.ts` to be a **generic proxy** that forwards ALL parameters from the request body to the provider API as form data.
 
-2. **Fix platform name labels** (line 508): Replace `p.slice(0, 5)` with a proper short-name map:
-   - Instagram → "Insta"
-   - YouTube → "YouTube"  
-   - TikTok → "TikTok"
-   - Twitter → "Twitter"
-   - Telegram → "Telegram"
+### Changes to `api/proxy-provider.ts`
 
-   On small screens where space is tight, use sensible abbreviations that are still readable. Will adjust the grid to allow slightly more space per button so full names fit.
+Instead of hardcoding `action: "services"`, the proxy will:
+1. Extract `apiUrl` and `apiKey` from the request body
+2. Forward **all remaining fields** (`action`, `service`, `link`, `quantity`, etc.) as URL-encoded form data to the provider
+3. This makes it work for ALL SMM panel API actions: `services`, `add`, `status`, `cancel`, `refill`, etc.
+
+```text
+Before (broken):
+  formData.append("key", apiKey);
+  formData.append("action", "services");  // <-- always "services"
+
+After (fixed):
+  formData.append("key", apiKey);
+  // Forward all other fields dynamically
+  for (const [key, value] of Object.entries(rest)) {
+    formData.append(key, String(value));
+  }
+```
+
+### Files Modified
+1. **`api/proxy-provider.ts`** -- Make it a generic forwarder instead of hardcoded "services" only
+
+### No Frontend Changes Needed
+Both `NewOrder.tsx` and `BulkOrder.tsx` already send the correct parameters (`action: "add"`, `service`, `link`, `quantity`). Once the proxy forwards them properly, orders will automatically go to the provider API and come back with a `providerOrderId`.
 
