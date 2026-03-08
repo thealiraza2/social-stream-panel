@@ -293,6 +293,7 @@ function SectionTitle({ badge, title, description }: { badge: string; title: str
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
+  const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
