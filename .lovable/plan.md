@@ -1,38 +1,22 @@
 
 
-# Fix: Fully Automated Provider Order Routing
+# Landing Page Background Update — NOIR-style Dark Aesthetic
 
-## The Problem
+The reference image shows a dark, cinematic background with subtle red/crimson light glows bleeding from the edges, creating a moody "dark elegance" feel. Your current landing page uses purple/blue/teal mesh gradients. The plan is to shift the color palette to match the red/crimson glow style.
 
-The proxy endpoint (`api/proxy-provider.ts`) is broken for order placement. It **hardcodes** `action: "services"` and ignores all other parameters sent from the frontend (like `action: "add"`, `service`, `link`, `quantity`). So when a user places an order, the proxy fetches the service list instead of placing the actual order with the provider.
+## Changes
 
-## The Fix
+### `src/index.css` — Update mesh-gradient colors
+- Replace the current purple/blue/teal gradient blobs with **deep red/crimson tones**
+- Dark mode: Use `hsl(0 80% 50% / 0.15)` (red) and `hsl(350 70% 40% / 0.12)` (dark crimson) radial gradients
+- Light mode: Softer red tints
+- Add a subtle dark overlay vignette effect (darker edges, slightly lighter center) to match the cinematic feel
+- Keep the grid pattern but make it even more subtle
 
-Update `api/proxy-provider.ts` to be a **generic proxy** that forwards ALL parameters from the request body to the provider API as form data.
+### `src/pages/LandingPage.tsx` — Optional hero section tweaks
+- No structural changes needed; the background change alone will create the NOIR-like atmosphere
 
-### Changes to `api/proxy-provider.ts`
-
-Instead of hardcoding `action: "services"`, the proxy will:
-1. Extract `apiUrl` and `apiKey` from the request body
-2. Forward **all remaining fields** (`action`, `service`, `link`, `quantity`, etc.) as URL-encoded form data to the provider
-3. This makes it work for ALL SMM panel API actions: `services`, `add`, `status`, `cancel`, `refill`, etc.
-
-```text
-Before (broken):
-  formData.append("key", apiKey);
-  formData.append("action", "services");  // <-- always "services"
-
-After (fixed):
-  formData.append("key", apiKey);
-  // Forward all other fields dynamically
-  for (const [key, value] of Object.entries(rest)) {
-    formData.append(key, String(value));
-  }
-```
-
-### Files Modified
-1. **`api/proxy-provider.ts`** -- Make it a generic forwarder instead of hardcoded "services" only
-
-### No Frontend Changes Needed
-Both `NewOrder.tsx` and `BulkOrder.tsx` already send the correct parameters (`action: "add"`, `service`, `link`, `quantity`). Once the proxy forwards them properly, orders will automatically go to the provider API and come back with a `providerOrderId`.
+## Scope
+- 1 file edited: `src/index.css` (mesh-gradient and grid-pattern color updates)
+- No new dependencies
 
