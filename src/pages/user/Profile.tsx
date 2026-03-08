@@ -10,7 +10,7 @@ import { User, Mail, Shield, Calendar, Save, KeyRound, Wallet, ShoppingCart, Clo
 import { useAuth } from "@/contexts/AuthContext";
 import { db, auth } from "@/lib/firebase";
 import { doc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, GoogleAuthProvider, reauthenticateWithPopup } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
@@ -211,27 +211,44 @@ const Profile = () => {
                   Your account will be deactivated and you will lose access immediately. Contact support to recover your account.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="space-y-2 py-2">
-                <Label>Enter your password to confirm</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                />
-              </div>
+              {/* Only show password input for email/password users */}
+              {user?.providerData?.[0]?.providerId === "password" && (
+                <div className="space-y-2 py-2">
+                  <Label>Enter your password to confirm</Label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                  />
+                </div>
+              )}
+              {user?.providerData?.[0]?.providerId === "google.com" && (
+                <p className="text-sm text-muted-foreground py-2">
+                  You will be asked to re-authenticate with Google to confirm deletion.
+                </p>
+              )}
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setDeletePassword("")}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  disabled={!deletePassword || deleting}
+                  disabled={
+                    deleting ||
+                    (user?.providerData?.[0]?.providerId === "password" && !deletePassword)
+                  }
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={async (e) => {
                     e.preventDefault();
-                    if (!user || !user.email) return;
+                    if (!user) return;
                     setDeleting(true);
                     try {
-                      const cred = EmailAuthProvider.credential(user.email, deletePassword);
-                      await reauthenticateWithCredential(user, cred);
+                      const providerId = user.providerData?.[0]?.providerId;
+                      if (providerId === "google.com") {
+                        const googleProvider = new GoogleAuthProvider();
+                        await reauthenticateWithPopup(user, googleProvider);
+                      } else if (user.email) {
+                        const cred = EmailAuthProvider.credential(user.email, deletePassword);
+                        await reauthenticateWithCredential(user, cred);
+                      }
                       await updateDoc(doc(db, "users", user.uid), {
                         status: "deleted",
                         deletedAt: serverTimestamp(),
