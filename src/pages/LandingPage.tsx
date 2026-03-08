@@ -655,7 +655,7 @@ export default function LandingPage() {
             </ul>
           </div>
           <motion.div
-            className="relative mx-auto w-full max-w-lg lg:max-w-none animate-float-slow"
+            className="relative mx-auto w-full max-w-lg lg:max-w-none"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           >
@@ -664,7 +664,10 @@ export default function LandingPage() {
               src={heroImg}
               alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
               className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
-              loading="lazy"
+              width={800}
+              height={500}
+              fetchPriority="high"
+              loading="eager"
               style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
             />
           </motion.div>
