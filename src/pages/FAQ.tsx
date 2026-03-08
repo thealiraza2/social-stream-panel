@@ -3,14 +3,18 @@ import { ChevronRight, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const faqs = [
-  { q: "What is BudgetSMM?", a: "BudgetSMM is the #1 cheapest SMM panel for social media marketing. We provide high-quality followers, likes, views, and engagement services for all major platforms at the lowest prices." },
-  { q: "How fast is delivery?", a: "Most orders start processing instantly after payment. Average delivery time is under 2 minutes for most services, depending on the quantity and service type." },
-  { q: "Is it safe to use?", a: "Yes! We use secure payment gateways with SSL encryption and never ask for your social media passwords. Your account safety is our top priority." },
-  { q: "What payment methods do you accept?", a: "We accept JazzCash, Easypaisa, Visa, Mastercard, cryptocurrency, and various other local and international payment methods." },
-  { q: "Do you offer an API?", a: "Yes! Full REST API access is available for developers and resellers. Check our API Documentation page for integration details." },
-  { q: "What if my order doesn't deliver?", a: "If your order is not delivered, you can submit a support ticket and our team will investigate within 24-48 hours. Refunds are credited to your account balance." },
-  { q: "Can I get a refund?", a: "Refunds are available for orders that haven't started. Please review our Refund Policy for complete details." },
-  { q: "Do you offer bulk discounts?", a: "Yes! We offer competitive bulk pricing. The more you order, the more you save. Contact support for custom quotes on large orders." },
+  { q: "What is BudgetSMM?", a: "BudgetSMM is a social media marketing (SMM) panel where you can buy followers, likes, views, comments, and other engagement services for platforms like Instagram, TikTok, YouTube, Facebook, Twitter, and more — all at the cheapest prices in Pakistan." },
+  { q: "How do I place an order?", a: "Sign up or log in, add funds to your wallet, go to 'New Order', select a service category, choose a service, enter your social media link and quantity, and click 'Submit Order'. Your order will start processing automatically." },
+  { q: "How fast is delivery?", a: "Most orders begin processing within seconds. Delivery speed depends on the service type and quantity — small orders are usually completed in minutes, while larger orders may take a few hours." },
+  { q: "What payment methods do you accept?", a: "We accept cryptocurrency (USDT), bank transfers, JazzCash, Easypaisa, and other payment methods as available. Check the 'Add Funds' page for currently active payment options." },
+  { q: "Can I withdraw my balance?", a: "No. All funds added to your BudgetSMM wallet are non-withdrawable. Your balance can only be used to place orders on the platform. Please make sure you only add the amount you intend to use." },
+  { q: "Can I get a refund?", a: "Refunds are only issued for cancelled orders. The refund is credited back to your BudgetSMM wallet balance — not to your bank account or external payment method. Completed or partially fulfilled orders are not eligible for refunds." },
+  { q: "What if my order doesn't deliver?", a: "If your order is stuck or not delivered, open a support ticket from your dashboard with the order ID. Our team will investigate and either complete the order or issue a balance refund." },
+  { q: "Is it safe? Will my account get banned?", a: "We use secure payment processing and never ask for your social media passwords. However, using third-party growth services always carries some risk depending on the platform's policies. BudgetSMM is not responsible for any action taken by social media platforms on your account." },
+  { q: "Do you offer an API for resellers?", a: "Yes! We provide full REST API access so you can integrate BudgetSMM services into your own panel or website. Visit the API Documentation page for endpoints and usage details." },
+  { q: "What is drip-feed?", a: "Drip-feed lets you spread an order over time instead of delivering it all at once. For example, you can set 1000 followers to be delivered gradually over 5 days to make growth look more natural." },
+  { q: "How do I contact support?", a: "Go to your dashboard and open a support ticket. Our team typically responds within 24 hours. Please include your order ID when reporting order-related issues." },
+  { q: "Can I delete my account?", a: "Yes. You can delete your account from the Profile page in your dashboard. Please note that account deletion is permanent and any remaining balance will be forfeited." },
 ];
 
 const FAQ = () => (
