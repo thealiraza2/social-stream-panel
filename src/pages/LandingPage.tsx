@@ -574,7 +574,7 @@ export default function LandingPage() {
       </section>
 
       {/* ==================== LIVE STATS BAR ==================== */}
-      <AnimatedSection className="!py-0">
+      <AnimatedSection className="!py-0" isMobile={isMobile}>
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute inset-0 gradient-primary opacity-90" />
           <div className="relative flex flex-col items-center justify-around gap-8 px-6 py-10 sm:flex-row sm:gap-4">
