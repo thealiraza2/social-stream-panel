@@ -710,45 +710,47 @@ export default function LandingPage() {
           description="Hover over any service to see detailed specs. All services start instantly."
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {SERVICE_CARDS.map((s, i) => (
-            <motion.div
-              key={`${s.platform}-${s.service}-${i}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              whileHover={{ y: -8, transition: { duration: 0.25 } }}
-              className="glass-card group relative rounded-2xl p-5 overflow-hidden cursor-default hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              {/* Glow on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-
-              <div className={`relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient} transition-transform duration-300 group-hover:scale-110`}>
-                <s.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h3 className="relative mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
-              <p className="relative text-xs text-muted-foreground">{s.service}</p>
-
-              {/* Hover reveal */}
-              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Start</p>
-                  <p className="text-xs font-bold text-foreground">{s.start}</p>
+          {SERVICE_CARDS.map((s, i) => {
+            const Wrapper = isMobile ? "div" : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.06 },
+              whileHover: { y: -8, transition: { duration: 0.25 } },
+            };
+            return (
+              <Wrapper
+                key={`${s.platform}-${s.service}-${i}`}
+                {...animProps}
+                className="glass-card group relative rounded-2xl p-5 overflow-hidden cursor-default hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+                <div className={`relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient} transition-transform duration-300 group-hover:scale-110`}>
+                  <s.icon className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <TrendingUp className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Speed</p>
-                  <p className="text-xs font-bold text-foreground">{s.speed}</p>
+                <h3 className="relative mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
+                <p className="relative text-xs text-muted-foreground">{s.service}</p>
+                <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Start</p>
+                    <p className="text-xs font-bold text-foreground">{s.start}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <TrendingUp className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Speed</p>
+                    <p className="text-xs font-bold text-foreground">{s.speed}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <RefreshCw className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Refill</p>
+                    <p className="text-xs font-bold text-foreground">{s.refill}</p>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <RefreshCw className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Refill</p>
-                  <p className="text-xs font-bold text-foreground">{s.refill}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
