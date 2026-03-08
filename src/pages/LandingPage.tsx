@@ -594,7 +594,7 @@ export default function LandingPage() {
             <Activity className="h-4 w-4 text-success animate-pulse" />
             <span className="text-sm font-semibold text-foreground">Live Orders Feed</span>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-pulse" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
             </span>
           </div>
