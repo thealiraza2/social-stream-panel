@@ -21,6 +21,12 @@ const Maintenance = lazy(() => import("./pages/Maintenance"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
 const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // User pages — lazy loaded
