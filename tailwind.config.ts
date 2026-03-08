@@ -90,11 +90,15 @@ export default {
         },
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-12px)" },
         },
         "pulse-glow": {
           "0%, 100%": { boxShadow: "0 0 15px -3px hsl(262 83% 58% / 0.3)" },
           "50%": { boxShadow: "0 0 25px -3px hsl(262 83% 58% / 0.5)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "50%": { transform: "translateY(-8px) rotate(1deg)" },
         },
       },
       animation: {
@@ -103,6 +107,7 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "float": "float 3s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "float-slow": "float-slow 4s ease-in-out infinite",
       },
     },
   },
