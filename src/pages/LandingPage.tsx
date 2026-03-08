@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { motion, useInView } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Zap, Shield, Headphones, DollarSign, Code2, Star,
   Menu, X, Moon, Sun, ChevronRight, UserPlus, LogIn,
@@ -78,14 +79,24 @@ function AnimatedSection({
   className = "",
   id,
   delay = 0,
+  isMobile = false,
 }: {
   children: React.ReactNode;
   className?: string;
   id?: string;
   delay?: number;
+  isMobile?: boolean;
 }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  if (isMobile) {
+    return (
+      <section ref={ref} id={id} className={`py-20 md:py-28 px-4 sm:px-6 lg:px-8 ${className}`}>
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </section>
+    );
+  }
 
   return (
     <motion.section
@@ -282,6 +293,7 @@ function SectionTitle({ badge, title, description }: { badge: string; title: str
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
+  const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -562,7 +574,7 @@ export default function LandingPage() {
       </section>
 
       {/* ==================== LIVE STATS BAR ==================== */}
-      <AnimatedSection className="!py-0">
+      <AnimatedSection className="!py-0" isMobile={isMobile}>
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute inset-0 gradient-primary opacity-90" />
           <div className="relative flex flex-col items-center justify-around gap-8 px-6 py-10 sm:flex-row sm:gap-4">
@@ -588,7 +600,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== LIVE ORDER COUNTER ==================== */}
-      <AnimatedSection className="!py-12">
+      <AnimatedSection className="!py-12" isMobile={isMobile}>
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Activity className="h-4 w-4 text-success animate-pulse" />
@@ -627,7 +639,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== DASHBOARD MOCKUP ==================== */}
-      <AnimatedSection className="relative overflow-hidden">
+      <AnimatedSection className="relative overflow-hidden" isMobile={isMobile}>
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="max-w-lg">
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -654,78 +666,96 @@ export default function LandingPage() {
               ))}
             </ul>
           </div>
-          <motion.div
-            className="relative mx-auto w-full max-w-lg lg:max-w-none"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
-            <img
-              src={heroImg}
-              alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
-              className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
-              width={800}
-              height={500}
-              fetchPriority="high"
-              loading="eager"
-              style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
-            />
-          </motion.div>
+          {isMobile ? (
+            <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+              <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
+              <img
+                src={heroImg}
+                alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
+                className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
+                width={800}
+                height={500}
+                fetchPriority="high"
+                loading="eager"
+                style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
+              />
+            </div>
+          ) : (
+            <motion.div
+              className="relative mx-auto w-full max-w-lg lg:max-w-none"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="absolute inset-0 rounded-3xl gradient-primary opacity-10 blur-2xl" />
+              <img
+                src={heroImg}
+                alt="BudgetSMM cheapest SMM panel dashboard showing order management and social media services"
+                className="relative w-full rounded-2xl shadow-2xl shadow-primary/10 border border-border/30"
+                width={800}
+                height={500}
+                fetchPriority="high"
+                loading="eager"
+                style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
+              />
+            </motion.div>
+          )}
         </div>
       </AnimatedSection>
 
       {/* ==================== SERVICES PREVIEW (Glassmorphism Grid) ==================== */}
-      <AnimatedSection id="services">
+      <AnimatedSection id="services" isMobile={isMobile}>
         <SectionTitle
           badge="Top Services"
           title="Our Services"
           description="Hover over any service to see detailed specs. All services start instantly."
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {SERVICE_CARDS.map((s, i) => (
-            <motion.div
-              key={`${s.platform}-${s.service}-${i}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              whileHover={{ y: -8, transition: { duration: 0.25 } }}
-              className="glass-card group relative rounded-2xl p-5 overflow-hidden cursor-default hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              {/* Glow on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-
-              <div className={`relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient} transition-transform duration-300 group-hover:scale-110`}>
-                <s.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h3 className="relative mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
-              <p className="relative text-xs text-muted-foreground">{s.service}</p>
-
-              {/* Hover reveal */}
-              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Start</p>
-                  <p className="text-xs font-bold text-foreground">{s.start}</p>
+          {SERVICE_CARDS.map((s, i) => {
+            const Wrapper = isMobile ? "div" : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.06 },
+              whileHover: { y: -8, transition: { duration: 0.25 } },
+            };
+            return (
+              <Wrapper
+                key={`${s.platform}-${s.service}-${i}`}
+                {...animProps}
+                className="glass-card group relative rounded-2xl p-5 overflow-hidden cursor-default hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+                <div className={`relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.gradient} transition-transform duration-300 group-hover:scale-110`}>
+                  <s.icon className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <TrendingUp className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Speed</p>
-                  <p className="text-xs font-bold text-foreground">{s.speed}</p>
+                <h3 className="relative mb-1 text-sm font-bold text-foreground">{s.platform}</h3>
+                <p className="relative text-xs text-muted-foreground">{s.service}</p>
+                <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Start</p>
+                    <p className="text-xs font-bold text-foreground">{s.start}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <TrendingUp className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Speed</p>
+                    <p className="text-xs font-bold text-foreground">{s.speed}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
+                    <RefreshCw className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-medium text-muted-foreground">Refill</p>
+                    <p className="text-xs font-bold text-foreground">{s.refill}</p>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
-                  <RefreshCw className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium text-muted-foreground">Refill</p>
-                  <p className="text-xs font-bold text-foreground">{s.refill}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
       {/* ==================== WHY CHOOSE US ==================== */}
-      <AnimatedSection id="features">
+      <AnimatedSection id="features" isMobile={isMobile}>
         <SectionTitle badge="Why Us" title="Why Choose Us" description="We don't just sell services. We deliver growth you can measure." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
@@ -735,102 +765,119 @@ export default function LandingPage() {
             { icon: DollarSign, title: "Unbeatable Prices", desc: "Wholesale pricing that beats every competitor. Save more, grow faster.", gradient: "gradient-orange" },
             { icon: Code2, title: "API Support", desc: "Full REST API for developers and resellers to automate orders at scale.", gradient: "gradient-purple" },
             { icon: Star, title: "High-Quality Services", desc: "Real, high-retention services that keep your accounts safe and growing.", gradient: "gradient-primary" },
-          ].map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -6 }}
-              className="glass-card group rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
-                <f.icon className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">{f.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-            </motion.div>
-          ))}
+           ].map((f, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.08 },
+              whileHover: { y: -6 },
+            };
+            return (
+              <Wrapper
+                key={f.title}
+                {...(animProps as any)}
+                className="glass-card group rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+                  <f.icon className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
       {/* ==================== FAQ ==================== */}
-      <AnimatedSection id="faq">
+      <AnimatedSection id="faq" isMobile={isMobile}>
         <SectionTitle badge="FAQ" title="Frequently Asked Questions" description="Got questions? We've got answers. Here are the most common ones." />
         <div className="mx-auto max-w-3xl space-y-3">
-          {FAQ_ITEMS.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-30px" }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="glass-card rounded-2xl overflow-hidden transition-all duration-200"
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="flex w-full items-center justify-between gap-4 p-5 text-left"
+          {FAQ_ITEMS.map((item, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 20 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-30px" },
+              transition: { duration: 0.4, delay: i * 0.05 },
+            };
+            return (
+              <Wrapper
+                key={i}
+                {...(animProps as any)}
+                className="glass-card rounded-2xl overflow-hidden transition-all duration-200"
               >
-                <div className="flex items-start gap-3">
-                  <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">{item.q}</span>
-                </div>
-                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
-              </button>
-              <div
-                className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
-              >
-                <div className="overflow-hidden">
-                  <div className="px-5 pb-5 pl-13">
-                    <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 p-5 text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">{item.q}</span>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
+                </button>
+                <div
+                  className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-5 pb-5 pl-13">
+                      <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
       {/* ==================== TESTIMONIALS ==================== */}
-      <AnimatedSection id="testimonials">
+      <AnimatedSection id="testimonials" isMobile={isMobile}>
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -4 }}
-              className="glass-card rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              {/* Star rating */}
-              <div className="mb-4 flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`h-4 w-4 ${i < t.rating ? "fill-warning text-warning" : "fill-muted text-muted"}`} />
-                ))}
-              </div>
-              <Quote className="mb-3 h-6 w-6 text-primary/20" />
-              <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
-                  {t.avatar}
+          {TESTIMONIALS.map((t, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.08 },
+              whileHover: { y: -4 },
+            };
+            return (
+              <Wrapper
+                key={t.name}
+                {...(animProps as any)}
+                className="glass-card rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className="mb-4 flex gap-0.5">
+                  {[...Array(5)].map((_, si) => (
+                    <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-warning text-warning" : "fill-muted text-muted"}`} />
+                  ))}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
+                <Quote className="mb-3 h-6 w-6 text-primary/20" />
+                <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
       {/* ==================== CTA BANNER ==================== */}
-      <AnimatedSection id="how-it-works" className="text-center">
+      <AnimatedSection id="how-it-works" className="text-center" isMobile={isMobile}>
         <div className="relative rounded-3xl gradient-primary p-10 md:p-16 overflow-hidden">
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-10" style={{
@@ -847,9 +894,15 @@ export default function LandingPage() {
                 <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
             </div>
-            <motion.div className="mx-auto max-w-xs" whileHover={{ scale: 1.05 }}>
-              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" width={400} height={300} />
-            </motion.div>
+            {isMobile ? (
+              <div className="mx-auto max-w-xs">
+                <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" width={400} height={300} />
+              </div>
+            ) : (
+              <motion.div className="mx-auto max-w-xs" whileHover={{ scale: 1.05 }}>
+                <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" width={400} height={300} />
+              </motion.div>
+            )}
           </div>
         </div>
       </AnimatedSection>

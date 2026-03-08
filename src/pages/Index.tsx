@@ -1,6 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import LandingPage from "./LandingPage";
+import { lazy, Suspense } from "react";
+import { PageLoader } from "@/components/PageLoader";
+
+const LandingPage = lazy(() => import("./LandingPage"));
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -17,7 +20,11 @@ const Index = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <LandingPage />;
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <LandingPage />
+    </Suspense>
+  );
 };
 
 export default Index;

@@ -18,4 +18,27 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: "es2020",
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-router": ["react-router-dom"],
+          "vendor-motion": ["framer-motion"],
+          "vendor-firebase": ["firebase/app", "firebase/auth", "firebase/firestore"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-ui": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-dropdown-menu",
+          ],
+        },
+      },
+    },
+  },
 }));
