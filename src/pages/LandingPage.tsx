@@ -847,8 +847,8 @@ export default function LandingPage() {
                 <Link to="/signup">Get Started Free <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
             </div>
-            <motion.div className="mx-auto max-w-xs animate-float" whileHover={{ scale: 1.05 }}>
-              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" />
+            <motion.div className="mx-auto max-w-xs" whileHover={{ scale: 1.05 }}>
+              <img src={paymentsImg} alt="BudgetSMM secure payment methods - Visa, Mastercard, JazzCash, Easypaisa, Crypto" className="w-full drop-shadow-2xl" loading="lazy" width={400} height={300} />
             </motion.div>
           </div>
         </div>
