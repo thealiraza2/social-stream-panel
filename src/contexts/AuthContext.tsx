@@ -39,16 +39,37 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => useContext(AuthContext);
 
+const PROFILE_CACHE_KEY = "cached_profile";
+
+const getCachedProfile = (): UserProfile | null => {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const setCachedProfile = (p: UserProfile | null) => {
+  if (p) {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(p));
+  } else {
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const cachedProfile = getCachedProfile();
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(cachedProfile);
+  const [loading, setLoading] = useState(!cachedProfile);
 
   const fetchProfile = async (u: User): Promise<UserProfile | null> => {
     const snap = await getDoc(doc(db, "users", u.uid));
     if (snap.exists()) {
       const data = { uid: u.uid, ...snap.data() } as UserProfile;
       setProfile(data);
+      setCachedProfile(data);
       return data;
     }
     return null;
@@ -58,9 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        // Background-refresh profile (UI already showing cached)
         await fetchProfile(u);
       } else {
         setProfile(null);
+        setCachedProfile(null);
       }
       setLoading(false);
     });
@@ -85,7 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: serverTimestamp(),
     };
     await setDoc(doc(db, "users", cred.user.uid), userProfile);
-    setProfile({ uid: cred.user.uid, ...userProfile });
+    const full = { uid: cred.user.uid, ...userProfile };
+    setProfile(full);
+    setCachedProfile(full);
   };
 
   const loginWithGoogle = async () => {
@@ -102,15 +127,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: serverTimestamp(),
       };
       await setDoc(doc(db, "users", cred.user.uid), userProfile);
-      setProfile({ uid: cred.user.uid, ...userProfile });
+      const full = { uid: cred.user.uid, ...userProfile };
+      setProfile(full);
+      setCachedProfile(full);
     } else {
-      setProfile({ uid: cred.user.uid, ...snap.data() } as UserProfile);
+      const data = { uid: cred.user.uid, ...snap.data() } as UserProfile;
+      setProfile(data);
+      setCachedProfile(data);
     }
   };
 
   const logout = async () => {
     await signOut(auth);
     setProfile(null);
+    setCachedProfile(null);
   };
 
   const refreshProfile = async () => {

@@ -4,13 +4,21 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+const MAINTENANCE_CACHE_KEY = "maintenance_mode";
+
 const useMaintenanceMode = () => {
-  const [maintenance, setMaintenance] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [maintenance, setMaintenance] = useState(() => {
+    return sessionStorage.getItem(MAINTENANCE_CACHE_KEY) === "true";
+  });
+  const [loaded, setLoaded] = useState(() => {
+    return sessionStorage.getItem(MAINTENANCE_CACHE_KEY) !== null;
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "settings", "general"), (snap) => {
-      setMaintenance(snap.exists() ? !!snap.data().maintenanceMode : false);
+      const val = snap.exists() ? !!snap.data().maintenanceMode : false;
+      setMaintenance(val);
+      sessionStorage.setItem(MAINTENANCE_CACHE_KEY, String(val));
       setLoaded(true);
     });
     return unsub;
