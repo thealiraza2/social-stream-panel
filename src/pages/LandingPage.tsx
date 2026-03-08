@@ -579,7 +579,7 @@ export default function LandingPage() {
                   <p className="text-2xl font-extrabold font-display sm:text-3xl">
                     {s.static ?? `${s.data!.count.toLocaleString()}${s.suffix}`}
                   </p>
-                  <p className="text-xs font-medium text-primary-foreground/70">{s.label}</p>
+                  <p className="text-xs font-medium text-primary-foreground/80">{s.label}</p>
                 </div>
               </div>
             ))}
