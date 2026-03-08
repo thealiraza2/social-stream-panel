@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePrefetch } from "@/hooks/usePrefetch";
 import heroImg from "@/assets/hero.png";
 import paymentsImg from "@/assets/payments.png";
 
@@ -302,6 +303,8 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const prefetch = usePrefetch();
+
   const scrollTo = (id: string) => {
     setMobileOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -362,10 +365,10 @@ export default function LandingPage() {
                 <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
               </Button>
               <Button variant="outline" className="rounded-full border-border/50" asChild>
-                <Link to="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
+                <Link to="/login" {...prefetch("/login")}><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
               </Button>
               <Button className="rounded-full gradient-primary text-primary-foreground border-0 btn-glow" asChild>
-                <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
+                <Link to="/signup" {...prefetch("/signup")}><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
               </Button>
             </div>
 
@@ -455,7 +458,7 @@ export default function LandingPage() {
                   className="rounded-full gradient-primary text-primary-foreground border-0 px-8 text-base group btn-glow"
                   asChild
                 >
-                  <Link to="/signup">
+                  <Link to="/signup" {...prefetch("/signup")}>
                     Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
