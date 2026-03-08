@@ -795,37 +795,43 @@ export default function LandingPage() {
       <AnimatedSection id="faq" isMobile={isMobile}>
         <SectionTitle badge="FAQ" title="Frequently Asked Questions" description="Got questions? We've got answers. Here are the most common ones." />
         <div className="mx-auto max-w-3xl space-y-3">
-          {FAQ_ITEMS.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-30px" }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="glass-card rounded-2xl overflow-hidden transition-all duration-200"
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="flex w-full items-center justify-between gap-4 p-5 text-left"
+          {FAQ_ITEMS.map((item, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 20 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-30px" },
+              transition: { duration: 0.4, delay: i * 0.05 },
+            };
+            return (
+              <Wrapper
+                key={i}
+                {...(animProps as any)}
+                className="glass-card rounded-2xl overflow-hidden transition-all duration-200"
               >
-                <div className="flex items-start gap-3">
-                  <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">{item.q}</span>
-                </div>
-                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
-              </button>
-              <div
-                className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
-              >
-                <div className="overflow-hidden">
-                  <div className="px-5 pb-5 pl-13">
-                    <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 p-5 text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">{item.q}</span>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`} />
+                </button>
+                <div
+                  className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr", opacity: openFaq === i ? 1 : 0 }}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-5 pb-5 pl-13">
+                      <p className="text-sm leading-relaxed text-muted-foreground pl-8">{item.a}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
