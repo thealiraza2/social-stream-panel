@@ -418,8 +418,8 @@ export default function LandingPage() {
       {/* ==================== HERO (Staggered Reveal) ==================== */}
       <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
         {/* Ambient orbs */}
-        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px] animate-float-slow" />
-        <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px] animate-float" />
+        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
+        <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-accent/6 blur-[100px]" />
 
         <div className="mx-auto max-w-7xl">
