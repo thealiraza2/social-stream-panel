@@ -250,6 +250,18 @@ body {
     100% { transform: translate(-5%, 3%); }
   }
 
+  /* Kill mesh-gradient animation on mobile to save GPU */
+  @media (max-width: 767px) {
+    .mesh-gradient::before {
+      animation: none !important;
+      will-change: auto;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
   /* Grid pattern overlay */
   .grid-pattern {
     position: fixed;
