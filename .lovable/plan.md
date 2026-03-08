@@ -1,38 +1,52 @@
 
 
-# Fix: Fully Automated Provider Order Routing
+## Panel Enhancement Plan
 
-## The Problem
+### 1. User Account Self-Delete (Soft Delete) — `src/pages/user/Profile.tsx`
 
-The proxy endpoint (`api/proxy-provider.ts`) is broken for order placement. It **hardcodes** `action: "services"` and ignores all other parameters sent from the frontend (like `action: "add"`, `service`, `link`, `quantity`). So when a user places an order, the proxy fetches the service list instead of placing the actual order with the provider.
+Add a "Delete Account" danger zone card at the bottom of Profile page:
+- User clicks "Delete My Account" → AlertDialog confirmation with password re-authentication
+- On confirm: sets `status: "deleted"` and `deletedAt: serverTimestamp()` on the user's Firestore doc, then signs out
+- **No Firebase Auth deletion** — just Firestore status change (soft delete)
+- In `ProtectedRoute.tsx`: add check for `status === "deleted"` → redirect to a "Account Deleted" page (reuse pattern from Banned page)
+- Create `src/pages/AccountDeleted.tsx` — simple page saying "Your account has been deleted. Contact support if this was a mistake." with logout button
+- In `AuthContext`: treat `deleted` status same as `banned` — block access
 
-## The Fix
+### 2. Password Reset (Forgot Password) — `src/pages/Login.tsx`
 
-Update `api/proxy-provider.ts` to be a **generic proxy** that forwards ALL parameters from the request body to the provider API as form data.
+Add "Forgot password?" link below the password field on login page:
+- Opens a Dialog/inline form asking for email
+- Calls Firebase `sendPasswordResetEmail(auth, email)`
+- Shows success toast: "Password reset email sent!"
+- No new page needed — just a dialog on the login page
 
-### Changes to `api/proxy-provider.ts`
+### 3. Admin Delete User — `src/pages/admin/UserManagement.tsx`
 
-Instead of hardcoding `action: "services"`, the proxy will:
-1. Extract `apiUrl` and `apiKey` from the request body
-2. Forward **all remaining fields** (`action`, `service`, `link`, `quantity`, etc.) as URL-encoded form data to the provider
-3. This makes it work for ALL SMM panel API actions: `services`, `add`, `status`, `cancel`, `refill`, etc.
+Add delete options to the edit user dialog:
+- **Soft Delete** button: sets `status: "deleted"`, `deletedAt: serverTimestamp()` — user can't login but data preserved, admin can recover by setting status back to "active"
+- **Hard Delete** button (with extra confirmation AlertDialog): deletes the Firestore doc entirely with `deleteDoc()`
+- Add "deleted" status badge (gray) in user table
+- Add "Recover" quick action for soft-deleted users (sets status back to "active", clears `deletedAt`)
+- Update status Select to include "deleted" option
 
-```text
-Before (broken):
-  formData.append("key", apiKey);
-  formData.append("action", "services");  // <-- always "services"
+### 4. Favicon — `index.html` + SVG favicon
 
-After (fixed):
-  formData.append("key", apiKey);
-  // Forward all other fields dynamically
-  for (const [key, value] of Object.entries(rest)) {
-    formData.append(key, String(value));
-  }
-```
+Generate an inline SVG favicon with "B" letter using the brand gradient (#7c3aed → #2563eb):
+- Add `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` to `index.html`
+- Create `public/favicon.svg` — a rounded square with gradient "B" letter
+- Keep existing `.ico` as fallback
 
-### Files Modified
-1. **`api/proxy-provider.ts`** -- Make it a generic forwarder instead of hardcoded "services" only
+### Files to Modify
 
-### No Frontend Changes Needed
-Both `NewOrder.tsx` and `BulkOrder.tsx` already send the correct parameters (`action: "add"`, `service`, `link`, `quantity`). Once the proxy forwards them properly, orders will automatically go to the provider API and come back with a `providerOrderId`.
+| File | Change |
+|------|--------|
+| `src/pages/user/Profile.tsx` | Add danger zone card with delete account + AlertDialog |
+| `src/pages/Login.tsx` | Add "Forgot password?" with reset email dialog |
+| `src/pages/admin/UserManagement.tsx` | Add soft/hard delete buttons, recover action |
+| `src/components/ProtectedRoute.tsx` | Block `deleted` status users → redirect |
+| `src/pages/AccountDeleted.tsx` | New — simple deleted account page |
+| `src/contexts/AuthContext.tsx` | Update UserProfile type to include `"deleted"` status |
+| `src/App.tsx` | Add `/account-deleted` route |
+| `index.html` | Update favicon link |
+| `public/favicon.svg` | New — brand "B" SVG favicon |
 
