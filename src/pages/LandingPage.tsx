@@ -822,7 +822,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== TESTIMONIALS ==================== */}
-      <AnimatedSection id="testimonials">
+      <AnimatedSection id="testimonials" isMobile={isMobile}>
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
