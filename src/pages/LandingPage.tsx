@@ -839,35 +839,40 @@ export default function LandingPage() {
       <AnimatedSection id="testimonials" isMobile={isMobile}>
         <SectionTitle badge="Testimonials" title="What Our Users Say" description="Trusted by thousands of marketers and resellers worldwide." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -4 }}
-              className="glass-card rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              {/* Star rating */}
-              <div className="mb-4 flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`h-4 w-4 ${i < t.rating ? "fill-warning text-warning" : "fill-muted text-muted"}`} />
-                ))}
-              </div>
-              <Quote className="mb-3 h-6 w-6 text-primary/20" />
-              <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
-                  {t.avatar}
+          {TESTIMONIALS.map((t, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.08 },
+              whileHover: { y: -4 },
+            };
+            return (
+              <Wrapper
+                key={t.name}
+                {...(animProps as any)}
+                className="glass-card rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className="mb-4 flex gap-0.5">
+                  {[...Array(5)].map((_, si) => (
+                    <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-warning text-warning" : "fill-muted text-muted"}`} />
+                  ))}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
+                <Quote className="mb-3 h-6 w-6 text-primary/20" />
+                <p className="mb-6 text-sm leading-relaxed text-muted-foreground">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role} · {t.country}</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
