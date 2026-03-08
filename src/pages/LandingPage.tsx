@@ -702,7 +702,7 @@ export default function LandingPage() {
               <p className="relative text-xs text-muted-foreground">{s.service}</p>
 
               {/* Hover reveal */}
-              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100 max-h-0 group-hover:max-h-24 overflow-hidden">
+              <div className="relative mt-3 grid grid-cols-3 gap-2 opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100">
                 <div className="rounded-lg bg-secondary/50 backdrop-blur-sm p-2 text-center">
                   <Clock className="mx-auto mb-1 h-3.5 w-3.5 text-primary" />
                   <p className="text-[10px] font-medium text-muted-foreground">Start</p>
