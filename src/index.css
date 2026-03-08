@@ -200,8 +200,69 @@ body {
     -webkit-backdrop-filter: blur(12px) saturate(1.8);
   }
 
+  /* Glassmorphism card */
+  .glass-card {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px) saturate(1.5);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+  .dark .glass-card {
+    background: hsl(240 8% 8% / 0.5);
+    border-color: hsl(0 0% 100% / 0.08);
+  }
+
   /* Password strength bar */
   .strength-bar {
     transition: width 0.4s ease, background-color 0.4s ease;
+  }
+
+  /* Animated mesh gradient background */
+  .mesh-gradient {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+  .mesh-gradient::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 20% 50%, hsl(262 83% 58% / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(220 90% 56% / 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.08) 0%, transparent 50%);
+    animation: mesh-move 20s ease-in-out infinite alternate;
+  }
+  .dark .mesh-gradient::before {
+    background:
+      radial-gradient(ellipse at 20% 50%, hsl(262 83% 58% / 0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(220 90% 56% / 0.14) 0%, transparent 50%),
+      radial-gradient(ellipse at 40% 80%, hsl(174 72% 46% / 0.1) 0%, transparent 50%);
+  }
+  @keyframes mesh-move {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-5%, 3%) rotate(3deg); }
+  }
+
+  /* Grid pattern overlay */
+  .grid-pattern {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 70%);
+  }
+  .dark .grid-pattern {
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
   }
 }
