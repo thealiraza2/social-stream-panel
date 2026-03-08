@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { motion, useInView } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Zap, Shield, Headphones, DollarSign, Code2, Star,
   Menu, X, Moon, Sun, ChevronRight, UserPlus, LogIn,
