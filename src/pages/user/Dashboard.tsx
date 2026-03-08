@@ -1,16 +1,35 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, ShoppingCart, Plus, Banknote, ClipboardList, ArrowRight, Layers, MessageSquare, TrendingUp, Clock, CheckCircle2, Sparkles } from "lucide-react";
+import { Wallet, ShoppingCart, Plus, Banknote, ClipboardList, ArrowRight, Layers, MessageSquare, TrendingUp, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { format, subDays, startOfDay } from "date-fns";
+
+// Lazy-load recharts
+const LazyChart = lazy(() => import("recharts").then(mod => ({
+  default: ({ chartData }: { chartData: { name: string; amount: number }[] }) => (
+    <mod.ResponsiveContainer width="100%" height="100%">
+      <mod.AreaChart data={chartData}>
+        <defs>
+          <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(262 83% 58%)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="hsl(262 83% 58%)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <mod.XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+        <mod.YAxis hide />
+        <mod.Tooltip formatter={(v: number) => [`Rs.${v.toFixed(2)}`, "Spent"]} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} />
+        <mod.Area type="monotone" dataKey="amount" stroke="hsl(262 83% 58%)" strokeWidth={2} fill="url(#spendGradient)" />
+      </mod.AreaChart>
+    </mod.ResponsiveContainer>
+  )
+})));
 
 const statusColor: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -34,6 +53,18 @@ const tips = [
   "💰 Add funds in advance for uninterrupted orders",
   "⭐ Check Services page for latest offerings",
 ];
+
+const StatCardSkeleton = () => (
+  <Card className="border-0 shadow-lg">
+    <CardContent className="flex items-center gap-4 p-5">
+      <Skeleton className="rounded-xl h-12 w-12" />
+      <div className="space-y-2 flex-1">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-7 w-28" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const UserDashboard = () => {
   const { user, profile } = useAuth();
@@ -67,14 +98,12 @@ const UserDashboard = () => {
     fetchData();
   }, [user]);
 
-  // Order status counts
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { pending: 0, processing: 0, in_progress: 0, completed: 0, canceled: 0, partial: 0 };
     orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
     return counts;
   }, [orders]);
 
-  // Spending chart data (last 7 days)
   const chartData = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
       const date = startOfDay(subDays(new Date(), 6 - i));
@@ -130,21 +159,38 @@ const UserDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Stat Cards */}
+      {/* Stat Cards - show skeleton while loading data, but show cached profile balance instantly */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((s) => (
-          <Card key={s.label} className={`${s.gradient} text-white border-0 shadow-lg hover-scale cursor-default`}>
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="rounded-xl bg-white/20 p-3">
-                <s.icon className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white/80">{s.label}</p>
-                <p className="text-2xl font-bold">{s.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {loading ? (
+          <>
+            {/* Balance card can show immediately from cached profile */}
+            <Card className="gradient-purple text-white border-0 shadow-lg hover-scale cursor-default">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="rounded-xl bg-white/20 p-3"><Wallet className="h-6 w-6" /></div>
+                <div>
+                  <p className="text-sm font-medium text-white/80">Balance</p>
+                  <p className="text-2xl font-bold">Rs.{profile?.balance?.toFixed(2) ?? "0.00"}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          stats.map((s) => (
+            <Card key={s.label} className={`${s.gradient} text-white border-0 shadow-lg hover-scale cursor-default`}>
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="rounded-xl bg-white/20 p-3">
+                  <s.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white/80">{s.label}</p>
+                  <p className="text-2xl font-bold">{s.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Order Status Summary */}
@@ -154,21 +200,29 @@ const UserDashboard = () => {
             <ClipboardList className="h-4 w-4 text-primary" />
             <h3 className="font-semibold text-sm">Order Status</h3>
           </div>
-          <div className="flex flex-wrap gap-4">
-            {[
-              { key: "pending", label: "Pending", color: "bg-warning" },
-              { key: "processing", label: "Processing", color: "bg-info" },
-              { key: "in_progress", label: "In Progress", color: "bg-info" },
-              { key: "completed", label: "Completed", color: "bg-success" },
-              { key: "canceled", label: "Canceled", color: "bg-destructive" },
-            ].map(s => (
-              <div key={s.key} className="flex items-center gap-2 text-sm">
-                <div className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-                <span className="text-muted-foreground">{s.label}</span>
-                <span className="font-semibold">{statusCounts[s.key] || 0}</span>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex flex-wrap gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-5 w-24" />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-4">
+              {[
+                { key: "pending", label: "Pending", color: "bg-warning" },
+                { key: "processing", label: "Processing", color: "bg-info" },
+                { key: "in_progress", label: "In Progress", color: "bg-info" },
+                { key: "completed", label: "Completed", color: "bg-success" },
+                { key: "canceled", label: "Canceled", color: "bg-destructive" },
+              ].map(s => (
+                <div key={s.key} className="flex items-center gap-2 text-sm">
+                  <div className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-semibold">{statusCounts[s.key] || 0}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -187,7 +241,7 @@ const UserDashboard = () => {
         ))}
       </div>
 
-      {/* Spending Chart */}
+      {/* Spending Chart - lazy loaded */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -197,20 +251,17 @@ const UserDashboard = () => {
             </div>
           </div>
           <div className="h-[180px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(262 83% 58%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(262 83% 58%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                <YAxis hide />
-                <Tooltip formatter={(v: number) => [`Rs.${v.toFixed(2)}`, "Spent"]} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} />
-                <Area type="monotone" dataKey="amount" stroke="hsl(262 83% 58%)" strokeWidth={2} fill="url(#spendGradient)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="h-full flex items-end gap-2 px-4">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <Skeleton key={i} className="flex-1 rounded-t" style={{ height: `${30 + Math.random() * 60}%` }} />
+                ))}
+              </div>
+            ) : (
+              <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                <LazyChart chartData={chartData} />
+              </Suspense>
+            )}
           </div>
         </CardContent>
       </Card>

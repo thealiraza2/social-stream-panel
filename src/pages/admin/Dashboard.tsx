@@ -1,11 +1,94 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Banknote, TrendingUp, ShoppingCart, Server, MessageSquare, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
-import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, Timestamp } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+// Lazy-load recharts
+const LazyCharts = lazy(() => import("recharts").then(mod => ({
+  default: ({ orderStats, revenueData, isUp, revenueChange }: any) => (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base font-semibold">Order Status</CardTitle>
+          <Badge variant="outline" className="text-xs font-normal">{orderStats.reduce((s: number, d: any) => s + d.value, 0)} total</Badge>
+        </CardHeader>
+        <CardContent>
+          {orderStats.length > 0 ? (
+            <>
+              <mod.ResponsiveContainer width="100%" height={250}>
+                <mod.PieChart>
+                  <mod.Pie data={orderStats} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                    {orderStats.map((entry: any, i: number) => (<mod.Cell key={i} fill={entry.color} />))}
+                  </mod.Pie>
+                  <mod.Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                </mod.PieChart>
+              </mod.ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-3 mt-2">
+                {orderStats.map((d: any) => (
+                  <div key={d.name} className="flex items-center gap-1.5 text-xs capitalize">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                    {d.name} ({d.value})
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No orders yet</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base font-semibold">Revenue & Deposits (7 Days)</CardTitle>
+          <div className="flex items-center gap-1 text-xs">
+            {isUp ? <ArrowUpRight className="h-3.5 w-3.5 text-green-500" /> : <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />}
+            <span className={isUp ? "text-green-500" : "text-red-500"}>{revenueChange}%</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <mod.ResponsiveContainer width="100%" height={280}>
+            <mod.AreaChart data={revenueData}>
+              <defs>
+                <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="depositGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <mod.CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <mod.XAxis dataKey="day" className="text-xs" />
+              <mod.YAxis className="text-xs" tickFormatter={(v: number) => `Rs.${v}`} />
+              <mod.Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} formatter={(value: number) => [`Rs. ${value.toFixed(2)}`, undefined]} />
+              <mod.Area type="monotone" dataKey="revenue" name="Earnings" stroke="hsl(262, 83%, 58%)" strokeWidth={2} fill="url(#revenueGrad)" />
+              <mod.Area type="monotone" dataKey="deposits" name="Deposits" stroke="hsl(152, 69%, 45%)" strokeWidth={2} fill="url(#depositGrad)" />
+            </mod.AreaChart>
+          </mod.ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  )
+})));
+
+const StatCardSkeleton = () => (
+  <Card className="border-0 shadow-lg overflow-hidden">
+    <CardContent className="flex items-center gap-4 p-5">
+      <Skeleton className="rounded-xl h-12 w-12" />
+      <div className="space-y-2 flex-1">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-7 w-28" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ totalUsers: 0, totalRevenue: 0, dailyProfit: 0, activeOrders: 0, totalServices: 0, openTickets: 0, todayOrders: 0, yesterdayRevenue: 0 });
@@ -18,19 +101,19 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const usersSnap = await getDocs(collection(db, "users"));
+        // Parallel fetches
+        const [usersSnap, ordersSnap, txSnap, svcSnap, ticketSnap] = await Promise.all([
+          getDocs(collection(db, "users")),
+          getDocs(collection(db, "orders")),
+          getDocs(collection(db, "transactions")),
+          getDocs(collection(db, "services")),
+          getDocs(collection(db, "tickets")),
+        ]);
+
         const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const ordersSnap = await getDocs(collection(db, "orders"));
         const orders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-
-        const txSnap = await getDocs(collection(db, "transactions"));
         const transactions = txSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-
-        const svcSnap = await getDocs(collection(db, "services"));
         const services = svcSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-
-        const ticketSnap = await getDocs(collection(db, "tickets"));
         const tickets = ticketSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
         const totalRevenue = transactions
@@ -56,13 +139,11 @@ const AdminDashboard = () => {
 
         setStats({ totalUsers: users.length, totalRevenue, dailyProfit, activeOrders, totalServices: services.length, openTickets, todayOrders, yesterdayRevenue });
 
-        // Order status pie
         const statusCounts: Record<string, number> = { completed: 0, processing: 0, pending: 0, cancelled: 0, partial: 0, in_progress: 0 };
         orders.forEach((o: any) => { if (statusCounts[o.status] !== undefined) statusCounts[o.status]++; });
         const colors: Record<string, string> = { completed: "hsl(152, 69%, 45%)", processing: "hsl(220, 90%, 56%)", pending: "hsl(38, 92%, 50%)", cancelled: "hsl(0, 84%, 60%)", partial: "hsl(280, 80%, 55%)", in_progress: "hsl(174, 72%, 46%)" };
         setOrderStats(Object.entries(statusCounts).map(([name, value]) => ({ name, value, color: colors[name] || "#888" })).filter(d => d.value > 0));
 
-        // Revenue last 7 days
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const last7: any[] = [];
         for (let i = 6; i >= 0; i--) {
@@ -81,7 +162,6 @@ const AdminDashboard = () => {
         }
         setRevenueData(last7);
 
-        // Recent users
         const sorted = [...users].sort((a: any, b: any) => {
           const aTime = a.createdAt?.toDate?.() || new Date(0);
           const bTime = b.createdAt?.toDate?.() || new Date(0);
@@ -89,7 +169,6 @@ const AdminDashboard = () => {
         }).slice(0, 5);
         setRecentUsers(sorted);
 
-        // Top services
         const svcCount: Record<string, number> = {};
         orders.forEach((o: any) => { svcCount[o.serviceName] = (svcCount[o.serviceName] || 0) + 1; });
         const top = Object.entries(svcCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count }));
@@ -102,8 +181,6 @@ const AdminDashboard = () => {
     };
     fetchAll();
   }, []);
-
-  if (loading) return <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
 
   const revenueChange = stats.yesterdayRevenue > 0
     ? (((stats.dailyProfit - stats.yesterdayRevenue) / stats.yesterdayRevenue) * 100).toFixed(1)
@@ -132,90 +209,45 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stat Cards - skeleton first */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((s) => (
-          <Card key={s.label} className={`${s.gradient} text-white border-0 shadow-lg relative overflow-hidden`}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
-            <CardContent className="flex items-center gap-4 p-5 relative z-10">
-              <div className="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
-                <s.icon className="h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-white/70">{s.label}</p>
-                <p className="text-2xl font-bold tracking-tight">{s.value}</p>
-                <p className="text-xs text-white/50 mt-0.5">{s.sub}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-semibold">Order Status</CardTitle>
-            <Badge variant="outline" className="text-xs font-normal">{orders_total(orderStats)} total</Badge>
-          </CardHeader>
-          <CardContent>
-            {orderStats.length > 0 ? (
-              <>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={orderStats} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                      {orderStats.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap justify-center gap-3 mt-2">
-                  {orderStats.map((d) => (
-                    <div key={d.name} className="flex items-center gap-1.5 text-xs capitalize">
-                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                      {d.name} ({d.value})
-                    </div>
-                  ))}
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
+        ) : (
+          statCards.map((s) => (
+            <Card key={s.label} className={`${s.gradient} text-white border-0 shadow-lg relative overflow-hidden`}>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
+              <CardContent className="flex items-center gap-4 p-5 relative z-10">
+                <div className="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                  <s.icon className="h-6 w-6" />
                 </div>
-              </>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">No orders yet</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-semibold">Revenue & Deposits (7 Days)</CardTitle>
-            <div className="flex items-center gap-1 text-xs">
-              {isUp ? <ArrowUpRight className="h-3.5 w-3.5 text-green-500" /> : <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />}
-              <span className={isUp ? "text-green-500" : "text-red-500"}>{revenueChange}%</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={revenueData}>
-                <defs>
-                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="depositGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="day" className="text-xs" />
-                <YAxis className="text-xs" tickFormatter={(v) => `Rs.${v}`} />
-                <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} formatter={(value: number) => [`Rs. ${value.toFixed(2)}`, undefined]} />
-                <Area type="monotone" dataKey="revenue" name="Earnings" stroke="hsl(262, 83%, 58%)" strokeWidth={2} fill="url(#revenueGrad)" />
-                <Area type="monotone" dataKey="deposits" name="Deposits" stroke="hsl(152, 69%, 45%)" strokeWidth={2} fill="url(#depositGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white/70">{s.label}</p>
+                  <p className="text-2xl font-bold tracking-tight">{s.value}</p>
+                  <p className="text-xs text-white/50 mt-0.5">{s.sub}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
+
+      {/* Charts - lazy loaded */}
+      {loading ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+          <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+        </div>
+      ) : (
+        <Suspense fallback={
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+            <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+          </div>
+        }>
+          <LazyCharts orderStats={orderStats} revenueData={revenueData} isUp={isUp} revenueChange={revenueChange} />
+        </Suspense>
+      )}
 
       {/* Tables */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -224,7 +256,17 @@ const AdminDashboard = () => {
             <CardTitle className="text-base font-semibold">Newest Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {recentUsers.length > 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            ) : recentUsers.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Status</TableHead></TableRow>
@@ -248,7 +290,16 @@ const AdminDashboard = () => {
             <CardTitle className="text-base font-semibold">Top Services by Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            {topServices.length > 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between"><Skeleton className="h-4 w-32" /><Skeleton className="h-4 w-16" /></div>
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                ))}
+              </div>
+            ) : topServices.length > 0 ? (
               <div className="space-y-3">
                 {topServices.map((s, i) => {
                   const maxCount = topServices[0]?.count || 1;
@@ -273,9 +324,5 @@ const AdminDashboard = () => {
     </div>
   );
 };
-
-function orders_total(stats: { value: number }[]) {
-  return stats.reduce((s, d) => s + d.value, 0);
-}
 
 export default AdminDashboard;
