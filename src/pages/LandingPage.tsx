@@ -703,7 +703,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== SERVICES PREVIEW (Glassmorphism Grid) ==================== */}
-      <AnimatedSection id="services">
+      <AnimatedSection id="services" isMobile={isMobile}>
         <SectionTitle
           badge="Top Services"
           title="Our Services"
