@@ -784,7 +784,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== FAQ ==================== */}
-      <AnimatedSection id="faq">
+      <AnimatedSection id="faq" isMobile={isMobile}>
         <SectionTitle badge="FAQ" title="Frequently Asked Questions" description="Got questions? We've got answers. Here are the most common ones." />
         <div className="mx-auto max-w-3xl space-y-3">
           {FAQ_ITEMS.map((item, i) => (
