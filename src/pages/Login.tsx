@@ -178,6 +178,33 @@ const Login = () => {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+                <DialogTrigger asChild>
+                  <button type="button" className="text-xs text-primary hover:underline font-medium">
+                    Forgot password?
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5 text-primary" /> Reset Password
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <p className="text-sm text-muted-foreground">Enter your email and we'll send you a link to reset your password.</p>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+                    </div>
+                    <Button onClick={handleResetPassword} disabled={resetLoading || !resetEmail} className="w-full gradient-primary text-primary-foreground border-0">
+                      {resetLoading ? "Sending..." : "Send Reset Link"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
             <Button
               type="submit"
               className="w-full h-12 gradient-primary text-primary-foreground border-0 text-sm font-semibold btn-glow"

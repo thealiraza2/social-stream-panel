@@ -187,6 +187,72 @@ const Profile = () => {
           </Button>
         </CardContent>
       </Card>
+      {/* Danger Zone — Delete Account */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" /> Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your account. This action cannot be undone by you — only an admin can recover your account.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2">
+                <Trash2 className="h-4 w-4" /> Delete My Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your account will be deactivated and you will lose access immediately. Contact support to recover your account.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 py-2">
+                <Label>Enter your password to confirm</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeletePassword("")}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={!deletePassword || deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (!user || !user.email) return;
+                    setDeleting(true);
+                    try {
+                      const cred = EmailAuthProvider.credential(user.email, deletePassword);
+                      await reauthenticateWithCredential(user, cred);
+                      await updateDoc(doc(db, "users", user.uid), {
+                        status: "deleted",
+                        deletedAt: serverTimestamp(),
+                      });
+                      toast({ title: "Account deleted", description: "Your account has been deactivated." });
+                      await logout();
+                    } catch (err: any) {
+                      toast({ title: "Error", description: err.message, variant: "destructive" });
+                    } finally {
+                      setDeleting(false);
+                      setDeletePassword("");
+                    }
+                  }}
+                >
+                  {deleting ? "Deleting..." : "Delete Account"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
     </div>
   );
 };

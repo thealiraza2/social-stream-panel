@@ -221,7 +221,7 @@ const UserManagement = () => {
               <Label>Status</Label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="banned">Banned</SelectItem><SelectItem value="deleted">Deleted</SelectItem></SelectContent>
               </Select>
             </div>
             {form.status === "banned" && (
