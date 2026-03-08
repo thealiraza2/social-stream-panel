@@ -147,9 +147,46 @@ const UserManagement = () => {
                     <TableCell>{u.email}</TableCell>
                     <TableCell className="font-medium">Rs.{(u.balance || 0).toFixed(2)}</TableCell>
                     <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                    <TableCell><Badge variant="outline" className={u.status === "active" ? "text-green-600" : "text-destructive"}>{u.status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={
+                        u.status === "active" ? "text-green-600" :
+                        u.status === "deleted" ? "text-muted-foreground" : "text-destructive"
+                      }>{u.status}</Badge>
+                    </TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
-                    <TableCell><Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button></TableCell>
+                    <TableCell className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>
+                      {u.status === "deleted" ? (
+                        <Button size="icon" variant="ghost" onClick={() => handleRecover(u.id)} title="Recover">
+                          <RotateCcw className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : (
+                        <Button size="icon" variant="ghost" onClick={() => handleSoftDelete(u.id)} title="Soft Delete">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Hard Delete">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Permanently delete this user?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently remove {u.email} and all their data. This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleHardDelete(u.id)}>
+                              Delete Permanently
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
