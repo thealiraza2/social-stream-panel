@@ -765,23 +765,29 @@ export default function LandingPage() {
             { icon: DollarSign, title: "Unbeatable Prices", desc: "Wholesale pricing that beats every competitor. Save more, grow faster.", gradient: "gradient-orange" },
             { icon: Code2, title: "API Support", desc: "Full REST API for developers and resellers to automate orders at scale.", gradient: "gradient-purple" },
             { icon: Star, title: "High-Quality Services", desc: "Real, high-retention services that keep your accounts safe and growing.", gradient: "gradient-primary" },
-          ].map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -6 }}
-              className="glass-card group rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
-            >
-              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
-                <f.icon className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">{f.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-            </motion.div>
-          ))}
+           ].map((f, i) => {
+            const Wrapper = isMobile ? "div" as const : motion.div;
+            const animProps = isMobile ? {} : {
+              initial: { opacity: 0, y: 30 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, margin: "-50px" },
+              transition: { duration: 0.5, delay: i * 0.08 },
+              whileHover: { y: -6 },
+            };
+            return (
+              <Wrapper
+                key={f.title}
+                {...(animProps as any)}
+                className="glass-card group rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-shadow duration-300"
+              >
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.gradient} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+                  <f.icon className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+              </Wrapper>
+            );
+          })}
         </div>
       </AnimatedSection>
 
