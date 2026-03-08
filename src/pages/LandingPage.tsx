@@ -753,7 +753,7 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* ==================== WHY CHOOSE US ==================== */}
-      <AnimatedSection id="features">
+      <AnimatedSection id="features" isMobile={isMobile}>
         <SectionTitle badge="Why Us" title="Why Choose Us" description="We don't just sell services. We deliver growth you can measure." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
