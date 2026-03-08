@@ -407,12 +407,12 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">The #1 cheapest & fastest SMM panel for Instagram, YouTube, TikTok, Twitter and more. Automated delivery 24/7.</p>
               <nav aria-label="Social media links" className="flex gap-3">
                 {[
-                  { Icon: Facebook, label: "Facebook" },
-                  { Icon: Twitter, label: "Twitter" },
-                  { Icon: Instagram, label: "Instagram" },
-                  { Icon: Youtube, label: "YouTube" },
-                ].map(({ Icon, label }) => (
-                  <a key={label} href="#" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 text-muted-foreground transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:scale-110">
+                  { Icon: Facebook, label: "Facebook", url: "https://facebook.com/budgetsmm" },
+                  { Icon: Twitter, label: "Twitter", url: "https://twitter.com/budgetsmm" },
+                  { Icon: Instagram, label: "Instagram", url: "https://instagram.com/budgetsmm" },
+                  { Icon: Youtube, label: "YouTube", url: "https://youtube.com/@budgetsmm" },
+                ].map(({ Icon, label, url }) => (
+                  <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={`BudgetSMM on ${label}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 text-muted-foreground transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:scale-110">
                     <Icon className="h-4 w-4" />
                   </a>
                 ))}
@@ -425,17 +425,17 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                 <li><Link to="/services" className="text-muted-foreground transition-colors hover:text-primary">Services</Link></li>
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
                 <li><Link to="/login" className="text-muted-foreground transition-colors hover:text-primary">Login</Link></li>
-                <li><a href="#services" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
-                <li><a href="#faq" className="text-muted-foreground transition-colors hover:text-primary">FAQ</a></li>
+                <li><Link to="/pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</Link></li>
+                <li><Link to="/faq" className="text-muted-foreground transition-colors hover:text-primary">FAQ</Link></li>
               </ul>
             </nav>
             <nav aria-label="Legal links">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Legal & Policies</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Terms of Service</a></li>
-                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Privacy Policy</a></li>
-                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Refund Policy</a></li>
-                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">API Documentation</a></li>
+                <li><Link to="/terms" className="text-muted-foreground transition-colors hover:text-primary">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="text-muted-foreground transition-colors hover:text-primary">Privacy Policy</Link></li>
+                <li><Link to="/refund" className="text-muted-foreground transition-colors hover:text-primary">Refund Policy</Link></li>
+                <li><Link to="/api-docs" className="text-muted-foreground transition-colors hover:text-primary">API Documentation</Link></li>
               </ul>
             </nav>
             <div>
