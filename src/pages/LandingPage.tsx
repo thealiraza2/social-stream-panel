@@ -131,9 +131,9 @@ function PriceCalculator() {
                   className={`flex flex-col items-center gap-1 rounded-[16px] px-2 py-2.5 text-xs font-medium transition-all duration-200 ${
                     platform === p
                       ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
-                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                      : "shadow-clayPressed"
                   }`}
-                  style={{ color: platform === p ? "white" : "var(--clay-muted)" }}
+                  style={{ color: platform === p ? "white" : "var(--clay-muted)", background: platform === p ? undefined : "var(--clay-input-bg)" }}
                 >
                   {PLATFORM_ICONS[p]}
                   <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
