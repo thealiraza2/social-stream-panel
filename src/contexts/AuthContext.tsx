@@ -41,6 +41,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const useAuth = () => useContext(AuthContext);
 
 const PROFILE_CACHE_KEY = "cached_profile";
+const AUTH_SESSION_HINT_KEY = "auth_session_expected";
 
 const getCachedProfile = (): UserProfile | null => {
   try {
@@ -59,11 +60,31 @@ const setCachedProfile = (p: UserProfile | null) => {
   }
 };
 
+const getSessionHint = () => {
+  try {
+    return localStorage.getItem(AUTH_SESSION_HINT_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+const setSessionHint = (value: boolean) => {
+  try {
+    if (value) {
+      localStorage.setItem(AUTH_SESSION_HINT_KEY, "true");
+    } else {
+      localStorage.removeItem(AUTH_SESSION_HINT_KEY);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const cachedProfile = getCachedProfile();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => auth.currentUser);
   const [profile, setProfile] = useState<UserProfile | null>(cachedProfile);
-  const [loading, setLoading] = useState(!cachedProfile);
+  const [loading, setLoading] = useState(() => (!!cachedProfile || getSessionHint()) && !auth.currentUser);
 
   const fetchProfile = async (u: User): Promise<UserProfile | null> => {
     const snap = await getDoc(doc(db, "users", u.uid));
@@ -78,38 +99,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
+    let restoreTimer: number | undefined;
+
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (!isMounted) return;
+      if (restoreTimer) window.clearTimeout(restoreTimer);
+
       setUser(u);
+
       if (u) {
-        await fetchProfile(u);
-      } else {
-        // Only clear profile if we had no cached profile either
-        // This prevents flash-logout during token refresh
-        if (!getCachedProfile()) {
-          setProfile(null);
-        } else {
-          // Give Firebase a moment to restore session before clearing
-          setTimeout(() => {
-            if (!auth.currentUser && isMounted) {
-              setProfile(null);
-              setCachedProfile(null);
-            }
-          }, 2000);
+        setSessionHint(true);
+        try {
+          await fetchProfile(u);
+        } catch (error) {
+          console.error("Failed to restore profile:", error);
+        } finally {
+          if (isMounted) setLoading(false);
         }
+        return;
       }
+
+      if (getCachedProfile() || getSessionHint()) {
+        restoreTimer = window.setTimeout(() => {
+          if (!auth.currentUser && isMounted) {
+            setProfile(null);
+            setCachedProfile(null);
+            setSessionHint(false);
+            setLoading(false);
+          }
+        }, 2000);
+        return;
+      }
+
+      setProfile(null);
+      setCachedProfile(null);
+      setSessionHint(false);
       setLoading(false);
     });
-    return () => { isMounted = false; unsub(); };
+
+    return () => {
+      isMounted = false;
+      if (restoreTimer) window.clearTimeout(restoreTimer);
+      unsub();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    setSessionHint(true);
     await fetchProfile(cred.user);
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
     const userProfile: Omit<UserProfile, "uid"> = {
@@ -129,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
+    setSessionHint(true);
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (!snap.exists()) {
       const userProfile: Omit<UserProfile, "uid"> = {
@@ -151,6 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    setSessionHint(false);
     await signOut(auth);
     setProfile(null);
     setCachedProfile(null);
