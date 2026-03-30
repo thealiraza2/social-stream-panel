@@ -1,37 +1,69 @@
 
 
-## Problem
+## SEO Optimization Plan
 
-Login history entries are not being saved to the `login_history` subcollection. The `saveLoginHistory` function silently swallows all errors (`catch {}` on line 56-57), making it impossible to diagnose failures. The main user doc fields (lastIP, lastCity etc.) may update while the subcollection write silently fails.
+After auditing all pages, here's the current state and what needs fixing:
 
-Additionally, the session deduplication logic using `Date.now().toString().slice(0, -4)` creates a key that changes every ~10 seconds, which can cause `onAuthStateChanged` to skip saving if it fires within the same window on rapid re-renders.
+### What's Already Done (No Changes Needed)
+- Most public pages (Landing, FAQ, Pricing, About, Contact, API Docs, Terms, Privacy, Refund, Login, Signup, Blog) already have **unique titles, descriptions, canonical URLs, and keywords** via `useSEO`.
+- All pages have proper `<h1>` tags.
+- Most images already have descriptive `alt` text.
+- `index.html` has proper JSON-LD schemas (Organization, WebSite, FAQPage, Product).
+- Fonts are already non-render-blocking (preload + media=print trick).
 
-## Plan
+### What Needs Fixing
 
-**File: `src/contexts/AuthContext.tsx`**
+**1. BlogPost.tsx — Missing useSEO (Dynamic SEO)**
+- Currently has no `useSEO` call at all. When someone shares or Google indexes a blog post, it shows the previous page's meta tags.
+- Add dynamic `useSEO` using the fetched post's title, excerpt, and featured image.
+- Set canonical to `https://budgetsmm.store/blog/{slug}`.
 
-1. **Add error logging to `saveLoginHistory`** — Replace the silent `catch {}` with `console.error` so failures are visible in the console.
+**2. NotFound.tsx — Missing useSEO**
+- Uses raw `document.title` instead of `useSEO`.
+- Add `useSEO` with `noindex: true` so 404 pages don't get indexed.
 
-2. **Fix session deduplication** — Change the `locKey` to use a stable session-based key (e.g., just `loc_saved_{uid}`) that only resets on actual login/logout, not on page refreshes. This ensures:
-   - Fresh login → always saves history
-   - Page refresh within same session → doesn't duplicate
+**3. Admin BlogPosts.tsx — Empty alt text**
+- Line 163: `alt=""` on blog post thumbnail images.
+- Change to `alt={p.title || "Blog post thumbnail"}`.
 
-3. **Add explicit logging** — Add `console.log` before and after the `saveLoginHistory` call so we can confirm the save path is being reached and completing.
+**4. Bing Webmaster Verification**
+- Line 39 in `index.html`: still has `REPLACE_WITH_YOUR_CODE` placeholder.
+- Either add real verification code or remove the tag to avoid looking unfinished to crawlers.
 
-4. **Ensure `saveLoginHistory` is awaited** — Currently it's fire-and-forget inside `.then()`. Make it properly awaited so errors surface.
+**5. Font optimization — reduce weight count**
+- Currently loading 4 font families with many weights (Nunito 6 weights, DM Sans 4, Inter 6, Plus Jakarta Sans 4 = ~20 font files).
+- Trim to only weights actually used to reduce payload.
+
+### Files to Modify
+1. `src/pages/BlogPost.tsx` — Add `useSEO` with dynamic post data
+2. `src/pages/NotFound.tsx` — Replace `document.title` with `useSEO({ noindex: true })`
+3. `src/pages/admin/BlogPosts.tsx` — Fix empty `alt=""` on line 163
+4. `index.html` — Remove placeholder Bing meta tag (line 39)
 
 ### Technical Details
 
-```
-// saveLoginHistory - add error logging
-catch (e) {
-  console.error('[Auth] Failed to save login history:', e);
-}
+**BlogPost.tsx changes:**
+```typescript
+import { useSEO } from "@/hooks/useSEO";
 
-// Fix locKey to be session-stable (reset only on fresh login)
-// In login/signup functions: sessionStorage.removeItem(`loc_saved_${uid}`)
-// In onAuthStateChanged: use `loc_saved_${uid}` without timestamp
+// After post is fetched, call useSEO dynamically:
+useSEO({
+  title: post ? `${post.title} - BudgetSMM Blog` : "Loading... - BudgetSMM Blog",
+  description: post?.excerpt || "Read this article on the BudgetSMM blog.",
+  canonical: `https://budgetsmm.store/blog/${slug}`,
+  ogImage: post?.featuredImage || undefined,
+  ogType: "article",
+});
 ```
 
-This way, every actual login triggers a fresh history save, and errors are no longer hidden.
+**NotFound.tsx changes:**
+```typescript
+import { useSEO } from "@/hooks/useSEO";
+// Replace useEffect with:
+useSEO({
+  title: "Page Not Found - BudgetSMM",
+  description: "The page you're looking for doesn't exist. Browse BudgetSMM services or return to the homepage.",
+  noindex: true,
+});
+```
 
