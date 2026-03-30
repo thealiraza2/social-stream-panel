@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,10 +58,49 @@ const ServiceManagement = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [form, setForm] = useState({
     name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
     description: "", status: "active", providerId: "", providerServiceId: "",
   });
+
+  const allSelected = services.length > 0 && selectedIds.size === services.length;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(services.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected service(s)?`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id => deleteDoc(doc(db, "services", id)))
+      );
+      toast({ title: `${selectedIds.size} services deleted` });
+      setSelectedIds(new Set());
+      clearCache();
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -160,7 +200,15 @@ const ServiceManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Service Management</h1>
-        <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Service</Button>
+        <div className="flex gap-2">
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
+            </Button>
+          )}
+          <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Service</Button>
+        </div>
       </div>
       <Card>
         <CardContent className="p-0">
@@ -168,14 +216,20 @@ const ServiceManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                  </TableHead>
                   <TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead>Provider</TableHead><TableHead>Rate/1k</TableHead><TableHead>Min</TableHead><TableHead>Max</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? <TableSkeleton rows={5} cols={8} /> : services.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>
+                {loading ? <TableSkeleton rows={5} cols={9} /> : services.length === 0 ? (
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No services yet</TableCell></TableRow>
                 ) : services.map(s => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className={selectedIds.has(s.id) ? "bg-primary/5" : ""}>
+                    <TableCell>
+                      <Checkbox checked={selectedIds.has(s.id)} onCheckedChange={() => toggleSelect(s.id)} />
+                    </TableCell>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{getCategoryName(s.categoryId)}</TableCell>
                     <TableCell>{getProviderName(s.providerId)}</TableCell>
