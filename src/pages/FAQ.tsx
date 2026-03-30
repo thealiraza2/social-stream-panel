@@ -17,7 +17,14 @@ const faqs = [
   { q: "Can I delete my account?", a: "Yes. You can delete your account from the Profile page in your dashboard. Please note that account deletion is permanent and any remaining balance will be forfeited." },
 ];
 
-const FAQ = () => (
+const FAQ = () => {
+  useSEO({
+    title: "FAQ - BudgetSMM | Frequently Asked Questions About SMM Panel",
+    description: "Find answers to common questions about BudgetSMM — payments, delivery speed, refund policy, API access, drip-feed, and more. Get help with your SMM panel orders.",
+    canonical: "https://budgetsmm.store/faq",
+    keywords: "smm panel faq, budgetsmm questions, smm panel help, buy followers faq, smm panel refund policy",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
