@@ -160,7 +160,7 @@ const BlogPosts = () => {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {p.featuredImage ? (
-                            <img src={p.featuredImage} alt="" className="h-10 w-10 rounded object-cover" />
+                            <img src={p.featuredImage} alt={p.title || "Blog post thumbnail"} className="h-10 w-10 rounded object-cover" />
                           ) : (
                             <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
                               <Image className="h-4 w-4 text-muted-foreground" />
