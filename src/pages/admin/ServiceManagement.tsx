@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Server, Plus, Pencil, Trash2 } from "lucide-react";
+import { Server, Plus, Pencil, Trash2, DollarSign } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
