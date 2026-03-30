@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
+import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle, Globe, MapPin } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, DocumentSnapshot, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -136,11 +136,11 @@ const UserManagement = () => {
           <div className="overflow-auto">
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>IP</TableHead><TableHead>Location</TableHead><TableHead>Last Login</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? <TableSkeleton rows={5} cols={7} /> : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+                {loading ? <TableSkeleton rows={5} cols={10} /> : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
                 ) : filtered.map(u => (
                   <TableRow key={u.id}>
                     <TableCell>{u.displayName || "—"}</TableCell>
@@ -153,6 +153,16 @@ const UserManagement = () => {
                         u.status === "deleted" ? "text-muted-foreground" : "text-destructive"
                       }>{u.status}</Badge>
                     </TableCell>
+                    <TableCell className="text-xs font-mono">{u.lastIP || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {u.lastCity || u.lastCountry ? (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          {[u.lastCity, u.lastRegion, u.lastCountry].filter(Boolean).join(", ")}
+                        </span>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{formatDate(u.lastLoginAt)}</TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
                     <TableCell className="flex items-center gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>

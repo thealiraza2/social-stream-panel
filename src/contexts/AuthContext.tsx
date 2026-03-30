@@ -10,8 +10,19 @@ import {
   signInWithPopup,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+
+const fetchLocationData = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { ip: data.ip || "", country: data.country_name || "", city: data.city || "", region: data.region || "" };
+  } catch {
+    return null;
+  }
+};
 
 export interface UserProfile {
   uid: string;
@@ -148,6 +159,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cred = await signInWithEmailAndPassword(auth, email, password);
     setSessionHint(true);
     await fetchProfile(cred.user);
+    // Save location in background
+    fetchLocationData().then(loc => {
+      if (loc) updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
+    });
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
@@ -155,13 +170,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
-    const userProfile: Omit<UserProfile, "uid"> = {
-      displayName,
-      email,
-      role: "user",
-      balance: 0,
-      status: "active",
-      createdAt: serverTimestamp(),
+    const loc = await fetchLocationData();
+    const userProfile: any = {
+      displayName, email, role: "user", balance: 0, status: "active", createdAt: serverTimestamp(),
+      lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
     };
     await setDoc(doc(db, "users", cred.user.uid), userProfile);
     const full = { uid: cred.user.uid, ...userProfile };
@@ -175,13 +187,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionHint(true);
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (!snap.exists()) {
-      const userProfile: Omit<UserProfile, "uid"> = {
+      const loc = await fetchLocationData();
+      const userProfile: any = {
         displayName: cred.user.displayName || "User",
         email: cred.user.email || "",
-        role: "user",
-        balance: 0,
-        status: "active",
-        createdAt: serverTimestamp(),
+        role: "user", balance: 0, status: "active", createdAt: serverTimestamp(),
+        lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
       };
       await setDoc(doc(db, "users", cred.user.uid), userProfile);
       const full = { uid: cred.user.uid, ...userProfile };
@@ -191,6 +202,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = { uid: cred.user.uid, ...snap.data() } as UserProfile;
       setProfile(data);
       setCachedProfile(data);
+      // Update location in background
+      fetchLocationData().then(loc => {
+        if (loc) updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
+      });
     }
   };
 
