@@ -69,5 +69,6 @@ const ApiDocs = () => {
     </div>
   </div>
 );
+};
 
 export default ApiDocs;
