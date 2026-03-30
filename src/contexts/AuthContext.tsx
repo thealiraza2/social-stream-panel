@@ -77,18 +77,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let isMounted = true;
     const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!isMounted) return;
       setUser(u);
       if (u) {
-        // Background-refresh profile (UI already showing cached)
         await fetchProfile(u);
       } else {
-        setProfile(null);
-        setCachedProfile(null);
+        // Only clear profile if we had no cached profile either
+        // This prevents flash-logout during token refresh
+        if (!getCachedProfile()) {
+          setProfile(null);
+        } else {
+          // Give Firebase a moment to restore session before clearing
+          setTimeout(() => {
+            if (!auth.currentUser && isMounted) {
+              setProfile(null);
+              setCachedProfile(null);
+            }
+          }, 2000);
+        }
       }
       setLoading(false);
     });
-    return unsub;
+    return () => { isMounted = false; unsub(); };
   }, []);
 
   const login = async (email: string, password: string) => {
