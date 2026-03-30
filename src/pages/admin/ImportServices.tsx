@@ -203,7 +203,12 @@ const ImportServices = () => {
               {fetching ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               {fetching ? "Fetching..." : "Fetch Services"}
             </Button>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Exchange Rate</Label>
+              <Input type="number" value={exchangeRate} onChange={e => setExchangeRate(e.target.value)} className="w-[100px]" placeholder="1" />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">Exchange Rate: Provider rate × {rateMultiplier} = Your rate. Set to 1 if provider already uses your currency.</p>
         </CardContent>
       </Card>
 
