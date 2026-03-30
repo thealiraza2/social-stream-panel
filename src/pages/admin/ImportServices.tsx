@@ -264,7 +264,6 @@ const ImportServices = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              </div>
               <div className="space-y-1.5 w-[140px]">
                 <Label className="text-xs">Margin Type</Label>
                 <Select onValueChange={(v) => bulkSetMargin(v as any, selectedRows[0]?.marginValue || "50")}>
