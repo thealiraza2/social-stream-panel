@@ -279,6 +279,7 @@ function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any 
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
