@@ -135,10 +135,15 @@ const BulkOrder = () => {
     }
 
     setLoading(true);
+    setCurrentOrderIndex(0);
     let successCount = 0;
     let failCount = 0;
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
     try {
-      for (const link of links) {
+      for (let i = 0; i < links.length; i++) {
+        const link = links[i];
+        setCurrentOrderIndex(i + 1);
+        if (i > 0) await delay(2000);
         const orderRef = await addDoc(collection(db, "orders"), {
           userId: user.uid,
           serviceId: selectedService,
