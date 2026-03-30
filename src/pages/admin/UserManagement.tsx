@@ -136,7 +136,7 @@ const UserManagement = () => {
           <div className="overflow-auto">
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>IP</TableHead><TableHead>Location</TableHead><TableHead>Last Login</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? <TableSkeleton rows={5} cols={7} /> : filtered.length === 0 ? (
