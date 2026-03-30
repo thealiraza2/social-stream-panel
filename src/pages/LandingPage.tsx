@@ -152,9 +152,9 @@ function PriceCalculator() {
                   className={`rounded-[16px] px-3 py-2 text-xs font-medium transition-all duration-200 ${
                     service === s
                       ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
-                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                      : "shadow-clayPressed"
                   }`}
-                  style={{ color: service === s ? "white" : "var(--clay-muted)" }}
+                  style={{ color: service === s ? "white" : "var(--clay-muted)", background: service === s ? undefined : "var(--clay-input-bg)" }}
                 >
                   {s}
                 </button>

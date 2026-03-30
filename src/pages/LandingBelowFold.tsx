@@ -479,7 +479,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {["Visa", "Mastercard", "Crypto"].map((p) => (
-                    <span key={p} className="inline-flex items-center gap-1.5 rounded-[14px] bg-[#EFEBF5] px-3 py-1.5 text-xs font-medium shadow-clayPressed" style={{ color: "var(--clay-muted)" }}>
+                    <span key={p} className="inline-flex items-center gap-1.5 rounded-[14px] px-3 py-1.5 text-xs font-medium shadow-clayPressed" style={{ color: "var(--clay-muted)", background: "var(--clay-input-bg)" }}>
                       <CreditCard className="h-3 w-3" /> {p}
                     </span>
                   ))}
