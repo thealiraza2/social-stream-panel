@@ -276,7 +276,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                   { icon: TrendingUp, label: "Speed", value: s.speed },
                   { icon: RefreshCw, label: "Refill", value: s.refill },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-[14px] bg-[#EFEBF5] p-2 text-center shadow-clayPressed">
+                  <div key={stat.label} className="rounded-[14px] p-2 text-center shadow-clayPressed" style={{ background: "var(--clay-input-bg)" }}>
                     <stat.icon className="mx-auto mb-1 h-3.5 w-3.5" style={{ color: "#7C3AED" }} />
                     <p className="text-[10px] font-medium" style={{ color: "var(--clay-muted)" }}>{stat.label}</p>
                     <p className="text-xs font-bold" style={{ color: "var(--clay-fg)" }}>{stat.value}</p>
@@ -355,7 +355,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
             <div key={t.name} className="clay-card rounded-[24px] p-6 shadow-clayCard hover:shadow-clayButtonHover hover:-translate-y-2">
               <div className="mb-4 flex gap-0.5">
                 {[...Array(5)].map((_, si) => (
-                  <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-[#F59E0B] text-[#F59E0B]" : "fill-[#EFEBF5] text-[#EFEBF5]"}`} />
+                  <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-[#F59E0B] text-[#F59E0B]" : ""}`} style={si >= t.rating ? { fill: "var(--clay-input-bg)", color: "var(--clay-input-bg)" } : undefined} />
                 ))}
               </div>
               <Quote className="mb-3 h-6 w-6" style={{ color: "#7C3AED", opacity: 0.3 }} />
@@ -428,8 +428,8 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`BudgetSMM on ${label}`}
-                      className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#EFEBF5] shadow-clayPressed transition-all duration-300 hover:bg-gradient-to-br hover:from-[#A78BFA] hover:to-[#7C3AED] hover:text-white hover:shadow-clayButton hover:scale-110"
-                      style={{ color: "var(--clay-muted)" }}
+                      className="flex h-10 w-10 items-center justify-center rounded-[14px] shadow-clayPressed transition-all duration-300 hover:bg-gradient-to-br hover:from-[#A78BFA] hover:to-[#7C3AED] hover:text-white hover:shadow-clayButton hover:scale-110"
+                      style={{ color: "var(--clay-muted)", background: "var(--clay-input-bg)" }}
                     >
                       <Icon className="h-4 w-4" />
                     </a>
@@ -479,14 +479,14 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {["Visa", "Mastercard", "Crypto"].map((p) => (
-                    <span key={p} className="inline-flex items-center gap-1.5 rounded-[14px] bg-[#EFEBF5] px-3 py-1.5 text-xs font-medium shadow-clayPressed" style={{ color: "var(--clay-muted)" }}>
+                    <span key={p} className="inline-flex items-center gap-1.5 rounded-[14px] px-3 py-1.5 text-xs font-medium shadow-clayPressed" style={{ color: "var(--clay-muted)", background: "var(--clay-input-bg)" }}>
                       <CreditCard className="h-3 w-3" /> {p}
                     </span>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="mt-10 border-t border-[#E5E0EF] pt-6 text-center text-xs font-medium" style={{ color: "var(--clay-muted)" }}>
+            <div className="mt-10 pt-6 text-center text-xs font-medium" style={{ color: "var(--clay-muted)", borderTop: "1px solid var(--clay-border)" }}>
               Copyright © 2024-2025 BudgetSMM. All rights reserved.
             </div>
           </div>

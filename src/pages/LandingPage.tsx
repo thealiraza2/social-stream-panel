@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Zap, Menu, X, ChevronRight, UserPlus, LogIn,
   CheckCircle2, Instagram, Youtube, Play, Twitter, Send,
-  ArrowRight
+  ArrowRight, Moon, Sun
 } from "lucide-react";
 import { usePrefetch } from "@/hooks/usePrefetch";
 
@@ -130,9 +131,9 @@ function PriceCalculator() {
                   className={`flex flex-col items-center gap-1 rounded-[16px] px-2 py-2.5 text-xs font-medium transition-all duration-200 ${
                     platform === p
                       ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
-                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                      : "shadow-clayPressed"
                   }`}
-                  style={{ color: platform === p ? "white" : "var(--clay-muted)" }}
+                  style={{ color: platform === p ? "white" : "var(--clay-muted)", background: platform === p ? undefined : "var(--clay-input-bg)" }}
                 >
                   {PLATFORM_ICONS[p]}
                   <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
@@ -151,9 +152,9 @@ function PriceCalculator() {
                   className={`rounded-[16px] px-3 py-2 text-xs font-medium transition-all duration-200 ${
                     service === s
                       ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
-                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                      : "shadow-clayPressed"
                   }`}
-                  style={{ color: service === s ? "white" : "var(--clay-muted)" }}
+                  style={{ color: service === s ? "white" : "var(--clay-muted)", background: service === s ? undefined : "var(--clay-input-bg)" }}
                 >
                   {s}
                 </button>
@@ -278,6 +279,7 @@ function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any 
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -306,9 +308,9 @@ export default function LandingPage() {
     <div className="clay-landing scroll-smooth relative">
       {/* ===== Floating Blobs ===== */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 blur-3xl clay-blob" />
-        <div className="absolute -right-[10%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-[#EC4899]/10 blur-3xl clay-blob-alt animation-delay-2000" />
-        <div className="absolute bottom-[10%] left-[30%] h-[50vh] w-[50vh] rounded-full bg-[#0EA5E9]/10 blur-3xl clay-blob-slow animation-delay-4000" />
+        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/20 blur-3xl clay-blob" />
+        <div className="absolute -right-[10%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-[#EC4899]/10 dark:bg-[#EC4899]/20 blur-3xl clay-blob-alt animation-delay-2000" />
+        <div className="absolute bottom-[10%] left-[30%] h-[50vh] w-[50vh] rounded-full bg-[#0EA5E9]/10 dark:bg-[#0EA5E9]/20 blur-3xl clay-blob-slow animation-delay-4000" />
       </div>
 
       {/* ==================== NAVBAR ==================== */}
@@ -318,9 +320,10 @@ export default function LandingPage() {
           aria-label="Main navigation"
           className={`fixed inset-x-4 sm:inset-x-6 lg:inset-x-8 top-4 z-50 transition-all duration-500 rounded-[32px] sm:rounded-[40px] ${
             scrolled
-              ? "bg-white/80 shadow-clayCard backdrop-blur-xl"
-              : "bg-white/40 backdrop-blur-md"
+              ? "shadow-clayCard backdrop-blur-xl"
+              : "backdrop-blur-md"
           }`}
+          style={{ background: scrolled ? "var(--clay-card-bg)" : "rgba(255,255,255,0.15)" }}
         >
           <div className="mx-auto flex h-16 sm:h-20 items-center justify-between px-4 sm:px-8">
             <button onClick={() => scrollTo("hero")} aria-label="Go to homepage">
@@ -332,8 +335,10 @@ export default function LandingPage() {
                 <button
                   key={l.id}
                   onClick={() => scrollTo(l.id)}
-                  className="text-sm font-bold transition-colors hover:text-[#7C3AED]"
+                  className="text-sm font-bold transition-colors"
                   style={{ color: "var(--clay-muted)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--clay-accent)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--clay-muted)")}
                 >
                   {l.label}
                 </button>
@@ -341,11 +346,20 @@ export default function LandingPage() {
             </div>
 
             <div className="hidden items-center gap-3 md:flex">
+              {/* Theme toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="clay-btn h-11 w-11 shadow-clayCard"
+                style={{ background: "var(--clay-card-bg)", color: "var(--clay-fg)" }}
+                aria-label="Toggle theme"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
+              </button>
               <Link
                 to="/login"
                 {...prefetch("/login")}
-                className="clay-btn h-11 px-6 text-sm bg-white shadow-clayCard hover:shadow-clayButtonHover"
-                style={{ color: "var(--clay-fg)" }}
+                className="clay-btn clay-btn-secondary h-11 px-6 text-sm shadow-clayCard hover:shadow-clayButtonHover"
               >
                 <LogIn className="mr-2 h-4 w-4" />Sign In
               </Link>
@@ -359,10 +373,20 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center gap-2 md:hidden">
+              {/* Mobile theme toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="clay-btn h-10 w-10 shadow-clayCard"
+                style={{ background: "var(--clay-card-bg)", color: "var(--clay-fg)" }}
+                aria-label="Toggle theme"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
+              </button>
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="clay-btn h-10 w-10 bg-white shadow-clayCard"
-                style={{ color: "var(--clay-fg)" }}
+                className="clay-btn h-10 w-10 shadow-clayCard"
+                style={{ background: "var(--clay-card-bg)", color: "var(--clay-fg)" }}
                 aria-label="Toggle mobile menu"
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -371,20 +395,20 @@ export default function LandingPage() {
           </div>
 
           {mobileOpen && (
-            <div className="rounded-b-[32px] bg-white/90 backdrop-blur-xl md:hidden px-4 pb-4 pt-2">
+            <div className="rounded-b-[32px] backdrop-blur-xl md:hidden px-4 pb-4 pt-2" style={{ background: "var(--clay-card-bg)" }}>
               <div className="space-y-1">
                 {navLinks.map((l) => (
                   <button
                     key={l.id}
                     onClick={() => scrollTo(l.id)}
-                    className="block w-full rounded-[16px] px-4 py-3 text-left text-sm font-bold hover:bg-[#EFEBF5]"
+                    className="block w-full rounded-[16px] px-4 py-3 text-left text-sm font-bold"
                     style={{ color: "var(--clay-muted)" }}
                   >
                     {l.label}
                   </button>
                 ))}
                 <div className="flex gap-3 pt-3">
-                  <Link to="/login" className="clay-btn flex-1 h-12 text-sm bg-white shadow-clayCard justify-center" style={{ color: "var(--clay-fg)" }}>
+                  <Link to="/login" className="clay-btn clay-btn-secondary flex-1 h-12 text-sm shadow-clayCard justify-center">
                     Sign In
                   </Link>
                   <Link to="/signup" className="clay-btn clay-btn-primary flex-1 h-12 text-sm shadow-clayButton justify-center">
