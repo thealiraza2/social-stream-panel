@@ -40,6 +40,7 @@ const statusColor: Record<string, string> = {
 const Tickets = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { checkLimit: checkTicketLimit } = useRateLimit({ maxAttempts: 3, windowMs: 300000, cooldownMs: 120000, message: "Too many tickets. Please wait 2 minutes." });
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
