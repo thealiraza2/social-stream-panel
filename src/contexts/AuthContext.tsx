@@ -13,17 +13,30 @@ import {
 import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
+const fetchJsonWithTimeout = async (url: string, timeoutMs = 5000) => {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    return await res.json();
+  } finally {
+    window.clearTimeout(timer);
+  }
+};
+
 const fetchLocationData = async () => {
   const apis = [
     { url: "https://freeipapi.com/api/json", map: (d: any) => ({ ip: d.ipAddress || "", country: d.countryName || "", city: d.cityName || "", region: d.regionName || "" }) },
     { url: "https://ipapi.co/json/", map: (d: any) => ({ ip: d.ip || "", country: d.country_name || "", city: d.city || "", region: d.region || "" }) },
     { url: "https://ipwho.is/", map: (d: any) => ({ ip: d.ip || "", country: d.country || "", city: d.city || "", region: d.region || "" }) },
   ];
+
   for (const api of apis) {
     try {
-      const res = await fetch(api.url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) continue;
-      const data = await res.json();
+      const data = await fetchJsonWithTimeout(api.url);
+      if (!data) continue;
       const result = api.map(data);
       if (result.ip) {
         console.log("[Auth] Location fetched from", api.url, result);
@@ -31,9 +44,9 @@ const fetchLocationData = async () => {
       }
     } catch (e) {
       console.warn("[Auth] API failed:", api.url, e);
-      continue;
     }
   }
+
   console.warn("[Auth] All IP APIs failed");
   return null;
 };
