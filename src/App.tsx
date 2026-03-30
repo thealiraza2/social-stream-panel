@@ -27,6 +27,8 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // User pages — lazy loaded
