@@ -352,7 +352,7 @@ const ServiceManagement = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : "Amount"}</Label>
+              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : (priceMode === "increase_pct" || priceMode === "decrease_pct") ? "Percentage (%)" : "Amount"}</Label>
               <Input type="number" step="0.01" placeholder="Enter value" value={priceValue} onChange={e => setPriceValue(e.target.value)} />
             </div>
             <p className="text-xs text-muted-foreground">
