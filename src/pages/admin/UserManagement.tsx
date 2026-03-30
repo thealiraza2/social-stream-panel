@@ -29,6 +29,25 @@ const UserManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ balance: "", role: "user", status: "active", banReason: "" });
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyUser, setHistoryUser] = useState<any>(null);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const openHistory = async (u: any) => {
+    setHistoryUser(u);
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const q = query(collection(db, "users", u.id, "login_history"), orderBy("loginAt", "desc"));
+      const snap = await getDocs(q);
+      setLoginHistory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      setLoginHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   const fetchFirstPage = useCallback(async () => {
     setLoading(true);
