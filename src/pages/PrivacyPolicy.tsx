@@ -33,7 +33,7 @@ const PrivacyPolicy = () => (
         <p>You can update your profile information at any time from your dashboard. You can request account deletion from your profile settings. For any data-related requests, please open a support ticket.</p>
         <h2 className="text-lg font-semibold text-foreground">9. Children's Privacy</h2>
         <p>BudgetSMM is not intended for users under the age of 13. We do not knowingly collect information from children.</p>
-        <h2 className="text-lg font-semibold text-foreground">9. Changes to This Policy</h2>
+        <h2 className="text-lg font-semibold text-foreground">10. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date. Continued use of the Platform constitutes acceptance of the revised policy.</p>
         <h2 className="text-lg font-semibold text-foreground">10. Contact</h2>
         <p>For privacy-related inquiries, please open a support ticket from your dashboard.</p>
