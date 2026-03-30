@@ -61,7 +61,7 @@ const ServiceManagement = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
-  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply">("fixed");
+  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply" | "increase_pct" | "decrease_pct">("fixed");
   const [priceValue, setPriceValue] = useState("");
   const [bulkPricing, setBulkPricing] = useState(false);
   const [form, setForm] = useState({
@@ -120,6 +120,8 @@ const ServiceManagement = () => {
         else if (priceMode === "increase") newRate = svc.rate + val;
         else if (priceMode === "decrease") newRate = Math.max(0, svc.rate - val);
         else if (priceMode === "multiply") newRate = svc.rate * val;
+        else if (priceMode === "increase_pct") newRate = svc.rate * (1 + val / 100);
+        else if (priceMode === "decrease_pct") newRate = Math.max(0, svc.rate * (1 - val / 100));
         newRate = Math.round(newRate * 100) / 100;
         return updateDoc(doc(db, "services", id), { rate: newRate });
       }).filter(Boolean);
@@ -343,18 +345,22 @@ const ServiceManagement = () => {
                   <SelectItem value="fixed">Set Fixed Price</SelectItem>
                   <SelectItem value="increase">Increase By Amount</SelectItem>
                   <SelectItem value="decrease">Decrease By Amount</SelectItem>
+                  <SelectItem value="increase_pct">Increase By %</SelectItem>
+                  <SelectItem value="decrease_pct">Decrease By %</SelectItem>
                   <SelectItem value="multiply">Multiply By Factor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : "Amount"}</Label>
+              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : (priceMode === "increase_pct" || priceMode === "decrease_pct") ? "Percentage (%)" : "Amount"}</Label>
               <Input type="number" step="0.01" placeholder="Enter value" value={priceValue} onChange={e => setPriceValue(e.target.value)} />
             </div>
             <p className="text-xs text-muted-foreground">
               {priceMode === "fixed" && `All selected services will be set to Rs.${priceValue || "0"}`}
               {priceMode === "increase" && `Rs.${priceValue || "0"} will be added to each service's rate`}
               {priceMode === "decrease" && `Rs.${priceValue || "0"} will be subtracted from each service's rate`}
+              {priceMode === "increase_pct" && `Each service's rate will increase by ${priceValue || "0"}%`}
+              {priceMode === "decrease_pct" && `Each service's rate will decrease by ${priceValue || "0"}%`}
               {priceMode === "multiply" && `Each service's rate will be multiplied by ${priceValue || "1"}`}
             </p>
             <Button onClick={handleBulkPriceEdit} disabled={bulkPricing || !priceValue} className="w-full gradient-purple text-white border-0">
