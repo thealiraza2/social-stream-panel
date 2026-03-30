@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, RefreshCw, Search, PackagePlus, Plus, Check, ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -238,9 +240,29 @@ const ImportServices = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="space-y-1.5 flex-1">
                 <Label className="text-xs">Assign Category</Label>
-                <Select onValueChange={bulkSetCategory}><SelectTrigger><SelectValue placeholder="Set category for all selected" /></SelectTrigger>
-                  <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal">
+                      <span className="truncate">Set category for all selected</span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search categories..." />
+                      <CommandList>
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup>
+                          {categories.map(c => (
+                            <CommandItem key={c.id} value={c.name} onSelect={() => bulkSetCategory(c.id)}>
+                              {c.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1.5 w-[140px]">
                 <Label className="text-xs">Margin Type</Label>
@@ -338,10 +360,30 @@ const ImportServices = () => {
                                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                                       <TableCell>
-                                        <Select value={row.categoryId} onValueChange={v => updateRow(globalIdx, { categoryId: v })}>
-                                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select..." /></SelectTrigger>
-                                          <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                        </Select>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-between font-normal">
+                                              <span className="truncate">{categories.find(c => c.id === row.categoryId)?.name || "Select..."}</span>
+                                              <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-[300px] p-0" align="start">
+                                            <Command>
+                                              <CommandInput placeholder="Search categories..." />
+                                              <CommandList>
+                                                <CommandEmpty>No category found.</CommandEmpty>
+                                                <CommandGroup>
+                                                  {categories.map(c => (
+                                                    <CommandItem key={c.id} value={c.name} onSelect={() => updateRow(globalIdx, { categoryId: c.id })}>
+                                                      <Check className={`mr-2 h-4 w-4 ${row.categoryId === c.id ? "opacity-100" : "opacity-0"}`} />
+                                                      {c.name}
+                                                    </CommandItem>
+                                                  ))}
+                                                </CommandGroup>
+                                              </CommandList>
+                                            </Command>
+                                          </PopoverContent>
+                                        </Popover>
                                       </TableCell>
                                       <TableCell>
                                         <div className="flex gap-1 items-center">
