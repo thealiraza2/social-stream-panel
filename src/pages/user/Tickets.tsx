@@ -115,6 +115,7 @@ const Tickets = () => {
 
   const handleCreateTicket = async () => {
     if (!user || !newSubject.trim() || !newMessage.trim()) return;
+    if (!checkTicketLimit()) return;
     setCreating(true);
     try {
       const ticketRef = await addDoc(collection(db, "tickets"), {
