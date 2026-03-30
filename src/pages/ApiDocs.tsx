@@ -2,8 +2,16 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Code2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useSEO } from "@/hooks/useSEO";
 
-const ApiDocs = () => (
+const ApiDocs = () => {
+  useSEO({
+    title: "API Documentation - BudgetSMM | REST API for SMM Resellers",
+    description: "BudgetSMM REST API documentation for resellers and developers. Automate order placement, check status, and manage your SMM panel programmatically.",
+    canonical: "https://budgetsmm.store/api-docs",
+    keywords: "smm panel api, budgetsmm api, smm reseller api, social media marketing api, smm panel automation",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
@@ -61,5 +69,6 @@ const ApiDocs = () => (
     </div>
   </div>
 );
+};
 
 export default ApiDocs;

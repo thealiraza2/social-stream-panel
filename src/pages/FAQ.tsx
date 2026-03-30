@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-
+import { useSEO } from "@/hooks/useSEO";
 const faqs = [
   { q: "What is BudgetSMM?", a: "BudgetSMM is a social media marketing (SMM) panel where you can buy followers, likes, views, comments, and other engagement services for platforms like Instagram, TikTok, YouTube, Facebook, Twitter, and more — all at the cheapest prices in Pakistan." },
   { q: "How do I place an order?", a: "Sign up or log in, add funds to your wallet, go to 'New Order', select a service category, choose a service, enter your social media link and quantity, and click 'Submit Order'. Your order will start processing automatically." },
@@ -17,7 +17,14 @@ const faqs = [
   { q: "Can I delete my account?", a: "Yes. You can delete your account from the Profile page in your dashboard. Please note that account deletion is permanent and any remaining balance will be forfeited." },
 ];
 
-const FAQ = () => (
+const FAQ = () => {
+  useSEO({
+    title: "FAQ - BudgetSMM | Frequently Asked Questions About SMM Panel",
+    description: "Find answers to common questions about BudgetSMM — payments, delivery speed, refund policy, API access, drip-feed, and more. Get help with your SMM panel orders.",
+    canonical: "https://budgetsmm.store/faq",
+    keywords: "smm panel faq, budgetsmm questions, smm panel help, buy followers faq, smm panel refund policy",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
@@ -40,5 +47,6 @@ const FAQ = () => (
     </div>
   </div>
 );
+};
 
 export default FAQ;

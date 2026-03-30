@@ -8,6 +8,7 @@ import { UserPlus, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, Check, X } from
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { useSEO } from "@/hooks/useSEO";
 
 const passwordRules = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -18,6 +19,12 @@ const passwordRules = [
 ];
 
 const Signup = () => {
+  useSEO({
+    title: "Sign Up - BudgetSMM | Create Free SMM Panel Account",
+    description: "Create your free BudgetSMM account. Access the cheapest SMM panel with instant delivery, 24/7 support, and multiple payment methods including JazzCash & Easypaisa.",
+    canonical: "https://budgetsmm.store/signup",
+    keywords: "smm panel sign up, create smm panel account, budgetsmm register, free smm panel account",
+  });
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

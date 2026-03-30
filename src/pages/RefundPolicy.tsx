@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, RotateCcw } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
-const RefundPolicy = () => (
+const RefundPolicy = () => {
+  useSEO({
+    title: "Refund Policy - BudgetSMM | Order Cancellation & Refund Rules",
+    description: "BudgetSMM refund policy — refunds are only for cancelled orders and credited to your wallet balance. Funds are non-withdrawable. Read full details.",
+    canonical: "https://budgetsmm.store/refund",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
@@ -29,5 +36,6 @@ const RefundPolicy = () => (
     </div>
   </div>
 );
+};
 
 export default RefundPolicy;

@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, Shield } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
-const PrivacyPolicy = () => (
+const PrivacyPolicy = () => {
+  useSEO({
+    title: "Privacy Policy - BudgetSMM | Data Protection & Cookie Policy",
+    description: "Learn how BudgetSMM collects, uses, and protects your personal data. Our privacy policy covers cookies, Google AdSense, and third-party services.",
+    canonical: "https://budgetsmm.store/privacy",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
@@ -41,5 +48,6 @@ const PrivacyPolicy = () => (
     </div>
   </div>
 );
+};
 
 export default PrivacyPolicy;

@@ -6,8 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Search, Calendar, ArrowRight, Image } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { useSEO } from "@/hooks/useSEO";
 
 const Blog = () => {
+  useSEO({
+    title: "Blog - BudgetSMM | SMM Tips, Social Media Growth & Marketing Guides",
+    description: "Read the latest tips on social media marketing, Instagram growth, YouTube strategies, and SMM panel guides on the BudgetSMM blog.",
+    canonical: "https://budgetsmm.store/blog",
+    keywords: "smm blog, social media marketing tips, instagram growth guide, youtube marketing, smm panel blog",
+  });
   const [posts, setPosts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -9,8 +9,15 @@ import { LogIn, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, KeyRound } from "l
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSEO } from "@/hooks/useSEO";
 
 const Login = () => {
+  useSEO({
+    title: "Login - BudgetSMM | Sign In to Your SMM Panel Account",
+    description: "Log in to your BudgetSMM account to manage orders, track delivery, and add funds. Access the cheapest SMM panel dashboard.",
+    canonical: "https://budgetsmm.store/login",
+    noindex: true,
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

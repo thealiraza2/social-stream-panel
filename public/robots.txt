@@ -10,18 +10,31 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /user/
-Disallow: /orders/
-Disallow: /profile/
-Disallow: /tickets/
-Disallow: /add-funds/
-Disallow: /new-order/
-Disallow: /bulk-order/
-Disallow: /private/
+Disallow: /dashboard
+Disallow: /new-order
+Disallow: /bulk-order
+Disallow: /orders
+Disallow: /add-funds
+Disallow: /services
+Disallow: /tickets
+Disallow: /profile
+Disallow: /influencer
+Disallow: /account-deleted
+Disallow: /banned
+Disallow: /maintenance
+Disallow: /verify-email
 
 Sitemap: https://budgetsmm.store/sitemap.xml

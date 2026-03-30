@@ -1,7 +1,15 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, Users } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
-const AboutUs = () => (
+const AboutUs = () => {
+  useSEO({
+    title: "About Us - BudgetSMM | #1 Cheapest SMM Panel in Pakistan",
+    description: "Learn about BudgetSMM — the #1 cheapest SMM panel providing Instagram followers, YouTube views, TikTok likes with instant delivery. Trusted by 50,000+ users.",
+    canonical: "https://budgetsmm.store/about",
+    keywords: "about budgetsmm, cheapest smm panel pakistan, smm panel company, social media marketing panel",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
@@ -44,5 +52,6 @@ const AboutUs = () => (
     </div>
   </div>
 );
+};
 
 export default AboutUs;
