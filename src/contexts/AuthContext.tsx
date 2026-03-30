@@ -13,41 +13,20 @@ import {
 import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
-const fetchJsonWithTimeout = async (url: string, timeoutMs = 5000) => {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    if (!res.ok) return null;
-    return await res.json();
-  } finally {
-    window.clearTimeout(timer);
-  }
-};
-
 const fetchLocationData = async () => {
-  const apis = [
-    { url: "https://freeipapi.com/api/json", map: (d: any) => ({ ip: d.ipAddress || "", country: d.countryName || "", city: d.cityName || "", region: d.regionName || "" }) },
-    { url: "https://ipapi.co/json/", map: (d: any) => ({ ip: d.ip || "", country: d.country_name || "", city: d.city || "", region: d.region || "" }) },
-    { url: "https://ipwho.is/", map: (d: any) => ({ ip: d.ip || "", country: d.country || "", city: d.city || "", region: d.region || "" }) },
-  ];
-
-  for (const api of apis) {
-    try {
-      const data = await fetchJsonWithTimeout(api.url);
-      if (!data) continue;
-      const result = api.map(data);
-      if (result.ip) {
-        console.log("[Auth] Location fetched from", api.url, result);
-        return result;
-      }
-    } catch (e) {
-      console.warn("[Auth] API failed:", api.url, e);
+  try {
+    const response = await fetch('/api/client-ip');
+    if (!response.ok) return null;
+    const result = await response.json();
+    if (result?.ip) {
+      console.log('[Auth] Location fetched from /api/client-ip', result);
+      return result;
     }
+  } catch (e) {
+    console.warn('[Auth] /api/client-ip failed', e);
   }
 
-  console.warn("[Auth] All IP APIs failed");
+  console.warn('[Auth] Could not fetch location data');
   return null;
 };
 
