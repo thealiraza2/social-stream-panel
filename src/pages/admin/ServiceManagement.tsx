@@ -345,6 +345,8 @@ const ServiceManagement = () => {
                   <SelectItem value="fixed">Set Fixed Price</SelectItem>
                   <SelectItem value="increase">Increase By Amount</SelectItem>
                   <SelectItem value="decrease">Decrease By Amount</SelectItem>
+                  <SelectItem value="increase_pct">Increase By %</SelectItem>
+                  <SelectItem value="decrease_pct">Decrease By %</SelectItem>
                   <SelectItem value="multiply">Multiply By Factor</SelectItem>
                 </SelectContent>
               </Select>
