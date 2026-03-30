@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Server, Search, ShoppingCart } from "lucide-react";
+import { Server, Search, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { TableSkeleton } from "@/components/TableSkeleton";
+
+const PAGE_SIZE = 50;
 
 const CACHE_KEY_SVC = "cache_user_services";
 const CACHE_KEY_CAT = "cache_user_categories";
@@ -34,6 +36,7 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,6 +75,12 @@ const Services = () => {
     const matchCategory = categoryFilter === "all" || s.categoryId === categoryFilter;
     return matchSearch && matchCategory;
   }), [services, search, categoryFilter]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, categoryFilter]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
   const getCategoryName = (catId: string) => categories.find(c => c.id === catId)?.name ?? "—";
 
@@ -132,9 +141,9 @@ const Services = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((s, i) => (
+                  {paginated.map((s, i) => (
                     <TableRow key={s.id}>
-                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                      <TableCell className="font-mono text-xs">{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell><Badge variant="outline">{getCategoryName(s.categoryId)}</Badge></TableCell>
                       <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
@@ -154,7 +163,7 @@ const Services = () => {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y">
-              {filtered.map((s) => (
+              {paginated.map((s) => (
                 <div key={s.id} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -172,6 +181,24 @@ const Services = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t">
+                <span className="text-sm text-muted-foreground">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">{page} / {totalPages}</span>
+                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
             </>
           )}
         </CardContent>
