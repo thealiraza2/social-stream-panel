@@ -154,7 +154,12 @@ const OrderManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Order Management</h1>
-        <Button variant="outline" size="sm" onClick={fetchFirstPage}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={syncAllStatuses} disabled={syncing}>
+            {syncing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Syncing...</> : <><RefreshCw className="h-4 w-4 mr-1" /> Sync All Status</>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchFirstPage}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
+        </div>
       </div>
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
