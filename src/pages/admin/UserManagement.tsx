@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle, Globe, MapPin } from "lucide-react";
+import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle, Globe, MapPin, History } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, DocumentSnapshot, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
