@@ -31,6 +31,8 @@ const Login = () => {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkLimit: checkLoginLimit } = useRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 30000, message: "Too many login attempts. Please wait 30 seconds." });
+  const { checkLimit: checkResetLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many reset requests. Please wait 1 minute." });
 
   const handleResetPassword = async () => {
     if (!resetEmail) return;
