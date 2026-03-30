@@ -14,14 +14,27 @@ import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } f
 import { auth, db } from "@/lib/firebase";
 
 const fetchLocationData = async () => {
-  try {
-    const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return { ip: data.ip || "", country: data.country_name || "", city: data.city || "", region: data.region || "" };
-  } catch {
-    return null;
+  // Try multiple free IP APIs as fallbacks
+  const apis = [
+    { url: "https://ip-api.com/json/?fields=query,country,regionName,city", map: (d: any) => ({ ip: d.query, country: d.country, city: d.city, region: d.regionName }) },
+    { url: "https://ipapi.co/json/", map: (d: any) => ({ ip: d.ip, country: d.country_name, city: d.city, region: d.region }) },
+  ];
+  for (const api of apis) {
+    try {
+      const res = await fetch(api.url, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const result = api.map(data);
+      if (result.ip) {
+        console.log("[Auth] Location fetched:", result);
+        return result;
+      }
+    } catch {
+      continue;
+    }
   }
+  console.warn("[Auth] All IP APIs failed");
+  return null;
 };
 
 const saveLoginHistory = async (uid: string, loc: { ip: string; country: string; city: string; region: string }) => {
