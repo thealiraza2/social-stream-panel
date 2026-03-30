@@ -228,6 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
+    sessionStorage.removeItem(`loc_saved_${cred.user.uid}`);
     setSessionHint(true);
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (!snap.exists()) {
