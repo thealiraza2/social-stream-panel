@@ -106,6 +106,36 @@ const ServiceManagement = () => {
     }
   };
 
+  const handleBulkPriceEdit = async () => {
+    if (selectedIds.size === 0 || !priceValue) return;
+    const val = parseFloat(priceValue);
+    if (isNaN(val)) return;
+    setBulkPricing(true);
+    try {
+      const updates = Array.from(selectedIds).map(id => {
+        const svc = services.find(s => s.id === id);
+        if (!svc) return null;
+        let newRate = svc.rate;
+        if (priceMode === "fixed") newRate = val;
+        else if (priceMode === "increase") newRate = svc.rate + val;
+        else if (priceMode === "decrease") newRate = Math.max(0, svc.rate - val);
+        else if (priceMode === "multiply") newRate = svc.rate * val;
+        newRate = Math.round(newRate * 100) / 100;
+        return updateDoc(doc(db, "services", id), { rate: newRate });
+      }).filter(Boolean);
+      await Promise.all(updates);
+      toast({ title: `Price updated for ${selectedIds.size} services` });
+      setBulkPriceOpen(false);
+      setPriceValue("");
+      clearCache();
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkPricing(false);
+    }
+  
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const cachedSvc = getCache(CACHE_KEY);
