@@ -274,59 +274,125 @@ const ImportServices = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-auto max-h-[60vh]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[40px]"><Checkbox checked={allFilteredSelected} onCheckedChange={(c) => toggleAll(!!c)} /></TableHead>
-                    <TableHead className="w-[70px]">ID</TableHead><TableHead>Name</TableHead><TableHead className="w-[90px]">Rate/1k</TableHead>
-                    <TableHead className="w-[70px]">Min</TableHead><TableHead className="w-[70px]">Max</TableHead>
-                    <TableHead className="w-[180px]">Category</TableHead><TableHead className="w-[120px]">Margin</TableHead>
-                    <TableHead className="w-[100px]">Selling</TableHead><TableHead className="w-[80px]">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((row, idx) => (
-                    <TableRow key={row.svc.service} className={row.selected ? "bg-primary/5" : ""}>
-                      <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(idx)} /></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
-                      <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                      <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
-                      <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
-                      <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Select value={row.categoryId} onValueChange={v => updateRow(idx, { categoryId: v })}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select..." /></SelectTrigger>
-                          <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 items-center">
-                          <Select value={row.marginType} onValueChange={v => updateRow(idx, { marginType: v as any })}>
-                            <SelectTrigger className="h-8 w-[50px] text-xs px-1"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">$</SelectItem></SelectContent>
-                          </Select>
-                          <Input type="number" value={row.marginValue} onChange={e => updateRow(idx, { marginValue: e.target.value })} className="h-8 w-[60px] text-xs" />
+            {groupedByCategory.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">{search ? "No matching services" : "No services fetched"}</div>
+            ) : (
+              <div className="divide-y">
+                {groupedByCategory.map(([catName, catRows]) => {
+                  const isOpen = openCategories.has(catName);
+                  const currentPage = categoryPages[catName] || 1;
+                  const totalPages = Math.ceil(catRows.length / IMPORT_PAGE_SIZE);
+                  const paginated = catRows.slice((currentPage - 1) * IMPORT_PAGE_SIZE, currentPage * IMPORT_PAGE_SIZE);
+                  const allSelected = catRows.every(r => r.selected);
+
+                  return (
+                    <div key={catName}>
+                      <button
+                        onClick={() => setOpenCategories(prev => {
+                          const next = new Set(prev);
+                          next.has(catName) ? next.delete(catName) : next.add(catName);
+                          return next;
+                        })}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          <span className="font-semibold text-sm">{catName}</span>
+                          <Badge variant="secondary" className="text-xs">{catRows.length} services</Badge>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm font-semibold text-primary">Rs.{calcSelling(row).toFixed(2)}</TableCell>
-                      <TableCell>
-                        {row.added ? (
-                          <Badge variant="outline" className="text-green-600 border-green-600"><Check className="h-3 w-3 mr-1" /> Added</Badge>
-                        ) : (
-                          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!row.categoryId} onClick={() => handleAddSingle(row, idx)}>
-                            <Plus className="h-3 w-3 mr-1" /> Add
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">{search ? "No matching services" : "No services fetched"}</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={(c) => {
+                              const catServiceIds = new Set(catRows.map(r => r.svc.service));
+                              setRows(prev => prev.map(r => catServiceIds.has(r.svc.service) ? { ...r, selected: !!c } : r));
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-xs text-muted-foreground">Select All</span>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div>
+                          <div className="overflow-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[40px]"></TableHead>
+                                  <TableHead className="w-[70px]">ID</TableHead><TableHead>Name</TableHead><TableHead className="w-[90px]">Rate/1k</TableHead>
+                                  <TableHead className="w-[70px]">Min</TableHead><TableHead className="w-[70px]">Max</TableHead>
+                                  <TableHead className="w-[180px]">Category</TableHead><TableHead className="w-[120px]">Margin</TableHead>
+                                  <TableHead className="w-[100px]">Selling</TableHead><TableHead className="w-[80px]">Action</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {paginated.map((row) => {
+                                  const globalIdx = filtered.indexOf(row);
+                                  return (
+                                    <TableRow key={row.svc.service} className={row.selected ? "bg-primary/5" : ""}>
+                                      <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(globalIdx)} /></TableCell>
+                                      <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
+                                      <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
+                                      <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
+                                      <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
+                                      <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
+                                      <TableCell>
+                                        <Select value={row.categoryId} onValueChange={v => updateRow(globalIdx, { categoryId: v })}>
+                                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                          <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex gap-1 items-center">
+                                          <Select value={row.marginType} onValueChange={v => updateRow(globalIdx, { marginType: v as any })}>
+                                            <SelectTrigger className="h-8 w-[50px] text-xs px-1"><SelectValue /></SelectTrigger>
+                                            <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">$</SelectItem></SelectContent>
+                                          </Select>
+                                          <Input type="number" value={row.marginValue} onChange={e => updateRow(globalIdx, { marginValue: e.target.value })} className="h-8 w-[60px] text-xs" />
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-sm font-semibold text-primary">Rs.{calcSelling(row).toFixed(2)}</TableCell>
+                                      <TableCell>
+                                        {row.added ? (
+                                          <Badge variant="outline" className="text-green-600 border-green-600"><Check className="h-3 w-3 mr-1" /> Added</Badge>
+                                        ) : (
+                                          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!row.categoryId} onClick={() => handleAddSingle(row, globalIdx)}>
+                                            <Plus className="h-3 w-3 mr-1" /> Add
+                                          </Button>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/30">
+                              <span className="text-xs text-muted-foreground">
+                                {(currentPage - 1) * IMPORT_PAGE_SIZE + 1}–{Math.min(currentPage * IMPORT_PAGE_SIZE, catRows.length)} of {catRows.length}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" className="h-7" disabled={currentPage === 1}
+                                  onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage - 1 }))}>
+                                  <ChevronLeft className="h-3 w-3" />
+                                </Button>
+                                <span className="text-xs font-medium">{currentPage}/{totalPages}</span>
+                                <Button variant="outline" size="sm" className="h-7" disabled={currentPage === totalPages}
+                                  onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage + 1 }))}>
+                                  <ChevronRight className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
