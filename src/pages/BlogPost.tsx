@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, ArrowRight } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useSEO } from "@/hooks/useSEO";
@@ -20,6 +20,33 @@ const BlogPost = () => {
     ogImage: post?.featuredImage || undefined,
     ogType: "article",
   });
+
+  // Inject Article JSON-LD
+  useEffect(() => {
+    if (!post) return;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": post.title,
+      "description": post.excerpt || "",
+      "image": post.featuredImage || "https://budgetsmm.store/og-image.png",
+      "datePublished": post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toISOString() : undefined,
+      "dateModified": post.updatedAt?.seconds ? new Date(post.updatedAt.seconds * 1000).toISOString() : post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toISOString() : undefined,
+      "author": { "@type": "Organization", "name": "BudgetSMM" },
+      "publisher": {
+        "@type": "Organization",
+        "name": "BudgetSMM",
+        "logo": { "@type": "ImageObject", "url": "https://budgetsmm.store/logo.png" }
+      },
+      "mainEntityOfPage": { "@type": "WebPage", "@id": `https://budgetsmm.store/blog/${slug}` }
+    };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "article-jsonld";
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+    return () => { document.getElementById("article-jsonld")?.remove(); };
+  }, [post, slug]);
 
   useEffect(() => {
     const fetch = async () => {
@@ -85,6 +112,20 @@ const BlogPost = () => {
 
         <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-wrap">
           {post.content}
+        </div>
+
+        {/* Internal Linking CTA */}
+        <div className="mt-12 p-6 rounded-lg border border-border bg-muted/50 text-center space-y-3">
+          <h2 className="text-xl font-bold">Ready to Grow Your Social Media?</h2>
+          <p className="text-muted-foreground">Get Instagram followers, YouTube views, TikTok likes and more at the cheapest prices with instant delivery.</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild>
+              <Link to="/signup">Get Started Free <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/pricing">View Pricing</Link>
+            </Button>
+          </div>
         </div>
       </article>
     </div>
