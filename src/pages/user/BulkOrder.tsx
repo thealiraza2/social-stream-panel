@@ -47,6 +47,7 @@ const BulkOrder = () => {
   const [linksText, setLinksText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
 
   const filteredServices = services.filter(
     (s) => s.categoryId === selectedCategory && s.status === "active"
@@ -134,10 +135,15 @@ const BulkOrder = () => {
     }
 
     setLoading(true);
+    setCurrentOrderIndex(0);
     let successCount = 0;
     let failCount = 0;
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
     try {
-      for (const link of links) {
+      for (let i = 0; i < links.length; i++) {
+        const link = links[i];
+        setCurrentOrderIndex(i + 1);
+        if (i > 0) await delay(2000);
         const orderRef = await addDoc(collection(db, "orders"), {
           userId: user.uid,
           serviceId: selectedService,
@@ -329,12 +335,38 @@ const BulkOrder = () => {
             </span>
           </div>
 
+          {/* Estimated time & warning */}
+          {loading && (
+            <div className="space-y-2">
+              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-center space-y-1">
+                <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
+                  ⚠️ Do NOT leave or refresh this page until all orders are completed!
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Processing order {currentOrderIndex} of {orderCount} — Est. time remaining: ~{Math.max(0, (orderCount - currentOrderIndex) * 2)}s
+                </p>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(currentOrderIndex / orderCount) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {!loading && orderCount > 1 && quantity && selectedService && (
+            <p className="text-xs text-muted-foreground text-center">
+              ⏱ Estimated time: ~{orderCount * 2} seconds (2s delay between each order)
+            </p>
+          )}
+
           <Button
             onClick={handleSubmit}
             className="w-full gradient-purple text-white border-0"
             disabled={loading || !selectedService || !quantity || links.length === 0}
           >
-            {loading ? "Placing Orders..." : `Place ${orderCount || 0} Orders`}
+            {loading ? `Placing Order ${currentOrderIndex}/${orderCount}...` : `Place ${orderCount || 0} Orders`}
           </Button>
         </CardContent>
       </Card>
