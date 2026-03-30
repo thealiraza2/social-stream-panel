@@ -23,7 +23,7 @@ const BlogPost = () => {
           setPost(p);
           if (data.categoryId) {
             const cSnap = await getDocs(collection(db, "blog_categories"));
-            const cat = cSnap.docs.find(d => d.id === p.categoryId);
+            const cat = cSnap.docs.find(d => d.id === data.categoryId);
             if (cat) setCategory(cat.data().name);
           }
         }
