@@ -392,8 +392,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
               </p>
               <Link
                 to="/signup"
-                className="clay-btn h-14 px-10 text-base font-bold bg-white shadow-clayCard group gap-2"
-                style={{ color: "var(--clay-fg)" }}
+                className="clay-btn clay-btn-secondary h-14 px-10 text-base font-bold shadow-clayCard group gap-2"
               >
                 Get Started Free <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>

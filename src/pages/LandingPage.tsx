@@ -224,8 +224,7 @@ function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any 
         </Link>
         <button
           onClick={() => scrollTo("services")}
-          className="clay-btn h-14 px-8 text-base gap-2 group bg-white shadow-clayCard hover:shadow-clayButtonHover"
-          style={{ color: "var(--clay-fg)" }}
+          className="clay-btn clay-btn-secondary h-14 px-8 text-base gap-2 group shadow-clayCard hover:shadow-clayButtonHover"
         >
           View Live Prices <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
