@@ -428,8 +428,8 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`BudgetSMM on ${label}`}
-                      className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#EFEBF5] shadow-clayPressed transition-all duration-300 hover:bg-gradient-to-br hover:from-[#A78BFA] hover:to-[#7C3AED] hover:text-white hover:shadow-clayButton hover:scale-110"
-                      style={{ color: "var(--clay-muted)" }}
+                      className="flex h-10 w-10 items-center justify-center rounded-[14px] shadow-clayPressed transition-all duration-300 hover:bg-gradient-to-br hover:from-[#A78BFA] hover:to-[#7C3AED] hover:text-white hover:shadow-clayButton hover:scale-110"
+                      style={{ color: "var(--clay-muted)", background: "var(--clay-input-bg)" }}
                     >
                       <Icon className="h-4 w-4" />
                     </a>
