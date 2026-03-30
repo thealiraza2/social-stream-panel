@@ -15,6 +15,7 @@ import {
   collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, doc, updateDoc,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface Ticket {
   id: string;
