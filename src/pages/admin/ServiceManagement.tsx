@@ -14,7 +14,6 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/TableSkeleton";
-import { useMemo, useEffect as useEffectAlias } from "react";
 
 const PAGE_SIZE = 20;
 
