@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, RefreshCw, Search, PackagePlus, Plus, Check, ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, RefreshCw, Search, PackagePlus, Plus, Check, ChevronDown, ChevronRight, ChevronLeft, FolderPlus, Layers } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 const CACHE_KEY_PROVS = "cache_import_providers";
@@ -45,6 +46,13 @@ const ImportServices = () => {
   const [exchangeRate, setExchangeRate] = useState("1");
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [categoryPages, setCategoryPages] = useState<Record<string, number>>({});
+
+  // Auto-category mode state
+  const [importMode, setImportMode] = useState<"auto" | "manual">("auto");
+  const [selectedProviderCats, setSelectedProviderCats] = useState<Set<string>>(new Set());
+  const [autoMarginType, setAutoMarginType] = useState<"percent" | "fixed">("percent");
+  const [autoMarginValue, setAutoMarginValue] = useState("50");
+  const [providerCatSearch, setProviderCatSearch] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -79,6 +87,7 @@ const ImportServices = () => {
     if (!provider) return;
     setFetching(true);
     setRows([]);
+    setSelectedProviderCats(new Set());
     try {
       const res = await fetch('/api/fetch-services', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -114,6 +123,23 @@ const ImportServices = () => {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered]);
 
+  // All unique provider categories
+  const providerCategories = useMemo(() => {
+    const catMap: Record<string, number> = {};
+    rows.forEach(r => {
+      const cat = r.svc.category || "Uncategorized";
+      catMap[cat] = (catMap[cat] || 0) + 1;
+    });
+    return Object.entries(catMap).sort(([a], [b]) => a.localeCompare(b));
+  }, [rows]);
+
+  // Filtered provider categories for search
+  const filteredProviderCats = useMemo(() => {
+    if (!providerCatSearch.trim()) return providerCategories;
+    const q = providerCatSearch.toLowerCase();
+    return providerCategories.filter(([name]) => name.toLowerCase().includes(q));
+  }, [providerCategories, providerCatSearch]);
+
   // Reset pages when search changes
   useEffect(() => { setCategoryPages({}); }, [search]);
 
@@ -136,10 +162,11 @@ const ImportServices = () => {
 
   const calcSelling = useCallback((row: ImportRow) => {
     const base = getConvertedRate(row.svc.rate);
-    const margin = parseFloat(row.marginValue) || 0;
-    if (row.marginType === "percent") return base + (base * margin) / 100;
-    return base + margin;
-  }, [getConvertedRate]);
+    const marginVal = importMode === "auto" ? (parseFloat(autoMarginValue) || 0) : (parseFloat(row.marginValue) || 0);
+    const marginT = importMode === "auto" ? autoMarginType : row.marginType;
+    if (marginT === "percent") return base + (base * marginVal) / 100;
+    return base + marginVal;
+  }, [getConvertedRate, importMode, autoMarginType, autoMarginValue]);
 
   const selectedRows = useMemo(() => rows.filter(r => r.selected), [rows]);
 
@@ -165,6 +192,7 @@ const ImportServices = () => {
     }
   }, [selectedProvider, provider, rows, filtered, calcSelling, toast]);
 
+  // Manual mode import
   const handleImport = useCallback(async () => {
     const toImport = selectedRows.filter(r => r.categoryId);
     if (toImport.length === 0) { toast({ title: "No services ready", description: "Select services and assign categories first.", variant: "destructive" }); return; }
@@ -194,6 +222,92 @@ const ImportServices = () => {
     }
   }, [selectedRows, selectedProvider, provider, calcSelling, toast]);
 
+  // Auto-category import: creates categories in Firebase automatically, then imports services
+  const handleAutoImport = useCallback(async () => {
+    if (selectedProviderCats.size === 0) {
+      toast({ title: "No categories selected", description: "Select at least one provider category to import.", variant: "destructive" });
+      return;
+    }
+    setImporting(true);
+    try {
+      // Get services that belong to selected provider categories
+      const servicesToImport = rows.filter(r => {
+        const cat = r.svc.category || "Uncategorized";
+        return selectedProviderCats.has(cat) && !r.added;
+      });
+
+      if (servicesToImport.length === 0) {
+        toast({ title: "No new services", description: "All services in selected categories are already imported.", variant: "destructive" });
+        setImporting(false);
+        return;
+      }
+
+      // Create or find categories for each unique provider category name
+      const catNameToId: Record<string, string> = {};
+
+      // Map existing categories by name (case-insensitive)
+      categories.forEach(c => {
+        catNameToId[c.name.toLowerCase()] = c.id;
+      });
+
+      // Create missing categories
+      const uniqueCats = [...selectedProviderCats];
+      let newCatsCreated = 0;
+      for (const catName of uniqueCats) {
+        if (!catNameToId[catName.toLowerCase()]) {
+          const maxSort = categories.length > 0 ? Math.max(...categories.map((c: any) => c.sortOrder || 0)) : 0;
+          const docRef = await addDoc(collection(db, "categories"), {
+            name: catName,
+            status: "active",
+            sortOrder: maxSort + newCatsCreated + 1,
+            createdAt: serverTimestamp(),
+          });
+          catNameToId[catName.toLowerCase()] = docRef.id;
+          newCatsCreated++;
+        }
+      }
+
+      // Import all services with their auto-matched categories
+      const marginVal = parseFloat(autoMarginValue) || 0;
+      const batch = servicesToImport.map(r => {
+        const catName = r.svc.category || "Uncategorized";
+        const categoryId = catNameToId[catName.toLowerCase()] || "";
+        const base = getConvertedRate(r.svc.rate);
+        const selling = autoMarginType === "percent" ? base + (base * marginVal) / 100 : base + marginVal;
+
+        return addDoc(collection(db, "services"), {
+          name: r.svc.name, categoryId, rate: parseFloat(selling.toFixed(4)),
+          providerRate: getConvertedRate(r.svc.rate), originalProviderRate: parseFloat(r.svc.rate) || 0,
+          exchangeRate: rateMultiplier, minQuantity: parseInt(r.svc.min) || 0, maxQuantity: parseInt(r.svc.max) || 0,
+          description: (r as any).svc?.description || "", providerId: selectedProvider,
+          providerServiceId: r.svc.service, providerApiUrl: provider?.apiUrl || "", providerApiKey: provider?.apiKey || "",
+          type: r.svc.type || "default", status: "active", marginType: autoMarginType,
+          marginValue: marginVal, createdAt: serverTimestamp(),
+        });
+      });
+
+      await Promise.all(batch);
+
+      // Refresh categories cache
+      const cSnap = await getDocs(collection(db, "categories"));
+      const updatedCats = cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter((c: any) => c.status === "active");
+      setCategories(updatedCats);
+      setCache(CACHE_KEY_CATS, updatedCats);
+      sessionStorage.removeItem("cache_services_admin");
+      sessionStorage.removeItem("cache_user_services");
+      sessionStorage.removeItem("cache_neworder_services");
+
+      const importedIds = new Set(servicesToImport.map(r => r.svc.service));
+      setRows(prev => prev.map(r => importedIds.has(r.svc.service) ? { ...r, selected: false, added: true } : r));
+
+      toast({ title: `${servicesToImport.length} services imported!`, description: newCatsCreated > 0 ? `${newCatsCreated} new categories created automatically.` : "All categories already existed." });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  }, [selectedProviderCats, rows, categories, autoMarginType, autoMarginValue, selectedProvider, provider, getConvertedRate, rateMultiplier, toast]);
+
   const bulkSetCategory = (catId: string) => {
     const selectedSet = new Set(selectedRows.map(r => r.svc.service));
     setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, categoryId: catId } : r));
@@ -205,11 +319,36 @@ const ImportServices = () => {
 
   const allFilteredSelected = filtered.length > 0 && filtered.every(r => r.selected);
 
+  const toggleProviderCat = (catName: string) => {
+    setSelectedProviderCats(prev => {
+      const next = new Set(prev);
+      next.has(catName) ? next.delete(catName) : next.add(catName);
+      return next;
+    });
+  };
+
+  const toggleAllProviderCats = () => {
+    if (selectedProviderCats.size === providerCategories.length) {
+      setSelectedProviderCats(new Set());
+    } else {
+      setSelectedProviderCats(new Set(providerCategories.map(([name]) => name)));
+    }
+  };
+
+  // Count total services in selected provider categories
+  const autoImportCount = useMemo(() => {
+    return rows.filter(r => {
+      const cat = r.svc.category || "Uncategorized";
+      return selectedProviderCats.has(cat) && !r.added;
+    }).length;
+  }, [rows, selectedProviderCats]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Import Services</h1>
-        {selectedRows.length > 0 && <Badge variant="secondary" className="text-sm">{selectedRows.length} selected</Badge>}
+        {selectedRows.length > 0 && importMode === "manual" && <Badge variant="secondary" className="text-sm">{selectedRows.length} selected</Badge>}
+        {importMode === "auto" && selectedProviderCats.size > 0 && <Badge variant="secondary" className="text-sm">{autoImportCount} services in {selectedProviderCats.size} categories</Badge>}
       </div>
 
       <Card>
@@ -233,219 +372,303 @@ const ImportServices = () => {
         </CardContent>
       </Card>
 
-      {selectedRows.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Bulk Actions ({selectedRows.length} selected)</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="space-y-1.5 flex-1">
-                <Label className="text-xs">Assign Category</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal">
-                      <span className="truncate">Set category for all selected</span>
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[400px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search categories..." />
-                      <CommandList>
-                        <CommandEmpty>No category found.</CommandEmpty>
-                        <CommandGroup>
-                          {categories.map(c => (
-                            <CommandItem key={c.id} value={c.name} onSelect={() => bulkSetCategory(c.id)}>
-                              {c.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-1.5 w-[140px]">
-                <Label className="text-xs">Margin Type</Label>
-                <Select onValueChange={(v) => bulkSetMargin(v as any, selectedRows[0]?.marginValue || "50")}>
-                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                  <SelectContent><SelectItem value="percent">Percentage %</SelectItem><SelectItem value="fixed">Fixed $</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 w-[100px]">
-                <Label className="text-xs">Margin</Label>
-                <Input type="number" placeholder="50" onChange={e => {
-                  const v = e.target.value;
-                  const selectedSet = new Set(selectedRows.map(r => r.svc.service));
-                  setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, marginValue: v } : r));
-                }} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {rows.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between gap-3">
-              <CardTitle className="text-base">{rows.length} Services Available</CardTitle>
-              <div className="relative w-full sm:w-[260px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search services..." className="pl-9" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {groupedByCategory.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">{search ? "No matching services" : "No services fetched"}</div>
-            ) : (
-              <div className="divide-y">
-                {groupedByCategory.map(([catName, catRows]) => {
-                  const isOpen = openCategories.has(catName);
-                  const currentPage = categoryPages[catName] || 1;
-                  const totalPages = Math.ceil(catRows.length / IMPORT_PAGE_SIZE);
-                  const paginated = catRows.slice((currentPage - 1) * IMPORT_PAGE_SIZE, currentPage * IMPORT_PAGE_SIZE);
-                  const allSelected = catRows.every(r => r.selected);
+        <Tabs value={importMode} onValueChange={(v) => setImportMode(v as any)}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="auto" className="gap-2"><FolderPlus className="h-4 w-4" /> Auto Category Import</TabsTrigger>
+            <TabsTrigger value="manual" className="gap-2"><Layers className="h-4 w-4" /> Manual Category Import</TabsTrigger>
+          </TabsList>
 
-                  return (
-                    <div key={catName}>
-                      <button
-                        onClick={() => setOpenCategories(prev => {
-                          const next = new Set(prev);
-                          next.has(catName) ? next.delete(catName) : next.add(catName);
-                          return next;
-                        })}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left"
-                      >
+          {/* ===== AUTO CATEGORY IMPORT MODE ===== */}
+          <TabsContent value="auto" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <FolderPlus className="h-5 w-5 text-primary" />
+                      Select Provider Categories to Import
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">Select categories below → categories will be auto-created in your panel → services imported automatically.</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap">Margin</Label>
+                      <Select value={autoMarginType} onValueChange={(v) => setAutoMarginType(v as any)}>
+                        <SelectTrigger className="h-8 w-[80px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">Fixed</SelectItem></SelectContent>
+                      </Select>
+                      <Input type="number" value={autoMarginValue} onChange={e => setAutoMarginValue(e.target.value)} className="h-8 w-[70px] text-xs" />
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                  <div className="relative w-full sm:w-[300px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input value={providerCatSearch} onChange={e => setProviderCatSearch(e.target.value)} placeholder="Search categories..." className="pl-9 h-9" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedProviderCats.size === providerCategories.length && providerCategories.length > 0}
+                      onCheckedChange={toggleAllProviderCats}
+                    />
+                    <span className="text-sm font-medium">Select All ({providerCategories.length})</span>
+                  </div>
+                </div>
+
+                <div className="max-h-[400px] overflow-y-auto border rounded-lg divide-y">
+                  {filteredProviderCats.map(([catName, count]) => {
+                    const isSelected = selectedProviderCats.has(catName);
+                    const existsInFirebase = categories.some(c => c.name.toLowerCase() === catName.toLowerCase());
+                    return (
+                      <label key={catName} className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}>
                         <div className="flex items-center gap-3">
-                          {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                          <span className="font-semibold text-sm">{catName}</span>
-                          <Badge variant="secondary" className="text-xs">{catRows.length} services</Badge>
+                          <Checkbox checked={isSelected} onCheckedChange={() => toggleProviderCat(catName)} />
+                          <span className="text-sm font-medium">{catName}</span>
+                          {existsInFirebase && <Badge variant="outline" className="text-xs text-green-600 border-green-600">Exists</Badge>}
+                          {!existsInFirebase && <Badge variant="outline" className="text-xs text-blue-600 border-blue-600">New</Badge>}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={allSelected}
-                            onCheckedChange={(c) => {
-                              const catServiceIds = new Set(catRows.map(r => r.svc.service));
-                              setRows(prev => prev.map(r => catServiceIds.has(r.svc.service) ? { ...r, selected: !!c } : r));
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <span className="text-xs text-muted-foreground">Select All</span>
-                        </div>
-                      </button>
+                        <Badge variant="secondary" className="text-xs">{count} services</Badge>
+                      </label>
+                    );
+                  })}
+                  {filteredProviderCats.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8 text-sm">
+                      {providerCatSearch ? "No matching categories" : "No categories found"}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-                      {isOpen && (
-                        <div>
-                          <div className="overflow-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-[40px]"></TableHead>
-                                  <TableHead className="w-[70px]">ID</TableHead><TableHead>Name</TableHead><TableHead className="w-[90px]">Rate/1k</TableHead>
-                                  <TableHead className="w-[70px]">Min</TableHead><TableHead className="w-[70px]">Max</TableHead>
-                                  <TableHead className="w-[180px]">Category</TableHead><TableHead className="w-[120px]">Margin</TableHead>
-                                  <TableHead className="w-[100px]">Selling</TableHead><TableHead className="w-[80px]">Action</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {paginated.map((row) => {
-                                  const globalIdx = filtered.indexOf(row);
-                                  return (
-                                    <TableRow key={row.svc.service} className={row.selected ? "bg-primary/5" : ""}>
-                                      <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(globalIdx)} /></TableCell>
-                                      <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
-                                      <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                                      <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
-                                      <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
-                                      <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
-                                      <TableCell>
-                                        <Popover>
-                                          <PopoverTrigger asChild>
-                                            <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-between font-normal">
-                                              <span className="truncate">{categories.find(c => c.id === row.categoryId)?.name || "Select..."}</span>
-                                              <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
-                                            </Button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-[300px] p-0" align="start">
-                                            <Command>
-                                              <CommandInput placeholder="Search categories..." />
-                                              <CommandList>
-                                                <CommandEmpty>No category found.</CommandEmpty>
-                                                <CommandGroup>
-                                                  {categories.map(c => (
-                                                    <CommandItem key={c.id} value={c.name} onSelect={() => updateRow(globalIdx, { categoryId: c.id })}>
-                                                      <Check className={`mr-2 h-4 w-4 ${row.categoryId === c.id ? "opacity-100" : "opacity-0"}`} />
-                                                      {c.name}
-                                                    </CommandItem>
-                                                  ))}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        </Popover>
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex gap-1 items-center">
-                                          <Select value={row.marginType} onValueChange={v => updateRow(globalIdx, { marginType: v as any })}>
-                                            <SelectTrigger className="h-8 w-[50px] text-xs px-1"><SelectValue /></SelectTrigger>
-                                            <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">$</SelectItem></SelectContent>
-                                          </Select>
-                                          <Input type="number" value={row.marginValue} onChange={e => updateRow(globalIdx, { marginValue: e.target.value })} className="h-8 w-[60px] text-xs" />
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-sm font-semibold text-primary">Rs.{calcSelling(row).toFixed(2)}</TableCell>
-                                      <TableCell>
-                                        {row.added ? (
-                                          <Badge variant="outline" className="text-green-600 border-green-600"><Check className="h-3 w-3 mr-1" /> Added</Badge>
-                                        ) : (
-                                          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!row.categoryId} onClick={() => handleAddSingle(row, globalIdx)}>
-                                            <Plus className="h-3 w-3 mr-1" /> Add
-                                          </Button>
-                                        )}
-                                      </TableCell>
+            {selectedProviderCats.size > 0 && (
+              <div className="flex justify-end sticky bottom-4">
+                <Button size="lg" onClick={handleAutoImport} disabled={importing || autoImportCount === 0} className="gradient-purple text-white border-0 px-8 shadow-lg">
+                  {importing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
+                  {importing ? "Importing..." : `Import ${autoImportCount} Services from ${selectedProviderCats.size} Categories`}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ===== MANUAL CATEGORY IMPORT MODE ===== */}
+          <TabsContent value="manual" className="space-y-4">
+            {selectedRows.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-base">Bulk Actions ({selectedRows.length} selected)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-4 items-end">
+                    <div className="space-y-1.5 flex-1">
+                      <Label className="text-xs">Assign Category</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between font-normal">
+                            <span className="truncate">Set category for all selected</span>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search categories..." />
+                            <CommandList>
+                              <CommandEmpty>No category found.</CommandEmpty>
+                              <CommandGroup>
+                                {categories.map(c => (
+                                  <CommandItem key={c.id} value={c.name} onSelect={() => bulkSetCategory(c.id)}>
+                                    {c.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-1.5 w-[140px]">
+                      <Label className="text-xs">Margin Type</Label>
+                      <Select onValueChange={(v) => bulkSetMargin(v as any, selectedRows[0]?.marginValue || "50")}>
+                        <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                        <SelectContent><SelectItem value="percent">Percentage %</SelectItem><SelectItem value="fixed">Fixed $</SelectItem></SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5 w-[100px]">
+                      <Label className="text-xs">Margin</Label>
+                      <Input type="number" placeholder="50" onChange={e => {
+                        const v = e.target.value;
+                        const selectedSet = new Set(selectedRows.map(r => r.svc.service));
+                        setRows(prev => prev.map(r => selectedSet.has(r.svc.service) ? { ...r, marginValue: v } : r));
+                      }} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                  <CardTitle className="text-base">{rows.length} Services Available</CardTitle>
+                  <div className="relative w-full sm:w-[260px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search services..." className="pl-9" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {groupedByCategory.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">{search ? "No matching services" : "No services fetched"}</div>
+                ) : (
+                  <div className="divide-y">
+                    {groupedByCategory.map(([catName, catRows]) => {
+                      const isOpen = openCategories.has(catName);
+                      const currentPage = categoryPages[catName] || 1;
+                      const totalPages = Math.ceil(catRows.length / IMPORT_PAGE_SIZE);
+                      const paginated = catRows.slice((currentPage - 1) * IMPORT_PAGE_SIZE, currentPage * IMPORT_PAGE_SIZE);
+                      const allSelected = catRows.every(r => r.selected);
+
+                      return (
+                        <div key={catName}>
+                          <button
+                            onClick={() => setOpenCategories(prev => {
+                              const next = new Set(prev);
+                              next.has(catName) ? next.delete(catName) : next.add(catName);
+                              return next;
+                            })}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <span className="font-semibold text-sm">{catName}</span>
+                              <Badge variant="secondary" className="text-xs">{catRows.length} services</Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={(c) => {
+                                  const catServiceIds = new Set(catRows.map(r => r.svc.service));
+                                  setRows(prev => prev.map(r => catServiceIds.has(r.svc.service) ? { ...r, selected: !!c } : r));
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="text-xs text-muted-foreground">Select All</span>
+                            </div>
+                          </button>
+
+                          {isOpen && (
+                            <div>
+                              <div className="overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="w-[40px]"></TableHead>
+                                      <TableHead className="w-[70px]">ID</TableHead><TableHead>Name</TableHead><TableHead className="w-[90px]">Rate/1k</TableHead>
+                                      <TableHead className="w-[70px]">Min</TableHead><TableHead className="w-[70px]">Max</TableHead>
+                                      <TableHead className="w-[180px]">Category</TableHead><TableHead className="w-[120px]">Margin</TableHead>
+                                      <TableHead className="w-[100px]">Selling</TableHead><TableHead className="w-[80px]">Action</TableHead>
                                     </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                          {totalPages > 1 && (
-                            <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/30">
-                              <span className="text-xs text-muted-foreground">
-                                {(currentPage - 1) * IMPORT_PAGE_SIZE + 1}–{Math.min(currentPage * IMPORT_PAGE_SIZE, catRows.length)} of {catRows.length}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" className="h-7" disabled={currentPage === 1}
-                                  onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage - 1 }))}>
-                                  <ChevronLeft className="h-3 w-3" />
-                                </Button>
-                                <span className="text-xs font-medium">{currentPage}/{totalPages}</span>
-                                <Button variant="outline" size="sm" className="h-7" disabled={currentPage === totalPages}
-                                  onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage + 1 }))}>
-                                  <ChevronRight className="h-3 w-3" />
-                                </Button>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {paginated.map((row) => {
+                                      const globalIdx = filtered.indexOf(row);
+                                      return (
+                                        <TableRow key={row.svc.service} className={row.selected ? "bg-primary/5" : ""}>
+                                          <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(globalIdx)} /></TableCell>
+                                          <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
+                                          <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
+                                          <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
+                                          <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
+                                          <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
+                                          <TableCell>
+                                            <Popover>
+                                              <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-between font-normal">
+                                                  <span className="truncate">{categories.find(c => c.id === row.categoryId)?.name || "Select..."}</span>
+                                                  <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                                </Button>
+                                              </PopoverTrigger>
+                                              <PopoverContent className="w-[300px] p-0" align="start">
+                                                <Command>
+                                                  <CommandInput placeholder="Search categories..." />
+                                                  <CommandList>
+                                                    <CommandEmpty>No category found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                      {categories.map(c => (
+                                                        <CommandItem key={c.id} value={c.name} onSelect={() => updateRow(globalIdx, { categoryId: c.id })}>
+                                                          <Check className={`mr-2 h-4 w-4 ${row.categoryId === c.id ? "opacity-100" : "opacity-0"}`} />
+                                                          {c.name}
+                                                        </CommandItem>
+                                                      ))}
+                                                    </CommandGroup>
+                                                  </CommandList>
+                                                </Command>
+                                              </PopoverContent>
+                                            </Popover>
+                                          </TableCell>
+                                          <TableCell>
+                                            <div className="flex gap-1 items-center">
+                                              <Select value={row.marginType} onValueChange={v => updateRow(globalIdx, { marginType: v as any })}>
+                                                <SelectTrigger className="h-8 w-[50px] text-xs px-1"><SelectValue /></SelectTrigger>
+                                                <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">$</SelectItem></SelectContent>
+                                              </Select>
+                                              <Input type="number" value={row.marginValue} onChange={e => updateRow(globalIdx, { marginValue: e.target.value })} className="h-8 w-[60px] text-xs" />
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="text-sm font-semibold text-primary">Rs.{calcSelling(row).toFixed(2)}</TableCell>
+                                          <TableCell>
+                                            {row.added ? (
+                                              <Badge variant="outline" className="text-green-600 border-green-600"><Check className="h-3 w-3 mr-1" /> Added</Badge>
+                                            ) : (
+                                              <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!row.categoryId} onClick={() => handleAddSingle(row, globalIdx)}>
+                                                <Plus className="h-3 w-3 mr-1" /> Add
+                                              </Button>
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
                               </div>
+                              {totalPages > 1 && (
+                                <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/30">
+                                  <span className="text-xs text-muted-foreground">
+                                    {(currentPage - 1) * IMPORT_PAGE_SIZE + 1}–{Math.min(currentPage * IMPORT_PAGE_SIZE, catRows.length)} of {catRows.length}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" className="h-7" disabled={currentPage === 1}
+                                      onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage - 1 }))}>
+                                      <ChevronLeft className="h-3 w-3" />
+                                    </Button>
+                                    <span className="text-xs font-medium">{currentPage}/{totalPages}</span>
+                                    <Button variant="outline" size="sm" className="h-7" disabled={currentPage === totalPages}
+                                      onClick={() => setCategoryPages(prev => ({ ...prev, [catName]: currentPage + 1 }))}>
+                                      <ChevronRight className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {rows.length > 0 && (
+              <div className="flex justify-end sticky bottom-4">
+                <Button size="lg" onClick={handleImport} disabled={importing || selectedRows.length === 0} className="gradient-purple text-white border-0 px-8 shadow-lg">
+                  {importing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
+                  {importing ? "Importing..." : `Import ${selectedRows.filter(r => r.categoryId).length} Selected`}
+                </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {rows.length > 0 && (
-        <div className="flex justify-end sticky bottom-4">
-          <Button size="lg" onClick={handleImport} disabled={importing || selectedRows.length === 0} className="gradient-purple text-white border-0 px-8 shadow-lg">
-            {importing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
-            {importing ? "Importing..." : `Import ${selectedRows.filter(r => r.categoryId).length} Selected`}
-          </Button>
-        </div>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
