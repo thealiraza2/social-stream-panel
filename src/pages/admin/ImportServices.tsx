@@ -152,7 +152,7 @@ const ImportServices = () => {
       const batch = toImport.map(r =>
         addDoc(collection(db, "services"), {
           name: r.svc.name, categoryId: r.categoryId, rate: parseFloat(calcSelling(r).toFixed(4)),
-          providerRate: parseFloat(r.svc.rate) || 0, minQuantity: parseInt(r.svc.min) || 0, maxQuantity: parseInt(r.svc.max) || 0,
+          providerRate: getConvertedRate(r.svc.rate), originalProviderRate: parseFloat(r.svc.rate) || 0, exchangeRate: rateMultiplier, minQuantity: parseInt(r.svc.min) || 0, maxQuantity: parseInt(r.svc.max) || 0,
           description: (r as any).svc?.description || "", providerId: selectedProvider,
           providerServiceId: r.svc.service, providerApiUrl: provider?.apiUrl || "", providerApiKey: provider?.apiKey || "",
           type: r.svc.type || "default", status: "active", marginType: r.marginType,
