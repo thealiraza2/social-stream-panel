@@ -134,7 +134,7 @@ const ServiceManagement = () => {
     } finally {
       setBulkPricing(false);
     }
-  
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
