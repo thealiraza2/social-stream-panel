@@ -24,14 +24,38 @@ export default async function handler(req, res) {
     ''
   );
 
-  const country = getHeader('x-vercel-ip-country') || '';
-  const region = getHeader('x-vercel-ip-country-region') || getHeader('x-vercel-ip-region') || '';
-  const city = getHeader('x-vercel-ip-city') || '';
+  let country = '';
+  let city = '';
+  let region = '';
 
-  return res.status(200).json({
-    ip,
-    country,
-    city,
-    region,
-  });
+  // Try ip-api.com first
+  try {
+    const resp = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,regionName,city`);
+    const data = await resp.json();
+    if (data.status === 'success') {
+      country = data.country || '';
+      city = data.city || '';
+      region = data.regionName || '';
+    }
+  } catch (_) {}
+
+  // Fallback to ipwho.is
+  if (!country && !city) {
+    try {
+      const resp = await fetch(`https://ipwho.is/${ip}`);
+      const data = await resp.json();
+      if (data.success !== false) {
+        country = data.country || '';
+        city = data.city || '';
+        region = data.region || '';
+      }
+    } catch (_) {}
+  }
+
+  // Last fallback: Vercel headers
+  if (!country) country = getHeader('x-vercel-ip-country') || '';
+  if (!city) city = getHeader('x-vercel-ip-city') || '';
+  if (!region) region = getHeader('x-vercel-ip-country-region') || '';
+
+  return res.status(200).json({ ip, country, city, region });
 }
