@@ -17,6 +17,7 @@ import { CardSkeleton } from "@/components/TableSkeleton";
 interface Order {
   id: string;
   serviceName: string;
+  serviceId?: string;
   link: string;
   quantity: number;
   charge: number;
@@ -25,6 +26,7 @@ interface Order {
   remains?: number;
   providerOrderId?: string;
   providerId?: string;
+  providerServiceId?: number;
   createdAt: any;
 }
 
