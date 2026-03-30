@@ -11,7 +11,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 const CACHE_KEY_SVC = "cache_user_services";
 const CACHE_KEY_CAT = "cache_user_categories";
