@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 const fetchLocationData = async () => {
