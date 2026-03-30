@@ -30,6 +30,11 @@ const clearCache = () => {
   sessionStorage.removeItem(CACHE_KEY);
   sessionStorage.removeItem(CACHE_KEY_CATS);
   sessionStorage.removeItem(CACHE_KEY_PROVS);
+  // Clear user-side caches so new services show immediately
+  sessionStorage.removeItem("cache_neworder_services");
+  sessionStorage.removeItem("cache_neworder_categories");
+  sessionStorage.removeItem("cache_user_services");
+  sessionStorage.removeItem("cache_user_categories");
 };
 
 const getCache = (key: string) => {
