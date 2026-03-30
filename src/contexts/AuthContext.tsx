@@ -218,9 +218,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = { uid: cred.user.uid, ...snap.data() } as UserProfile;
       setProfile(data);
       setCachedProfile(data);
-      // Update location in background
       fetchLocationData().then(loc => {
-        if (loc) updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
+        if (loc) {
+          updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
+          saveLoginHistory(cred.user.uid, loc);
+        }
       });
     }
   };
