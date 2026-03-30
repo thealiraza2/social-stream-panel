@@ -152,6 +152,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
           if (isMounted) setLoading(false);
         }
+        // Save location on every fresh auth (not page refresh)
+        const locKey = `loc_saved_${u.uid}_${Date.now().toString().slice(0, -4)}`;
+        if (!sessionStorage.getItem(locKey)) {
+          sessionStorage.setItem(locKey, "1");
+          fetchLocationData().then(loc => {
+            if (loc) {
+              console.log("[Auth] Saving location for", u.uid, loc);
+              updateDoc(doc(db, "users", u.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(e => console.error("[Auth] updateDoc failed:", e));
+              saveLoginHistory(u.uid, loc);
+            }
+          });
+        }
         return;
       }
 
@@ -184,13 +196,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cred = await signInWithEmailAndPassword(auth, email, password);
     setSessionHint(true);
     await fetchProfile(cred.user);
-    // Save location in background
-    fetchLocationData().then(loc => {
-      if (loc) {
-        updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
-        saveLoginHistory(cred.user.uid, loc);
-      }
-    });
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
@@ -198,13 +203,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
-    const loc = await fetchLocationData();
     const userProfile: any = {
       displayName, email, role: "user", balance: 0, status: "active", createdAt: serverTimestamp(),
-      lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
     };
     await setDoc(doc(db, "users", cred.user.uid), userProfile);
-    if (loc) saveLoginHistory(cred.user.uid, loc);
     const full = { uid: cred.user.uid, ...userProfile };
     setProfile(full);
     setCachedProfile(full);
@@ -216,15 +218,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionHint(true);
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (!snap.exists()) {
-      const loc = await fetchLocationData();
       const userProfile: any = {
         displayName: cred.user.displayName || "User",
         email: cred.user.email || "",
         role: "user", balance: 0, status: "active", createdAt: serverTimestamp(),
-        lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
       };
       await setDoc(doc(db, "users", cred.user.uid), userProfile);
-      if (loc) saveLoginHistory(cred.user.uid, loc);
       const full = { uid: cred.user.uid, ...userProfile };
       setProfile(full);
       setCachedProfile(full);
@@ -232,12 +231,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = { uid: cred.user.uid, ...snap.data() } as UserProfile;
       setProfile(data);
       setCachedProfile(data);
-      fetchLocationData().then(loc => {
-        if (loc) {
-          updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
-          saveLoginHistory(cred.user.uid, loc);
-        }
-      });
     }
   };
 
