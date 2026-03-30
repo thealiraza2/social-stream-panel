@@ -1,18 +1,14 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
-  Zap, Menu, X, Moon, Sun, ChevronRight, UserPlus, LogIn,
+  Zap, Menu, X, ChevronRight, UserPlus, LogIn,
   CheckCircle2, Instagram, Youtube, Play, Twitter, Send,
   ArrowRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { usePrefetch } from "@/hooks/usePrefetch";
-import heroImg from "@/assets/hero.png";
 
-// Lazy load below-fold content — not needed for FCP/LCP
+// Lazy load below-fold content
 const LandingBelowFold = lazy(() => import("./LandingBelowFold"));
 
 // Lazy load framer-motion only on desktop
@@ -41,18 +37,20 @@ export function BrandLogo({ className = "", size = "default" }: { className?: st
         >
           <defs>
             <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(262 83% 58%)" />
-              <stop offset="50%" stopColor="hsl(220 90% 56%)" />
-              <stop offset="100%" stopColor="hsl(174 72% 46%)" />
+              <stop offset="0%" stopColor="#A78BFA" />
+              <stop offset="100%" stopColor="#7C3AED" />
             </linearGradient>
           </defs>
-          <rect width="38" height="38" rx="10" fill="url(#logoGrad)" />
+          <rect width="38" height="38" rx="14" fill="url(#logoGrad)" />
           <path d="M10 26L16 18L21 22L28 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M23 12H28V17" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="28" cy="12" r="2" fill="white" opacity="0.8" />
         </svg>
       </div>
-      <span className={`font-display font-extrabold tracking-tight bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent ${isSmall ? "text-lg" : "text-xl"}`}>
+      <span
+        className={`font-black tracking-tight clay-text-gradient ${isSmall ? "text-lg" : "text-xl"}`}
+        style={{ fontFamily: "Nunito, sans-serif" }}
+      >
         BudgetSMM
       </span>
     </div>
@@ -100,9 +98,9 @@ const scaleIn = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Hero section — renders above the fold, critical for LCP            */
+/*  Calculator Card                                                    */
 /* ------------------------------------------------------------------ */
-function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any }) {
+function PriceCalculator() {
   const [platform, setPlatform] = useState("Instagram");
   const [service, setService] = useState("Followers");
   const [quantity, setQuantity] = useState(1000);
@@ -112,175 +110,160 @@ function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any 
     return (rate * quantity) / 1000;
   }, [platform, service, quantity]);
 
+  return (
+    <div className="relative mx-auto w-full max-w-md">
+      {/* Glow behind card */}
+      <div className="absolute -inset-4 rounded-[40px] bg-[#7C3AED]/15 blur-3xl" />
+      <div className="clay-card relative rounded-[32px] p-6 shadow-clayCard">
+        <p className="mb-5 text-center text-sm font-bold" style={{ fontFamily: "Nunito, sans-serif", color: "var(--clay-muted)" }}>
+          See our unbeatable prices instantly 👇
+        </p>
+        <div className="space-y-4">
+          {/* Platform selector */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: "var(--clay-muted)" }}>Platform</label>
+            <div className="grid grid-cols-5 gap-2">
+              {PLATFORMS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPlatform(p)}
+                  className={`flex flex-col items-center gap-1 rounded-[16px] px-2 py-2.5 text-xs font-medium transition-all duration-200 ${
+                    platform === p
+                      ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
+                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                  }`}
+                  style={{ color: platform === p ? "white" : "var(--clay-muted)" }}
+                >
+                  {PLATFORM_ICONS[p]}
+                  <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Service selector */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: "var(--clay-muted)" }}>Service</label>
+            <div className="grid grid-cols-4 gap-2">
+              {SERVICES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setService(s)}
+                  className={`rounded-[16px] px-3 py-2 text-xs font-medium transition-all duration-200 ${
+                    service === s
+                      ? "bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton"
+                      : "bg-[#EFEBF5] shadow-clayPressed hover:bg-[#E8E3F2]"
+                  }`}
+                  style={{ color: service === s ? "white" : "var(--clay-muted)" }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Quantity */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium" style={{ color: "var(--clay-muted)" }}>Quantity</label>
+            <input
+              type="number"
+              min={100}
+              max={1000000}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(100, Number(e.target.value)))}
+              className="clay-input shadow-clayPressed"
+              style={{ height: "3.5rem" }}
+            />
+          </div>
+          {/* Price display */}
+          <div className="rounded-[24px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] p-5 text-center shadow-clayButton">
+            <p className="text-xs font-medium text-white/80">Estimated Price</p>
+            <p className="text-3xl font-black text-white" style={{ fontFamily: "Nunito, sans-serif" }}>
+              Rs. {estimatedPrice.toFixed(2)}
+            </p>
+            <p className="mt-1 text-xs text-white/80">
+              Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero section                                                       */
+/* ------------------------------------------------------------------ */
+function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any }) {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Static hero for mobile — zero JS animation overhead
+  const heroText = (
+    <div className="max-w-xl">
+      <span className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#7C3AED]/10 px-5 py-2 text-xs font-bold" style={{ color: "#7C3AED" }}>
+        <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
+      </span>
+      <h1
+        className="mb-6 text-5xl font-black leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
+        style={{ fontFamily: "Nunito, sans-serif", color: "var(--clay-fg)" }}
+      >
+        BudgetSMM - The #1 Cheapest SMM Panel.{" "}
+        <span className="clay-text-gradient">Real Growth, Zero Fake Promises.</span>
+      </h1>
+      <p className="mb-8 text-lg font-medium leading-relaxed" style={{ color: "var(--clay-muted)" }}>
+        High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
+      </p>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <Link
+          to="/signup"
+          {...prefetch("/signup")}
+          className="clay-btn clay-btn-primary shadow-clayButton hover:shadow-clayButtonHover h-14 px-8 text-base gap-2 group"
+        >
+          Get Started <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </Link>
+        <button
+          onClick={() => scrollTo("services")}
+          className="clay-btn h-14 px-8 text-base gap-2 group bg-white shadow-clayCard hover:shadow-clayButtonHover"
+          style={{ color: "var(--clay-fg)" }}
+        >
+          View Live Prices <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+      <div className="mt-10 flex flex-wrap items-center gap-6 text-sm font-medium" style={{ color: "var(--clay-muted)" }}>
+        {["1M+ Orders", "24/7 Support", "Instant Delivery"].map((t) => (
+          <span key={t} className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#10B981" }} /> {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+
   if (isMobile) {
     return (
-      <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
+      <section id="hero" className="relative overflow-hidden pt-32 pb-20 px-4 sm:px-6">
         <div className="mx-auto max-w-7xl">
           <div className="relative grid items-center gap-12 lg:grid-cols-2">
-            <div className="max-w-xl">
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary backdrop-blur-sm">
-                <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
-              </span>
-              <h1 className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                BudgetSMM - The #1 Cheapest SMM Panel.{" "}
-                <span className="bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent">
-                  Real Growth, Zero Fake Promises.
-                </span>
-              </h1>
-              <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
-                High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="rounded-full gradient-primary text-primary-foreground border-0 px-8 text-base group btn-glow" asChild>
-                  <Link to="/signup" {...prefetch("/signup")}>
-                    Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" className="rounded-full px-8 text-base group border-border/50 hover:border-primary/50 hover:text-primary transition-all duration-300 backdrop-blur-sm" onClick={() => scrollTo("services")}>
-                  View Live Prices <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </div>
-              <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-                {["1M+ Orders", "24/7 Support", "Instant Delivery"].map((t) => (
-                  <span key={t} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-success" /> {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Calculator */}
-            <div className="relative mx-auto w-full max-w-md">
-              <div className="absolute -inset-2 rounded-3xl gradient-primary opacity-15 blur-2xl" />
-              <div className="glass-card relative rounded-2xl p-6 shadow-2xl shadow-primary/5">
-                <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">See our unbeatable prices instantly 👇</p>
-                <div className="space-y-4">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Platform</label>
-                    <div className="grid grid-cols-5 gap-2">
-                      {PLATFORMS.map((p) => (
-                        <button key={p} onClick={() => setPlatform(p)} className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition-all duration-200 ${platform === p ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10" : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30 hover:bg-primary/5"}`}>
-                          {PLATFORM_ICONS[p]}
-                          <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Service</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {SERVICES.map((s) => (
-                        <button key={s} onClick={() => setService(s)} className={`rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200 ${service === s ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10" : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30"}`}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Quantity</label>
-                    <Input type="number" min={100} max={1000000} value={quantity} onChange={(e) => setQuantity(Math.max(100, Number(e.target.value)))} className="bg-secondary/30 border-border/50 rounded-xl" />
-                  </div>
-                  <div className="rounded-2xl gradient-primary p-4 text-center">
-                    <p className="text-xs font-medium text-primary-foreground/80">Estimated Price</p>
-                    <p className="text-3xl font-extrabold text-primary-foreground font-display">Rs. {estimatedPrice.toFixed(2)}</p>
-                    <p className="mt-1 text-xs text-primary-foreground/80">Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {heroText}
+            <PriceCalculator />
           </div>
         </div>
       </section>
     );
   }
 
-  // Desktop: animated hero with framer-motion loaded lazily
   return (
     <Suspense fallback={
-      <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="h-[500px]" />
-        </div>
+      <section id="hero" className="relative overflow-hidden pt-40 pb-28 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl"><div className="h-[500px]" /></div>
       </section>
     }>
       <MotionComponents>
         {(motion) => (
-          <section id="hero" className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
-            <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
-            <div className="pointer-events-none absolute top-20 right-0 h-[400px] w-[400px] rounded-full bg-info/6 blur-[100px]" />
-            <div className="pointer-events-none absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-accent/6 blur-[100px]" />
-
+          <section id="hero" className="relative overflow-hidden pt-40 pb-28 px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
               <motion.div className="relative grid items-center gap-12 lg:grid-cols-2" variants={staggerContainer} initial="hidden" animate="show">
-                <div className="max-w-xl">
-                  <motion.span variants={fadeUp} className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary backdrop-blur-sm">
-                    <Zap className="h-3.5 w-3.5" /> #1 Cheapest SMM Panel
-                  </motion.span>
-                  <motion.h1 variants={fadeUp} className="font-display mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                    BudgetSMM - The #1 Cheapest SMM Panel.{" "}
-                    <span className="bg-gradient-to-r from-primary via-info to-accent bg-clip-text text-transparent">Real Growth, Zero Fake Promises.</span>
-                  </motion.h1>
-                  <motion.p variants={fadeUp} className="mb-8 text-lg leading-relaxed text-muted-foreground">
-                    High-quality followers, likes, and views that actually stick. Boost your social proof with instant delivery and 24/7 support.
-                  </motion.p>
-                  <motion.div variants={fadeUp} className="flex flex-wrap gap-4">
-                    <Button size="lg" className="rounded-full gradient-primary text-primary-foreground border-0 px-8 text-base group btn-glow" asChild>
-                      <Link to="/signup" {...prefetch("/signup")}>Get Started <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
-                    </Button>
-                    <Button size="lg" variant="outline" className="rounded-full px-8 text-base group border-border/50 hover:border-primary/50 hover:text-primary transition-all duration-300 backdrop-blur-sm" onClick={() => scrollTo("services")}>
-                      View Live Prices <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </motion.div>
-                  <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-                    {["1M+ Orders", "24/7 Support", "Instant Delivery"].map((t) => (
-                      <span key={t} className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /> {t}</span>
-                    ))}
-                  </motion.div>
-                </div>
-
-                <motion.div variants={scaleIn} className="relative mx-auto w-full max-w-md">
-                  <div className="absolute -inset-2 rounded-3xl gradient-primary opacity-15 blur-2xl" />
-                  <div className="glass-card relative rounded-2xl p-6 shadow-2xl shadow-primary/5">
-                    <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">See our unbeatable prices instantly 👇</p>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Platform</label>
-                        <div className="grid grid-cols-5 gap-2">
-                          {PLATFORMS.map((p) => (
-                            <button key={p} onClick={() => setPlatform(p)} className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition-all duration-200 ${platform === p ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10" : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30 hover:bg-primary/5"}`}>
-                              {PLATFORM_ICONS[p]}
-                              <span className="hidden sm:inline text-[10px]">{p === "Instagram" ? "Insta" : p}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Service</label>
-                        <div className="grid grid-cols-4 gap-2">
-                          {SERVICES.map((s) => (
-                            <button key={s} onClick={() => setService(s)} className={`rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200 ${service === s ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10" : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/30"}`}>
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Quantity</label>
-                        <Input type="number" min={100} max={1000000} value={quantity} onChange={(e) => setQuantity(Math.max(100, Number(e.target.value)))} className="bg-secondary/30 border-border/50 rounded-xl" />
-                      </div>
-                      <div className="rounded-2xl gradient-primary p-4 text-center">
-                        <p className="text-xs font-medium text-primary-foreground/80">Estimated Price</p>
-                        <p className="text-3xl font-extrabold text-primary-foreground font-display">Rs. {estimatedPrice.toFixed(2)}</p>
-                        <p className="mt-1 text-xs text-primary-foreground/80">Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                <motion.div variants={fadeUp}>{heroText}</motion.div>
+                <motion.div variants={scaleIn}><PriceCalculator /></motion.div>
               </motion.div>
             </div>
           </section>
@@ -295,7 +278,6 @@ function HeroContent({ isMobile, prefetch }: { isMobile: boolean; prefetch: any 
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
   const isMobile = useIsMobile();
-  const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -321,74 +303,93 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="font-body min-h-screen bg-background text-foreground scroll-smooth relative">
-      {/* ===== Animated Background ===== */}
-      <div className="mesh-gradient" aria-hidden="true" />
-      <div className="grid-pattern" aria-hidden="true" />
+    <div className="clay-landing scroll-smooth relative">
+      {/* ===== Floating Blobs ===== */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 blur-3xl clay-blob" />
+        <div className="absolute -right-[10%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-[#EC4899]/10 blur-3xl clay-blob-alt animation-delay-2000" />
+        <div className="absolute bottom-[10%] left-[30%] h-[50vh] w-[50vh] rounded-full bg-[#0EA5E9]/10 blur-3xl clay-blob-slow animation-delay-4000" />
+      </div>
 
       {/* ==================== NAVBAR ==================== */}
-      <header>
+      <header className="relative z-50">
         <nav
           role="navigation"
           aria-label="Main navigation"
-          className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+          className={`fixed inset-x-4 sm:inset-x-6 lg:inset-x-8 top-4 z-50 transition-all duration-500 rounded-[32px] sm:rounded-[40px] ${
             scrolled
-              ? "bg-background/60 shadow-lg shadow-background/20 backdrop-blur-xl border-b border-border/50"
-              : "bg-transparent"
+              ? "bg-white/80 shadow-clayCard backdrop-blur-xl"
+              : "bg-white/40 backdrop-blur-md"
           }`}
         >
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-16 sm:h-20 items-center justify-between px-4 sm:px-8">
             <button onClick={() => scrollTo("hero")} aria-label="Go to homepage">
               <BrandLogo />
             </button>
 
             <div className="hidden items-center gap-8 md:flex">
               {navLinks.map((l) => (
-                <button key={l.id} onClick={() => scrollTo(l.id)} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">
+                <button
+                  key={l.id}
+                  onClick={() => scrollTo(l.id)}
+                  className="text-sm font-bold transition-colors hover:text-[#7C3AED]"
+                  style={{ color: "var(--clay-muted)" }}
+                >
                   {l.label}
                 </button>
               ))}
             </div>
 
             <div className="hidden items-center gap-3 md:flex">
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full" aria-label="Toggle theme">
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
-              </Button>
-              <Button variant="outline" className="rounded-full border-border/50" asChild>
-                <Link to="/login" {...prefetch("/login")}><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
-              </Button>
-              <Button className="rounded-full gradient-primary text-primary-foreground border-0 btn-glow" asChild>
-                <Link to="/signup" {...prefetch("/signup")}><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
-              </Button>
+              <Link
+                to="/login"
+                {...prefetch("/login")}
+                className="clay-btn h-11 px-6 text-sm bg-white shadow-clayCard hover:shadow-clayButtonHover"
+                style={{ color: "var(--clay-fg)" }}
+              >
+                <LogIn className="mr-2 h-4 w-4" />Sign In
+              </Link>
+              <Link
+                to="/signup"
+                {...prefetch("/signup")}
+                className="clay-btn clay-btn-primary shadow-clayButton hover:shadow-clayButtonHover h-11 px-6 text-sm gap-2"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />Sign Up
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 md:hidden">
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full" aria-label="Toggle theme">
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-500 dark:-rotate-180 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-180 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle mobile menu">
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="clay-btn h-10 w-10 bg-white shadow-clayCard"
+                style={{ color: "var(--clay-fg)" }}
+                aria-label="Toggle mobile menu"
+              >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
+              </button>
             </div>
           </div>
 
           {mobileOpen && (
-            <div className="border-b border-border/50 bg-background/80 backdrop-blur-xl md:hidden animate-fade-in">
-              <div className="space-y-1 px-4 pb-4 pt-2">
+            <div className="rounded-b-[32px] bg-white/90 backdrop-blur-xl md:hidden px-4 pb-4 pt-2">
+              <div className="space-y-1">
                 {navLinks.map((l) => (
-                  <button key={l.id} onClick={() => scrollTo(l.id)} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+                  <button
+                    key={l.id}
+                    onClick={() => scrollTo(l.id)}
+                    className="block w-full rounded-[16px] px-4 py-3 text-left text-sm font-bold hover:bg-[#EFEBF5]"
+                    style={{ color: "var(--clay-muted)" }}
+                  >
                     {l.label}
                   </button>
                 ))}
                 <div className="flex gap-3 pt-3">
-                  <Button variant="outline" className="flex-1 rounded-full" asChild>
-                    <Link to="/login">Sign In</Link>
-                  </Button>
-                  <Button className="flex-1 rounded-full gradient-primary text-primary-foreground border-0" asChild>
-                    <Link to="/signup">Sign Up</Link>
-                  </Button>
+                  <Link to="/login" className="clay-btn flex-1 h-12 text-sm bg-white shadow-clayCard justify-center" style={{ color: "var(--clay-fg)" }}>
+                    Sign In
+                  </Link>
+                  <Link to="/signup" className="clay-btn clay-btn-primary flex-1 h-12 text-sm shadow-clayButton justify-center">
+                    Sign Up
+                  </Link>
                 </div>
               </div>
             </div>
@@ -396,11 +397,8 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <main>
-        {/* Hero — critical above-fold content */}
+      <main className="relative z-10">
         <HeroContent isMobile={isMobile} prefetch={prefetch} />
-
-        {/* Below fold — lazy loaded */}
         <Suspense fallback={null}>
           <LandingBelowFold isMobile={isMobile} />
         </Suspense>
