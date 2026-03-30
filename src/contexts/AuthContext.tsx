@@ -203,13 +203,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
-    const loc = await fetchLocationData();
     const userProfile: any = {
       displayName, email, role: "user", balance: 0, status: "active", createdAt: serverTimestamp(),
-      lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
     };
     await setDoc(doc(db, "users", cred.user.uid), userProfile);
-    if (loc) saveLoginHistory(cred.user.uid, loc);
     const full = { uid: cred.user.uid, ...userProfile };
     setProfile(full);
     setCachedProfile(full);
