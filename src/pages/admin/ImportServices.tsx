@@ -127,7 +127,7 @@ const ImportServices = () => {
     try {
       await addDoc(collection(db, "services"), {
         name: row.svc.name, categoryId: row.categoryId, rate: parseFloat(calcSelling(row).toFixed(4)),
-        providerRate: parseFloat(row.svc.rate) || 0, minQuantity: parseInt(row.svc.min) || 0, maxQuantity: parseInt(row.svc.max) || 0,
+        providerRate: getConvertedRate(row.svc.rate), originalProviderRate: parseFloat(row.svc.rate) || 0, exchangeRate: rateMultiplier, minQuantity: parseInt(row.svc.min) || 0, maxQuantity: parseInt(row.svc.max) || 0,
         description: (row as any).svc?.description || "", providerId: selectedProvider,
         providerServiceId: row.svc.service, providerApiUrl: provider?.apiUrl || "", providerApiKey: provider?.apiKey || "",
         type: row.svc.type || "default", status: "active", marginType: row.marginType,
