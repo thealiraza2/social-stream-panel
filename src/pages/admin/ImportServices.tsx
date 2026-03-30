@@ -240,9 +240,30 @@ const ImportServices = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="space-y-1.5 flex-1">
                 <Label className="text-xs">Assign Category</Label>
-                <Select onValueChange={bulkSetCategory}><SelectTrigger><SelectValue placeholder="Set category for all selected" /></SelectTrigger>
-                  <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal">
+                      <span className="truncate">Set category for all selected</span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search categories..." />
+                      <CommandList>
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup>
+                          {categories.map(c => (
+                            <CommandItem key={c.id} value={c.name} onSelect={() => bulkSetCategory(c.id)}>
+                              {c.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
               </div>
               <div className="space-y-1.5 w-[140px]">
                 <Label className="text-xs">Margin Type</Label>
