@@ -76,6 +76,62 @@ const OrderManagement = () => {
 
   useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
 
+  const [syncing, setSyncing] = useState(false);
+
+  const syncAllStatuses = useCallback(async () => {
+    const activeOrders = orders.filter((o: any) => 
+      o.providerOrderId && ["pending", "processing", "in_progress"].includes(o.status)
+    );
+    if (activeOrders.length === 0) {
+      toast({ title: "No active orders to sync" });
+      return;
+    }
+    setSyncing(true);
+    let updated = 0;
+    const providerCache: Record<string, any> = {};
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    for (const order of activeOrders) {
+      try {
+        let provider = providerCache[order.providerId || ""];
+        if (!provider && order.providerId) {
+          const provDoc = await getDoc(doc(db, "providers", order.providerId));
+          if (provDoc.exists()) {
+            provider = provDoc.data();
+            providerCache[order.providerId] = provider;
+          }
+        }
+        if (!provider?.apiUrl || !provider?.apiKey) continue;
+
+        const res = await fetch("https://social-stream-panel-nine.vercel.app/api/order-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiUrl: provider.apiUrl,
+            apiKey: provider.apiKey,
+            orderId: order.providerOrderId,
+          }),
+        });
+        const data = await res.json();
+        if (data?.status) {
+          const newStatus = data.status.toLowerCase().replace(" ", "_");
+          const updateData: any = { status: newStatus };
+          if (data.start_count != null) updateData.startCount = Number(data.start_count);
+          if (data.remains != null) updateData.remains = Number(data.remains);
+          
+          await updateDoc(doc(db, "orders", order.id), updateData);
+          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, ...updateData } : o));
+          updated++;
+        }
+        await delay(500);
+      } catch (err) {
+        console.error(`Sync failed for order ${order.id}:`, err);
+      }
+    }
+    setSyncing(false);
+    toast({ title: "Status Synced", description: `${updated} of ${activeOrders.length} orders updated.` });
+  }, [orders, toast]);
+
   const updateStatus = useCallback(async (orderId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { status: newStatus });
