@@ -25,7 +25,14 @@ const plans = [
   },
 ];
 
-const Pricing = () => (
+const Pricing = () => {
+  useSEO({
+    title: "Pricing - BudgetSMM | Cheapest SMM Panel Rates",
+    description: "View BudgetSMM pricing plans. Starting from just $5 — get access to the cheapest Instagram followers, YouTube views, TikTok likes with instant delivery.",
+    canonical: "https://budgetsmm.store/pricing",
+    keywords: "smm panel pricing, cheapest smm panel prices, buy followers price, smm panel rates pakistan",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
