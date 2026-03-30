@@ -43,6 +43,7 @@ const NewOrder = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { checkLimit: checkOrderLimit } = useRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 30000, message: "Too many orders. Please wait 30 seconds." });
   const [searchParams] = useSearchParams();
 
   const [categories, setCategories] = useState<Category[]>([]);
