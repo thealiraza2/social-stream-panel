@@ -116,6 +116,7 @@ const NewOrder = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !link || !quantity) return;
+    if (!checkOrderLimit()) return;
     if (!user || !profile) { toast({ title: "Authentication required", description: "Please login again.", variant: "destructive" }); return; }
     const svc = selectedServiceData!;
     const qty = Number(quantity);

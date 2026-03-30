@@ -112,6 +112,7 @@ const AddFunds = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !method || !amount) return;
+    if (!checkDepositLimit()) return;
 
     const parsedAmount = Number(amount);
     if (parsedAmount <= 0 || parsedAmount > 1000000) {
