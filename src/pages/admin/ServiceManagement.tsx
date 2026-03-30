@@ -58,10 +58,49 @@ const ServiceManagement = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [form, setForm] = useState({
     name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
     description: "", status: "active", providerId: "", providerServiceId: "",
   });
+
+  const allSelected = services.length > 0 && selectedIds.size === services.length;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(services.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected service(s)?`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id => deleteDoc(doc(db, "services", id)))
+      );
+      toast({ title: `${selectedIds.size} services deleted` });
+      setSelectedIds(new Set());
+      clearCache();
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
