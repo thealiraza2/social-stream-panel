@@ -210,6 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastIP: loc?.ip || "", lastCountry: loc?.country || "", lastCity: loc?.city || "", lastRegion: loc?.region || "", lastLoginAt: serverTimestamp(),
       };
       await setDoc(doc(db, "users", cred.user.uid), userProfile);
+      if (loc) saveLoginHistory(cred.user.uid, loc);
       const full = { uid: cred.user.uid, ...userProfile };
       setProfile(full);
       setCachedProfile(full);
