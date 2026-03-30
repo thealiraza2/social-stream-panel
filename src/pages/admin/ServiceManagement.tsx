@@ -359,6 +359,8 @@ const ServiceManagement = () => {
               {priceMode === "fixed" && `All selected services will be set to Rs.${priceValue || "0"}`}
               {priceMode === "increase" && `Rs.${priceValue || "0"} will be added to each service's rate`}
               {priceMode === "decrease" && `Rs.${priceValue || "0"} will be subtracted from each service's rate`}
+              {priceMode === "increase_pct" && `Each service's rate will increase by ${priceValue || "0"}%`}
+              {priceMode === "decrease_pct" && `Each service's rate will decrease by ${priceValue || "0"}%`}
               {priceMode === "multiply" && `Each service's rate will be multiplied by ${priceValue || "1"}`}
             </p>
             <Button onClick={handleBulkPriceEdit} disabled={bulkPricing || !priceValue} className="w-full gradient-purple text-white border-0">
