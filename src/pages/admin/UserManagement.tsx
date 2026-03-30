@@ -272,6 +272,44 @@ const UserManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Login History Dialog */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Login History — {historyUser?.email}</DialogTitle></DialogHeader>
+          <ScrollArea className="max-h-[400px]">
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            ) : loginHistory.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No login history found</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date & Time</TableHead><TableHead>IP Address</TableHead><TableHead>Location</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loginHistory.map(h => (
+                    <TableRow key={h.id}>
+                      <TableCell className="text-xs">{h.loginAt?.toDate ? h.loginAt.toDate().toLocaleString() : "—"}</TableCell>
+                      <TableCell className="text-xs font-mono">{h.ip || "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {h.city || h.country ? (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            {[h.city, h.region, h.country].filter(Boolean).join(", ")}
+                          </span>
+                        ) : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
