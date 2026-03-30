@@ -355,7 +355,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
             <div key={t.name} className="clay-card rounded-[24px] p-6 shadow-clayCard hover:shadow-clayButtonHover hover:-translate-y-2">
               <div className="mb-4 flex gap-0.5">
                 {[...Array(5)].map((_, si) => (
-                  <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-[#F59E0B] text-[#F59E0B]" : "fill-[#EFEBF5] text-[#EFEBF5]"}`} />
+                  <Star key={si} className={`h-4 w-4 ${si < t.rating ? "fill-[#F59E0B] text-[#F59E0B]" : ""}`} style={si >= t.rating ? { fill: "var(--clay-input-bg)", color: "var(--clay-input-bg)" } : undefined} />
                 ))}
               </div>
               <Quote className="mb-3 h-6 w-6" style={{ color: "#7C3AED", opacity: 0.3 }} />
