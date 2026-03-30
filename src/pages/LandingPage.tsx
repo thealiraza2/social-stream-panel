@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense, useCallback } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import { useTheme } from "next-themes";
@@ -62,7 +64,7 @@ export function BrandLogo({ className = "", size = "default" }: { className?: st
 /* ------------------------------------------------------------------ */
 /*  Price data                                                         */
 /* ------------------------------------------------------------------ */
-const PRICE_MAP: Record<string, Record<string, number>> = {
+const DEFAULT_PRICE_MAP: Record<string, Record<string, number>> = {
   Instagram: { Followers: 2.5, Likes: 1.2, Views: 0.8, Comments: 5.0 },
   YouTube:   { Followers: 8.0, Likes: 2.0, Views: 0.5, Comments: 10.0 },
   TikTok:    { Followers: 3.0, Likes: 0.8, Views: 0.3, Comments: 4.0 },
@@ -70,8 +72,106 @@ const PRICE_MAP: Record<string, Record<string, number>> = {
   Telegram:  { Followers: 3.5, Likes: 1.0, Views: 0.4, Comments: 5.0 },
 };
 
-const PLATFORMS = Object.keys(PRICE_MAP);
+const PLATFORMS = Object.keys(DEFAULT_PRICE_MAP);
 const SERVICES = ["Followers", "Likes", "Views", "Comments"];
+
+const PLATFORM_KEYWORDS: Record<string, string[]> = {
+  Instagram: ["instagram", "insta"],
+  YouTube: ["youtube", "yt"],
+  TikTok: ["tiktok", "tik tok"],
+  Twitter: ["twitter", "x ", " x/"],
+  Telegram: ["telegram"],
+};
+
+const SERVICE_KEYWORDS: Record<string, string[]> = {
+  Followers: ["follower", "subscribers", "subscriber", "members", "member"],
+  Likes: ["like", "heart", "reaction"],
+  Views: ["view", "watch"],
+  Comments: ["comment", "reply"],
+};
+
+function useDynamicPrices() {
+  const [priceMap, setPriceMap] = useState(DEFAULT_PRICE_MAP);
+
+  useEffect(() => {
+    const CACHE_KEY = "landing_prices";
+    const CACHE_TTL = 2 * 60 * 1000;
+
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          setPriceMap(data);
+          return;
+        }
+      } catch {}
+    }
+
+    (async () => {
+      try {
+        const [catSnap, svcSnap] = await Promise.all([
+          getDocs(collection(db, "categories")),
+          getDocs(collection(db, "services")),
+        ]);
+
+        const categories = catSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+        const services = svcSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+
+        // Map category IDs to platform names
+        const catToPlatform: Record<string, string> = {};
+        for (const cat of categories) {
+          const catName = (cat.name || "").toLowerCase();
+          for (const [platform, keywords] of Object.entries(PLATFORM_KEYWORDS)) {
+            if (keywords.some(k => catName.includes(k))) {
+              catToPlatform[cat.id] = platform;
+              break;
+            }
+          }
+        }
+
+        // Build new price map from real services
+        const newMap: Record<string, Record<string, number[]>> = {};
+        for (const p of PLATFORMS) {
+          newMap[p] = {};
+          for (const s of SERVICES) newMap[p][s] = [];
+        }
+
+        for (const svc of services) {
+          if (svc.status === "disabled" || !svc.rate) continue;
+          const platform = catToPlatform[svc.category];
+          if (!platform) continue;
+          const svcName = (svc.name || "").toLowerCase();
+          for (const [serviceType, keywords] of Object.entries(SERVICE_KEYWORDS)) {
+            if (keywords.some(k => svcName.includes(k))) {
+              newMap[platform][serviceType].push(Number(svc.rate));
+              break;
+            }
+          }
+        }
+
+        // Take cheapest rate, fallback to defaults
+        const finalMap: Record<string, Record<string, number>> = {};
+        for (const p of PLATFORMS) {
+          finalMap[p] = {};
+          for (const s of SERVICES) {
+            const rates = newMap[p][s];
+            finalMap[p][s] = rates.length > 0
+              ? Math.min(...rates)
+              : DEFAULT_PRICE_MAP[p][s];
+          }
+        }
+
+        setPriceMap(finalMap);
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: finalMap, ts: Date.now() }));
+      } catch (e) {
+        console.error("[Landing] Failed to fetch prices:", e);
+      }
+    })();
+  }, []);
+
+  return priceMap;
+}
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
   Instagram: <Instagram className="h-4 w-4" />,
@@ -103,14 +203,15 @@ const scaleIn = {
 /*  Calculator Card                                                    */
 /* ------------------------------------------------------------------ */
 function PriceCalculator() {
+  const priceMap = useDynamicPrices();
   const [platform, setPlatform] = useState("Instagram");
   const [service, setService] = useState("Followers");
   const [quantity, setQuantity] = useState(1000);
 
+  const rate = priceMap[platform]?.[service] ?? 0;
   const estimatedPrice = useMemo(() => {
-    const rate = PRICE_MAP[platform]?.[service] ?? 0;
     return (rate * quantity) / 1000;
-  }, [platform, service, quantity]);
+  }, [rate, quantity]);
 
   return (
     <div className="relative mx-auto w-full max-w-md">
@@ -182,7 +283,7 @@ function PriceCalculator() {
               Rs. {estimatedPrice.toFixed(2)}
             </p>
             <p className="mt-1 text-xs text-white/80">
-              Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
+              Rate: Rs. {rate.toFixed(2)} per 1000
             </p>
           </div>
         </div>
