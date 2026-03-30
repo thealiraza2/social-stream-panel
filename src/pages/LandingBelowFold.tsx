@@ -486,7 +486,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                 </div>
               </div>
             </div>
-            <div className="mt-10 border-t border-[#E5E0EF] pt-6 text-center text-xs font-medium" style={{ color: "var(--clay-muted)" }}>
+            <div className="mt-10 pt-6 text-center text-xs font-medium" style={{ color: "var(--clay-muted)", borderTop: "1px solid var(--clay-border)" }}>
               Copyright © 2024-2025 BudgetSMM. All rights reserved.
             </div>
           </div>
