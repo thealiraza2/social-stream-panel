@@ -101,6 +101,20 @@ const ImportServices = () => {
     return rows.filter(r => r.svc.name.toLowerCase().includes(q) || String(r.svc.service).includes(q));
   }, [rows, search]);
 
+  // Group filtered services by their provider category
+  const groupedByCategory = useMemo(() => {
+    const groups: Record<string, ImportRow[]> = {};
+    filtered.forEach(row => {
+      const cat = row.svc.category || "Uncategorized";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(row);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  // Reset pages when search changes
+  useEffect(() => { setCategoryPages({}); }, [search]);
+
   const toggleRow = (idx: number) => {
     setRows(prev => { const next = [...prev]; const realIdx = rows.indexOf(filtered[idx]); next[realIdx] = { ...next[realIdx], selected: !next[realIdx].selected }; return next; });
   };
