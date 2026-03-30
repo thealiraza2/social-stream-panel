@@ -13,6 +13,28 @@
   --clay-green: #10B981;
   --clay-amber: #F59E0B;
   --clay-card-bg: rgba(255, 255, 255, 0.65);
+  --clay-input-bg: #EFEBF5;
+  --clay-input-focus-bg: #ffffff;
+  --clay-pressed-dark: #d9d4e3;
+  --clay-pressed-light: #ffffff;
+  --clay-border: #E5E0EF;
+}
+
+.dark {
+  --clay-bg: #1A1625;
+  --clay-fg: #E8E4F0;
+  --clay-muted: #9B95A8;
+  --clay-accent: #A78BFA;
+  --clay-accent-alt: #F472B6;
+  --clay-blue: #38BDF8;
+  --clay-green: #34D399;
+  --clay-amber: #FBBF24;
+  --clay-card-bg: rgba(30, 25, 45, 0.7);
+  --clay-input-bg: #241F35;
+  --clay-input-focus-bg: #2A2440;
+  --clay-pressed-dark: #141020;
+  --clay-pressed-light: #2A2440;
+  --clay-border: #2E2845;
 }
 
 /* ============================================= */
@@ -27,12 +49,28 @@
     inset -6px -6px 12px rgba(255, 255, 255, 1);
 }
 
+.dark .shadow-clayCard {
+  box-shadow:
+    16px 16px 32px rgba(0, 0, 0, 0.4),
+    -10px -10px 24px rgba(50, 40, 70, 0.3),
+    inset 6px 6px 12px rgba(139, 92, 246, 0.06),
+    inset -6px -6px 12px rgba(50, 40, 70, 0.4);
+}
+
 .shadow-clayButton {
   box-shadow:
     12px 12px 24px rgba(139, 92, 246, 0.3),
     -8px -8px 16px rgba(255, 255, 255, 0.4),
     inset 4px 4px 8px rgba(255, 255, 255, 0.4),
     inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-clayButton {
+  box-shadow:
+    12px 12px 24px rgba(139, 92, 246, 0.25),
+    -8px -8px 16px rgba(50, 40, 70, 0.3),
+    inset 4px 4px 8px rgba(139, 92, 246, 0.15),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .shadow-clayButtonHover {
@@ -43,10 +81,18 @@
     inset -4px -4px 8px rgba(0, 0, 0, 0.12);
 }
 
+.dark .shadow-clayButtonHover {
+  box-shadow:
+    16px 16px 32px rgba(139, 92, 246, 0.35),
+    -10px -10px 20px rgba(50, 40, 70, 0.4),
+    inset 4px 4px 8px rgba(139, 92, 246, 0.2),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.35);
+}
+
 .shadow-clayPressed {
   box-shadow:
-    inset 10px 10px 20px #d9d4e3,
-    inset -10px -10px 20px #ffffff;
+    inset 10px 10px 20px var(--clay-pressed-dark),
+    inset -10px -10px 20px var(--clay-pressed-light);
 }
 
 .shadow-claySurface {
@@ -55,6 +101,14 @@
     -30px -30px 60px #ffffff,
     inset 10px 10px 20px rgba(139, 92, 246, 0.05),
     inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+}
+
+.dark .shadow-claySurface {
+  box-shadow:
+    30px 30px 60px rgba(0, 0, 0, 0.5),
+    -30px -30px 60px rgba(50, 40, 70, 0.2),
+    inset 10px 10px 20px rgba(139, 92, 246, 0.08),
+    inset -10px -10px 20px rgba(50, 40, 70, 0.4);
 }
 
 /* ============================================= */
@@ -71,6 +125,10 @@
   padding: 2rem;
   color: var(--clay-fg);
   transition: all 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark .clay-card {
+  border: 1px solid rgba(139, 92, 246, 0.08);
 }
 
 .clay-card:hover {
@@ -91,6 +149,7 @@
   transition: all 200ms ease;
   cursor: pointer;
   border: none;
+  text-decoration: none;
 }
 
 .clay-btn:hover {
@@ -100,13 +159,18 @@
 .clay-btn:active {
   transform: scale(0.92);
   box-shadow:
-    inset 10px 10px 20px #d9d4e3,
-    inset -10px -10px 20px #ffffff;
+    inset 10px 10px 20px var(--clay-pressed-dark),
+    inset -10px -10px 20px var(--clay-pressed-light);
 }
 
 .clay-btn-primary {
   background: linear-gradient(to bottom right, #A78BFA, #7C3AED);
   color: white;
+}
+
+.clay-btn-secondary {
+  background: var(--clay-card-bg);
+  color: var(--clay-fg);
 }
 
 /* ============================================= */
@@ -117,7 +181,7 @@
   width: 100%;
   border: 0;
   border-radius: 16px;
-  background: #EFEBF5;
+  background: var(--clay-input-bg);
   padding: 1rem 1.5rem;
   color: var(--clay-fg);
   font-size: 1rem;
@@ -126,7 +190,7 @@
 
 .clay-input:focus {
   outline: none;
-  background: white;
+  background: var(--clay-input-focus-bg);
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
 }
 
@@ -193,6 +257,13 @@
   background-clip: text;
 }
 
+.dark .clay-text-gradient {
+  background: linear-gradient(135deg, #E8E4F0 20%, #A78BFA 60%, #F472B6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* ============================================= */
 /* CLAY LANDING PAGE WRAPPER                     */
 /* ============================================= */
@@ -230,6 +301,30 @@
 
 .clay-stat-orb:hover {
   transform: scale(1.1);
+}
+
+/* ============================================= */
+/* DARK MODE — NAVBAR                            */
+/* ============================================= */
+
+.dark .clay-nav-scrolled {
+  background: rgba(26, 22, 37, 0.8) !important;
+}
+
+.dark .clay-nav-default {
+  background: rgba(26, 22, 37, 0.4) !important;
+}
+
+.dark .clay-mobile-menu {
+  background: rgba(26, 22, 37, 0.95) !important;
+}
+
+/* ============================================= */
+/* DARK MODE — RECESSED ELEMENTS                 */
+/* ============================================= */
+
+.dark .clay-recessed {
+  background: var(--clay-input-bg) !important;
 }
 
 /* ============================================= */
