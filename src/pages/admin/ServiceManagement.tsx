@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Server, Plus, Pencil, Trash2 } from "lucide-react";
+import { Server, Plus, Pencil, Trash2, DollarSign } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +60,10 @@ const ServiceManagement = () => {
   const [editing, setEditing] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply">("fixed");
+  const [priceValue, setPriceValue] = useState("");
+  const [bulkPricing, setBulkPricing] = useState(false);
   const [form, setForm] = useState({
     name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
     description: "", status: "active", providerId: "", providerServiceId: "",
@@ -99,6 +103,36 @@ const ServiceManagement = () => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkPriceEdit = async () => {
+    if (selectedIds.size === 0 || !priceValue) return;
+    const val = parseFloat(priceValue);
+    if (isNaN(val)) return;
+    setBulkPricing(true);
+    try {
+      const updates = Array.from(selectedIds).map(id => {
+        const svc = services.find(s => s.id === id);
+        if (!svc) return null;
+        let newRate = svc.rate;
+        if (priceMode === "fixed") newRate = val;
+        else if (priceMode === "increase") newRate = svc.rate + val;
+        else if (priceMode === "decrease") newRate = Math.max(0, svc.rate - val);
+        else if (priceMode === "multiply") newRate = svc.rate * val;
+        newRate = Math.round(newRate * 100) / 100;
+        return updateDoc(doc(db, "services", id), { rate: newRate });
+      }).filter(Boolean);
+      await Promise.all(updates);
+      toast({ title: `Price updated for ${selectedIds.size} services` });
+      setBulkPriceOpen(false);
+      setPriceValue("");
+      clearCache();
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkPricing(false);
     }
   };
 
@@ -202,10 +236,16 @@ const ServiceManagement = () => {
         <h1 className="text-2xl font-bold">Service Management</h1>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setBulkPriceOpen(true)}>
+                <DollarSign className="mr-2 h-4 w-4" />
+                Edit Price ({selectedIds.size})
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
+              </Button>
+            </>
           )}
           <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Service</Button>
         </div>
@@ -286,6 +326,40 @@ const ServiceManagement = () => {
               </Select>
             </div>
             <Button onClick={handleSave} className="w-full gradient-purple text-white border-0">{editing ? "Update" : "Add"} Service</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Price Edit Dialog */}
+      <Dialog open={bulkPriceOpen} onOpenChange={setBulkPriceOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Bulk Price Edit ({selectedIds.size} services)</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Price Mode</Label>
+              <Select value={priceMode} onValueChange={(v: any) => setPriceMode(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Set Fixed Price</SelectItem>
+                  <SelectItem value="increase">Increase By Amount</SelectItem>
+                  <SelectItem value="decrease">Decrease By Amount</SelectItem>
+                  <SelectItem value="multiply">Multiply By Factor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : "Amount"}</Label>
+              <Input type="number" step="0.01" placeholder="Enter value" value={priceValue} onChange={e => setPriceValue(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {priceMode === "fixed" && `All selected services will be set to Rs.${priceValue || "0"}`}
+              {priceMode === "increase" && `Rs.${priceValue || "0"} will be added to each service's rate`}
+              {priceMode === "decrease" && `Rs.${priceValue || "0"} will be subtracted from each service's rate`}
+              {priceMode === "multiply" && `Each service's rate will be multiplied by ${priceValue || "1"}`}
+            </p>
+            <Button onClick={handleBulkPriceEdit} disabled={bulkPricing || !priceValue} className="w-full gradient-purple text-white border-0">
+              {bulkPricing ? "Updating..." : "Apply Price Change"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
