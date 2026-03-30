@@ -27,6 +27,8 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // User pages — lazy loaded
@@ -107,6 +109,8 @@ const App = () => (
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/api-docs" element={<ApiDocs />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
 
                 {/* User Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><AppLayout><UserDashboard /></AppLayout></ProtectedRoute>} />
