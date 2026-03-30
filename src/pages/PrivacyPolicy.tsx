@@ -35,7 +35,7 @@ const PrivacyPolicy = () => (
         <p>BudgetSMM is not intended for users under the age of 13. We do not knowingly collect information from children.</p>
         <h2 className="text-lg font-semibold text-foreground">10. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date. Continued use of the Platform constitutes acceptance of the revised policy.</p>
-        <h2 className="text-lg font-semibold text-foreground">10. Contact</h2>
+        <h2 className="text-lg font-semibold text-foreground">11. Contact</h2>
         <p>For privacy-related inquiries, please open a support ticket from your dashboard.</p>
       </div>
     </div>
