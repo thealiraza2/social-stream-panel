@@ -1,69 +1,26 @@
 
 
-## SEO Optimization Plan
+## Fix Landing Page Price Calculator — Use Real Prices from Firestore
 
-After auditing all pages, here's the current state and what needs fixing:
+The price calculator currently uses hardcoded dummy prices. We'll fetch actual service data from Firestore and show the **cheapest available rate** for each platform+service type combination.
 
-### What's Already Done (No Changes Needed)
-- Most public pages (Landing, FAQ, Pricing, About, Contact, API Docs, Terms, Privacy, Refund, Login, Signup, Blog) already have **unique titles, descriptions, canonical URLs, and keywords** via `useSEO`.
-- All pages have proper `<h1>` tags.
-- Most images already have descriptive `alt` text.
-- `index.html` has proper JSON-LD schemas (Organization, WebSite, FAQPage, Product).
-- Fonts are already non-render-blocking (preload + media=print trick).
+### Approach
 
-### What Needs Fixing
+**File: `src/pages/LandingPage.tsx`**
 
-**1. BlogPost.tsx — Missing useSEO (Dynamic SEO)**
-- Currently has no `useSEO` call at all. When someone shares or Google indexes a blog post, it shows the previous page's meta tags.
-- Add dynamic `useSEO` using the fetched post's title, excerpt, and featured image.
-- Set canonical to `https://budgetsmm.store/blog/{slug}`.
-
-**2. NotFound.tsx — Missing useSEO**
-- Uses raw `document.title` instead of `useSEO`.
-- Add `useSEO` with `noindex: true` so 404 pages don't get indexed.
-
-**3. Admin BlogPosts.tsx — Empty alt text**
-- Line 163: `alt=""` on blog post thumbnail images.
-- Change to `alt={p.title || "Blog post thumbnail"}`.
-
-**4. Bing Webmaster Verification**
-- Line 39 in `index.html`: still has `REPLACE_WITH_YOUR_CODE` placeholder.
-- Either add real verification code or remove the tag to avoid looking unfinished to crawlers.
-
-**5. Font optimization — reduce weight count**
-- Currently loading 4 font families with many weights (Nunito 6 weights, DM Sans 4, Inter 6, Plus Jakarta Sans 4 = ~20 font files).
-- Trim to only weights actually used to reduce payload.
-
-### Files to Modify
-1. `src/pages/BlogPost.tsx` — Add `useSEO` with dynamic post data
-2. `src/pages/NotFound.tsx` — Replace `document.title` with `useSEO({ noindex: true })`
-3. `src/pages/admin/BlogPosts.tsx` — Fix empty `alt=""` on line 163
-4. `index.html` — Remove placeholder Bing meta tag (line 39)
+1. **Fetch services & categories from Firestore** on mount (with sessionStorage caching like user Services page does)
+2. **Map categories to platforms** by matching category name keywords (e.g., category name containing "instagram" → Instagram platform, "youtube" → YouTube, etc.)
+3. **Map services to service types** by matching service name keywords (containing "follower" → Followers, "like" → Likes, "view" → Views, "comment" → Comments)
+4. **Find the cheapest rate** for each platform+service type combination
+5. **Build a dynamic `PRICE_MAP`** from this data, falling back to current hardcoded values if Firestore data is unavailable
+6. **Update the calculator UI** to use the dynamic price map — show a subtle loading state while prices load
 
 ### Technical Details
 
-**BlogPost.tsx changes:**
-```typescript
-import { useSEO } from "@/hooks/useSEO";
-
-// After post is fetched, call useSEO dynamically:
-useSEO({
-  title: post ? `${post.title} - BudgetSMM Blog` : "Loading... - BudgetSMM Blog",
-  description: post?.excerpt || "Read this article on the BudgetSMM blog.",
-  canonical: `https://budgetsmm.store/blog/${slug}`,
-  ogImage: post?.featuredImage || undefined,
-  ogType: "article",
-});
-```
-
-**NotFound.tsx changes:**
-```typescript
-import { useSEO } from "@/hooks/useSEO";
-// Replace useEffect with:
-useSEO({
-  title: "Page Not Found - BudgetSMM",
-  description: "The page you're looking for doesn't exist. Browse BudgetSMM services or return to the homepage.",
-  noindex: true,
-});
-```
+- Use `getDocs(collection(db, "categories"))` and `getDocs(collection(db, "services"))` with the same caching pattern already used in `user/Services.tsx`
+- Category-to-platform matching: check if `category.name.toLowerCase()` includes platform keyword
+- Service-to-type matching: check if `service.name.toLowerCase()` includes type keyword (follower/like/view/comment)
+- For each platform+type combo, take `Math.min(...matchingRates)` to show the cheapest option
+- Keep current hardcoded `PRICE_MAP` as fallback default state
+- Rates in Firestore are already "per 1000" format, matching the calculator's formula
 
