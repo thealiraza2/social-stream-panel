@@ -122,10 +122,10 @@ const CategoryManagement = () => {
                  </TableRow>
                </TableHeader>
                <TableBody>
-                 {categories.map((c, index) => (
+                 {paginated.map((c, index) => (
                    <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
                      <TableCell><Checkbox checked={selectedIds.has(c.id)} onCheckedChange={() => toggleSelect(c.id)} /></TableCell>
-                     <TableCell className="text-muted-foreground font-medium">{index + 1}</TableCell>
+                     <TableCell className="text-muted-foreground font-medium">{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
                      <TableCell className="font-medium">{c.name}</TableCell>
                      <TableCell>{c.sortOrder}</TableCell>
                      <TableCell><Badge variant="outline" className={c.status === "active" ? "text-green-600" : "text-red-600"}>{c.status}</Badge></TableCell>
@@ -138,6 +138,22 @@ const CategoryManagement = () => {
                  {categories.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No categories yet</TableCell></TableRow>}
               </TableBody>
             </Table>
+          )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <span className="text-sm text-muted-foreground">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, categories.length)} of {categories.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
