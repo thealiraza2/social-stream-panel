@@ -18,9 +18,10 @@ const BlogPost = () => {
       try {
         const snap = await getDocs(query(collection(db, "blog_posts"), where("slug", "==", slug), where("status", "==", "published")));
         if (!snap.empty) {
-          const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
+          const data = snap.docs[0].data();
+          const p = { id: snap.docs[0].id, ...data };
           setPost(p);
-          if (p.categoryId) {
+          if (data.categoryId) {
             const cSnap = await getDocs(collection(db, "blog_categories"));
             const cat = cSnap.docs.find(d => d.id === p.categoryId);
             if (cat) setCategory(cat.data().name);
