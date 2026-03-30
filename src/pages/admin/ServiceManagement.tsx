@@ -71,8 +71,12 @@ const ServiceManagement = () => {
     name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
     description: "", status: "active", providerId: "", providerServiceId: "",
   });
+  const [page, setPage] = useState(1);
 
-  const allSelected = services.length > 0 && selectedIds.size === services.length;
+  const totalPages = Math.ceil(services.length / PAGE_SIZE);
+  const paginated = useMemo(() => services.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [services, page]);
+
+  const allSelected = paginated.length > 0 && paginated.every(s => selectedIds.has(s.id));
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
