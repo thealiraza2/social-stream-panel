@@ -1,38 +1,30 @@
 
 
-# Fix: Fully Automated Provider Order Routing
+## Problem Analysis
 
-## The Problem
+The current `api/client-ip.js` has two issues:
 
-The proxy endpoint (`api/proxy-provider.ts`) is broken for order placement. It **hardcodes** `action: "services"` and ignores all other parameters sent from the frontend (like `action: "add"`, `service`, `link`, `quantity`). So when a user places an order, the proxy fetches the service list instead of placing the actual order with the provider.
+1. **Location data relies on Vercel-specific headers** (`x-vercel-ip-country`, `x-vercel-ip-city`) — these only work on Vercel's production edge network and return **country codes** (e.g., "US") not full names (e.g., "United States"). In Lovable preview, these headers don't exist at all, so location is always empty.
 
-## The Fix
+2. **IP is correct** (from `x-forwarded-for`) but location derived from Vercel headers is incomplete/missing.
 
-Update `api/proxy-provider.ts` to be a **generic proxy** that forwards ALL parameters from the request body to the provider API as form data.
+## Solution
 
-### Changes to `api/proxy-provider.ts`
+Update `api/client-ip.js` to:
+1. Extract the real client IP from headers (this part works fine)
+2. **Call a free geolocation API server-side** using that IP to get accurate city, region, country data
+3. Use `ip-api.com` (free, no key needed, returns full country/city names) as primary, with `ipwho.is` as fallback
+4. Fall back to Vercel headers only if both APIs fail
 
-Instead of hardcoding `action: "services"`, the proxy will:
-1. Extract `apiUrl` and `apiKey` from the request body
-2. Forward **all remaining fields** (`action`, `service`, `link`, `quantity`, etc.) as URL-encoded form data to the provider
-3. This makes it work for ALL SMM panel API actions: `services`, `add`, `status`, `cancel`, `refill`, etc.
+### Changes
 
-```text
-Before (broken):
-  formData.append("key", apiKey);
-  formData.append("action", "services");  // <-- always "services"
+**File: `api/client-ip.js`**
+- Keep existing IP extraction from headers
+- Add server-side `fetch` to `http://ip-api.com/json/{ip}?fields=country,regionName,city` using the extracted IP
+- If that fails, try `https://ipwho.is/{ip}`
+- Return accurate `{ ip, country, city, region }` with full names
 
-After (fixed):
-  formData.append("key", apiKey);
-  // Forward all other fields dynamically
-  for (const [key, value] of Object.entries(rest)) {
-    formData.append(key, String(value));
-  }
-```
+This approach works in both Lovable preview AND Vercel production because the geolocation lookup happens server-side using the real client IP — no reliance on platform-specific headers for location.
 
-### Files Modified
-1. **`api/proxy-provider.ts`** -- Make it a generic forwarder instead of hardcoded "services" only
-
-### No Frontend Changes Needed
-Both `NewOrder.tsx` and `BulkOrder.tsx` already send the correct parameters (`action: "add"`, `service`, `link`, `quantity`). Once the proxy forwards them properly, orders will automatically go to the provider API and come back with a `providerOrderId`.
+No changes needed to `AuthContext.tsx` or `UserManagement.tsx` — only the API endpoint needs fixing.
 
