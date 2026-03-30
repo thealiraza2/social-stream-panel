@@ -153,6 +153,16 @@ const UserManagement = () => {
                         u.status === "deleted" ? "text-muted-foreground" : "text-destructive"
                       }>{u.status}</Badge>
                     </TableCell>
+                    <TableCell className="text-xs font-mono">{u.lastIP || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {u.lastCity || u.lastCountry ? (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          {[u.lastCity, u.lastRegion, u.lastCountry].filter(Boolean).join(", ")}
+                        </span>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{formatDate(u.lastLoginAt)}</TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
                     <TableCell className="flex items-center gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>
