@@ -14,10 +14,10 @@ import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } f
 import { auth, db } from "@/lib/firebase";
 
 const fetchLocationData = async () => {
-  // Try multiple free IP APIs as fallbacks
   const apis = [
-    { url: "https://ip-api.com/json/?fields=query,country,regionName,city", map: (d: any) => ({ ip: d.query, country: d.country, city: d.city, region: d.regionName }) },
-    { url: "https://ipapi.co/json/", map: (d: any) => ({ ip: d.ip, country: d.country_name, city: d.city, region: d.region }) },
+    { url: "https://freeipapi.com/api/json", map: (d: any) => ({ ip: d.ipAddress || "", country: d.countryName || "", city: d.cityName || "", region: d.regionName || "" }) },
+    { url: "https://ipapi.co/json/", map: (d: any) => ({ ip: d.ip || "", country: d.country_name || "", city: d.city || "", region: d.region || "" }) },
+    { url: "https://ipwho.is/", map: (d: any) => ({ ip: d.ip || "", country: d.country || "", city: d.city || "", region: d.region || "" }) },
   ];
   for (const api of apis) {
     try {
@@ -26,10 +26,11 @@ const fetchLocationData = async () => {
       const data = await res.json();
       const result = api.map(data);
       if (result.ip) {
-        console.log("[Auth] Location fetched:", result);
+        console.log("[Auth] Location fetched from", api.url, result);
         return result;
       }
-    } catch {
+    } catch (e) {
+      console.warn("[Auth] API failed:", api.url, e);
       continue;
     }
   }
