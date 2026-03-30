@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-
+import { useSEO } from "@/hooks/useSEO";
 const faqs = [
   { q: "What is BudgetSMM?", a: "BudgetSMM is a social media marketing (SMM) panel where you can buy followers, likes, views, comments, and other engagement services for platforms like Instagram, TikTok, YouTube, Facebook, Twitter, and more — all at the cheapest prices in Pakistan." },
   { q: "How do I place an order?", a: "Sign up or log in, add funds to your wallet, go to 'New Order', select a service category, choose a service, enter your social media link and quantity, and click 'Submit Order'. Your order will start processing automatically." },
