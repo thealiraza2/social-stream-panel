@@ -2,7 +2,14 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Mail, MessageCircle, Send } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
-const ContactUs = () => (
+const ContactUs = () => {
+  useSEO({
+    title: "Contact Us - BudgetSMM | 24/7 Customer Support",
+    description: "Contact BudgetSMM support via WhatsApp, Telegram, or submit a ticket. We provide 24/7 customer support for all your SMM panel needs.",
+    canonical: "https://budgetsmm.store/contact",
+    keywords: "budgetsmm contact, smm panel support, budgetsmm whatsapp, smm panel help",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">

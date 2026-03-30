@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, FileText } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-const TermsOfService = () => (
+const TermsOfService = () => {
+  useSEO({
+    title: "Terms of Service - BudgetSMM | SMM Panel Terms & Conditions",
+    description: "Read BudgetSMM's Terms of Service. Understand your rights, responsibilities, and our policies for using the cheapest SMM panel.",
+    canonical: "https://budgetsmm.store/terms",
+  });
+  return (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
