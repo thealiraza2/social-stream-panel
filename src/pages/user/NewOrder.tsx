@@ -11,6 +11,7 @@ import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, increment
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 const CACHE_KEY_SVC = "cache_neworder_services";
 const CACHE_KEY_CAT = "cache_neworder_categories";
@@ -42,6 +43,7 @@ const NewOrder = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { checkLimit: checkOrderLimit } = useRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 30000, message: "Too many orders. Please wait 30 seconds." });
   const [searchParams] = useSearchParams();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -114,6 +116,7 @@ const NewOrder = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !link || !quantity) return;
+    if (!checkOrderLimit()) return;
     if (!user || !profile) { toast({ title: "Authentication required", description: "Please login again.", variant: "destructive" }); return; }
     const svc = selectedServiceData!;
     const qty = Number(quantity);

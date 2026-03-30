@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { useSEO } from "@/hooks/useSEO";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 const passwordRules = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -35,6 +36,7 @@ const Signup = () => {
   const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkLimit: checkSignupLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many signup attempts. Please wait 1 minute." });
 
   const ruleResults = useMemo(() => passwordRules.map((r) => ({ ...r, passed: r.test(password) })), [password]);
   const passedCount = ruleResults.filter((r) => r.passed).length;
@@ -83,6 +85,7 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkSignupLimit()) return;
     if (!validateEmailDomain(email)) {
       toast({ title: "Invalid Email", description: "Please use a valid personal email (Gmail, Hotmail, Yahoo, etc.) to register.", variant: "destructive" });
       startCooldown();

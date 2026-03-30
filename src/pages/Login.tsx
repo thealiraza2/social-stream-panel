@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSEO } from "@/hooks/useSEO";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 const Login = () => {
   useSEO({
@@ -30,9 +31,12 @@ const Login = () => {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkLimit: checkLoginLimit } = useRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 30000, message: "Too many login attempts. Please wait 30 seconds." });
+  const { checkLimit: checkResetLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many reset requests. Please wait 1 minute." });
 
   const handleResetPassword = async () => {
     if (!resetEmail) return;
+    if (!checkResetLimit()) return;
     setResetLoading(true);
     try {
       await sendPasswordResetEmail(auth, resetEmail);
@@ -53,6 +57,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkLoginLimit()) return;
     setLoading(true);
     try {
       await login(email, password);

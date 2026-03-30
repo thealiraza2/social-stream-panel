@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { uploadToImgBB } from "@/lib/imgbb";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface PaymentMethodData {
   id: string;
@@ -49,6 +50,7 @@ const depositStatusColor: Record<string, string> = {
 const AddFunds = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { checkLimit: checkDepositLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many deposit requests. Please wait 1 minute." });
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [method, setMethod] = useState("");
   const [amount, setAmount] = useState("");
@@ -110,6 +112,7 @@ const AddFunds = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !method || !amount) return;
+    if (!checkDepositLimit()) return;
 
     const parsedAmount = Number(amount);
     if (parsedAmount <= 0 || parsedAmount > 1000000) {

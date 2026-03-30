@@ -15,6 +15,7 @@ import {
   collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, doc, updateDoc,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface Ticket {
   id: string;
@@ -39,6 +40,7 @@ const statusColor: Record<string, string> = {
 const Tickets = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { checkLimit: checkTicketLimit } = useRateLimit({ maxAttempts: 3, windowMs: 300000, cooldownMs: 120000, message: "Too many tickets. Please wait 2 minutes." });
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +115,7 @@ const Tickets = () => {
 
   const handleCreateTicket = async () => {
     if (!user || !newSubject.trim() || !newMessage.trim()) return;
+    if (!checkTicketLimit()) return;
     setCreating(true);
     try {
       const ticketRef = await addDoc(collection(db, "tickets"), {
