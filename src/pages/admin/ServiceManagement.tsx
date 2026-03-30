@@ -329,6 +329,40 @@ const ServiceManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Price Edit Dialog */}
+      <Dialog open={bulkPriceOpen} onOpenChange={setBulkPriceOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Bulk Price Edit ({selectedIds.size} services)</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Price Mode</Label>
+              <Select value={priceMode} onValueChange={(v: any) => setPriceMode(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Set Fixed Price</SelectItem>
+                  <SelectItem value="increase">Increase By Amount</SelectItem>
+                  <SelectItem value="decrease">Decrease By Amount</SelectItem>
+                  <SelectItem value="multiply">Multiply By Factor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{priceMode === "fixed" ? "New Price" : priceMode === "multiply" ? "Factor (e.g. 1.5)" : "Amount"}</Label>
+              <Input type="number" step="0.01" placeholder="Enter value" value={priceValue} onChange={e => setPriceValue(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {priceMode === "fixed" && `All selected services will be set to Rs.${priceValue || "0"}`}
+              {priceMode === "increase" && `Rs.${priceValue || "0"} will be added to each service's rate`}
+              {priceMode === "decrease" && `Rs.${priceValue || "0"} will be subtracted from each service's rate`}
+              {priceMode === "multiply" && `Each service's rate will be multiplied by ${priceValue || "1"}`}
+            </p>
+            <Button onClick={handleBulkPriceEdit} disabled={bulkPricing || !priceValue} className="w-full gradient-purple text-white border-0">
+              {bulkPricing ? "Updating..." : "Apply Price Change"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
