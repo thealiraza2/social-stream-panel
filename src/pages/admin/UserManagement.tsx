@@ -139,8 +139,8 @@ const UserManagement = () => {
                 <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Balance</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>IP</TableHead><TableHead>Location</TableHead><TableHead>Last Login</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? <TableSkeleton rows={5} cols={7} /> : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+                {loading ? <TableSkeleton rows={5} cols={10} /> : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
                 ) : filtered.map(u => (
                   <TableRow key={u.id}>
                     <TableCell>{u.displayName || "—"}</TableCell>
