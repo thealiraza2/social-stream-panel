@@ -284,6 +284,13 @@ export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  useSEO({
+    title: "BudgetSMM - #1 Cheapest SMM Panel | Buy Instagram, YouTube, TikTok Services",
+    description: "BudgetSMM.store is the #1 cheapest SMM panel. Buy Instagram followers, YouTube views, TikTok likes at lowest prices. Instant delivery, 24/7 support. Start from Rs. 0.30!",
+    canonical: "https://budgetsmm.store/",
+    keywords: "smm panel, cheapest smm panel, best smm panel, buy instagram followers, buy youtube views, buy tiktok followers, smm panel pakistan, budget smm, social media marketing panel, buy followers cheap, smm panel india, cheapest smm panel in pakistan",
+  });
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
