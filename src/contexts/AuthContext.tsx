@@ -152,6 +152,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
           if (isMounted) setLoading(false);
         }
+        // Save location on every fresh auth (not page refresh)
+        const locKey = `loc_saved_${u.uid}_${Date.now().toString().slice(0, -4)}`;
+        if (!sessionStorage.getItem(locKey)) {
+          sessionStorage.setItem(locKey, "1");
+          fetchLocationData().then(loc => {
+            if (loc) {
+              console.log("[Auth] Saving location for", u.uid, loc);
+              updateDoc(doc(db, "users", u.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(e => console.error("[Auth] updateDoc failed:", e));
+              saveLoginHistory(u.uid, loc);
+            }
+          });
+        }
         return;
       }
 
