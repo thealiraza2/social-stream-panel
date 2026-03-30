@@ -360,10 +360,30 @@ const ImportServices = () => {
                                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                                       <TableCell>
-                                        <Select value={row.categoryId} onValueChange={v => updateRow(globalIdx, { categoryId: v })}>
-                                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select..." /></SelectTrigger>
-                                          <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                        </Select>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-between font-normal">
+                                              <span className="truncate">{categories.find(c => c.id === row.categoryId)?.name || "Select..."}</span>
+                                              <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-[300px] p-0" align="start">
+                                            <Command>
+                                              <CommandInput placeholder="Search categories..." />
+                                              <CommandList>
+                                                <CommandEmpty>No category found.</CommandEmpty>
+                                                <CommandGroup>
+                                                  {categories.map(c => (
+                                                    <CommandItem key={c.id} value={c.name} onSelect={() => updateRow(globalIdx, { categoryId: c.id })}>
+                                                      <Check className={`mr-2 h-4 w-4 ${row.categoryId === c.id ? "opacity-100" : "opacity-0"}`} />
+                                                      {c.name}
+                                                    </CommandItem>
+                                                  ))}
+                                                </CommandGroup>
+                                              </CommandList>
+                                            </Command>
+                                          </PopoverContent>
+                                        </Popover>
                                       </TableCell>
                                       <TableCell>
                                         <div className="flex gap-1 items-center">
