@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSEO } from "@/hooks/useSEO";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 const Login = () => {
   useSEO({

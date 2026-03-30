@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { uploadToImgBB } from "@/lib/imgbb";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface PaymentMethodData {
   id: string;
