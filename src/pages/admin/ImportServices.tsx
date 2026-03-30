@@ -107,12 +107,18 @@ const ImportServices = () => {
     setRows(prev => { const next = [...prev]; const realIdx = rows.indexOf(filtered[filteredIdx]); next[realIdx] = { ...next[realIdx], ...field }; return next; });
   };
 
+  const rateMultiplier = parseFloat(exchangeRate) || 1;
+
+  const getConvertedRate = useCallback((rate: string) => {
+    return (parseFloat(rate) || 0) * rateMultiplier;
+  }, [rateMultiplier]);
+
   const calcSelling = useCallback((row: ImportRow) => {
-    const base = parseFloat(row.svc.rate) || 0;
+    const base = getConvertedRate(row.svc.rate);
     const margin = parseFloat(row.marginValue) || 0;
     if (row.marginType === "percent") return base + (base * margin) / 100;
     return base + margin;
-  }, []);
+  }, [getConvertedRate]);
 
   const selectedRows = useMemo(() => rows.filter(r => r.selected), [rows]);
 
