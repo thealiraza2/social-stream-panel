@@ -203,14 +203,15 @@ const scaleIn = {
 /*  Calculator Card                                                    */
 /* ------------------------------------------------------------------ */
 function PriceCalculator() {
+  const priceMap = useDynamicPrices();
   const [platform, setPlatform] = useState("Instagram");
   const [service, setService] = useState("Followers");
   const [quantity, setQuantity] = useState(1000);
 
+  const rate = priceMap[platform]?.[service] ?? 0;
   const estimatedPrice = useMemo(() => {
-    const rate = PRICE_MAP[platform]?.[service] ?? 0;
     return (rate * quantity) / 1000;
-  }, [platform, service, quantity]);
+  }, [rate, quantity]);
 
   return (
     <div className="relative mx-auto w-full max-w-md">
