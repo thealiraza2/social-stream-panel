@@ -276,7 +276,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                   { icon: TrendingUp, label: "Speed", value: s.speed },
                   { icon: RefreshCw, label: "Refill", value: s.refill },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-[14px] bg-[#EFEBF5] p-2 text-center shadow-clayPressed">
+                  <div key={stat.label} className="rounded-[14px] p-2 text-center shadow-clayPressed" style={{ background: "var(--clay-input-bg)" }}>
                     <stat.icon className="mx-auto mb-1 h-3.5 w-3.5" style={{ color: "#7C3AED" }} />
                     <p className="text-[10px] font-medium" style={{ color: "var(--clay-muted)" }}>{stat.label}</p>
                     <p className="text-xs font-bold" style={{ color: "var(--clay-fg)" }}>{stat.value}</p>
