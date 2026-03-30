@@ -212,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, displayName: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    sessionStorage.removeItem(`loc_saved_${cred.user.uid}`);
     setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
