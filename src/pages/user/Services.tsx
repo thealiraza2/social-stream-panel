@@ -145,7 +145,7 @@ const Services = () => {
                     <TableRow key={s.id}>
                       <TableCell className="font-mono text-xs">{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell><Badge variant="outline">{getCategoryName(s.categoryId)}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="max-w-[180px] truncate inline-block">{getCategoryName(s.categoryId)}</Badge></TableCell>
                       <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
                       <TableCell>{s.minQuantity?.toLocaleString()}</TableCell>
                       <TableCell>{s.maxQuantity?.toLocaleString()}</TableCell>
