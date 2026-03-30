@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageLoader } from "@/components/PageLoader";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Critical path — loaded eagerly
 import Index from "./pages/Index";
@@ -171,6 +172,7 @@ const App = () => (
         </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
+    <SpeedInsights />
   </QueryClientProvider>
 );
 
