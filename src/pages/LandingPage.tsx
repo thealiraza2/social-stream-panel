@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
