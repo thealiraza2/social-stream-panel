@@ -60,6 +60,10 @@ const ServiceManagement = () => {
   const [editing, setEditing] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply">("fixed");
+  const [priceValue, setPriceValue] = useState("");
+  const [bulkPricing, setBulkPricing] = useState(false);
   const [form, setForm] = useState({
     name: "", categoryId: "", rate: "", minQuantity: "", maxQuantity: "",
     description: "", status: "active", providerId: "", providerServiceId: "",
