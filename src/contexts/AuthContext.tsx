@@ -10,8 +10,19 @@ import {
   signInWithPopup,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+
+const fetchLocationData = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { ip: data.ip || "", country: data.country_name || "", city: data.city || "", region: data.region || "" };
+  } catch {
+    return null;
+  }
+};
 
 export interface UserProfile {
   uid: string;
