@@ -1,30 +1,37 @@
 
 
-## Problem Analysis
+## Problem
 
-The current `api/client-ip.js` has two issues:
+Login history entries are not being saved to the `login_history` subcollection. The `saveLoginHistory` function silently swallows all errors (`catch {}` on line 56-57), making it impossible to diagnose failures. The main user doc fields (lastIP, lastCity etc.) may update while the subcollection write silently fails.
 
-1. **Location data relies on Vercel-specific headers** (`x-vercel-ip-country`, `x-vercel-ip-city`) — these only work on Vercel's production edge network and return **country codes** (e.g., "US") not full names (e.g., "United States"). In Lovable preview, these headers don't exist at all, so location is always empty.
+Additionally, the session deduplication logic using `Date.now().toString().slice(0, -4)` creates a key that changes every ~10 seconds, which can cause `onAuthStateChanged` to skip saving if it fires within the same window on rapid re-renders.
 
-2. **IP is correct** (from `x-forwarded-for`) but location derived from Vercel headers is incomplete/missing.
+## Plan
 
-## Solution
+**File: `src/contexts/AuthContext.tsx`**
 
-Update `api/client-ip.js` to:
-1. Extract the real client IP from headers (this part works fine)
-2. **Call a free geolocation API server-side** using that IP to get accurate city, region, country data
-3. Use `ip-api.com` (free, no key needed, returns full country/city names) as primary, with `ipwho.is` as fallback
-4. Fall back to Vercel headers only if both APIs fail
+1. **Add error logging to `saveLoginHistory`** — Replace the silent `catch {}` with `console.error` so failures are visible in the console.
 
-### Changes
+2. **Fix session deduplication** — Change the `locKey` to use a stable session-based key (e.g., just `loc_saved_{uid}`) that only resets on actual login/logout, not on page refreshes. This ensures:
+   - Fresh login → always saves history
+   - Page refresh within same session → doesn't duplicate
 
-**File: `api/client-ip.js`**
-- Keep existing IP extraction from headers
-- Add server-side `fetch` to `http://ip-api.com/json/{ip}?fields=country,regionName,city` using the extracted IP
-- If that fails, try `https://ipwho.is/{ip}`
-- Return accurate `{ ip, country, city, region }` with full names
+3. **Add explicit logging** — Add `console.log` before and after the `saveLoginHistory` call so we can confirm the save path is being reached and completing.
 
-This approach works in both Lovable preview AND Vercel production because the geolocation lookup happens server-side using the real client IP — no reliance on platform-specific headers for location.
+4. **Ensure `saveLoginHistory` is awaited** — Currently it's fire-and-forget inside `.then()`. Make it properly awaited so errors surface.
 
-No changes needed to `AuthContext.tsx` or `UserManagement.tsx` — only the API endpoint needs fixing.
+### Technical Details
+
+```
+// saveLoginHistory - add error logging
+catch (e) {
+  console.error('[Auth] Failed to save login history:', e);
+}
+
+// Fix locKey to be session-stable (reset only on fresh login)
+// In login/signup functions: sessionStorage.removeItem(`loc_saved_${uid}`)
+// In onAuthStateChanged: use `loc_saved_${uid}` without timestamp
+```
+
+This way, every actual login triggers a fresh history save, and errors are no longer hidden.
 
