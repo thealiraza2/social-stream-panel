@@ -17,6 +17,8 @@ const CACHE_KEY_PROVS = "cache_import_providers";
 const CACHE_KEY_CATS = "cache_import_categories";
 const CACHE_TTL = 5 * 60 * 1000;
 
+const IMPORT_PAGE_SIZE = 30;
+
 interface ProviderService { service: number; name: string; rate: string; min: string; max: string; type?: string; category?: string; }
 interface ImportRow { svc: ProviderService; selected: boolean; categoryId: string; marginType: "percent" | "fixed"; marginValue: string; added?: boolean; }
 
