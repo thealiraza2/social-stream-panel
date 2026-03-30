@@ -14,16 +14,33 @@ import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp } f
 import { auth, db } from "@/lib/firebase";
 
 const fetchLocationData = async () => {
+  // Try server-side endpoint first (works on Vercel deployment)
   try {
     const response = await fetch('/api/client-ip');
-    if (!response.ok) return null;
-    const result = await response.json();
-    if (result?.ip) {
-      console.log('[Auth] Location fetched from /api/client-ip', result);
-      return result;
+    if (response.ok) {
+      const result = await response.json();
+      if (result?.ip) {
+        console.log('[Auth] Location fetched from /api/client-ip', result);
+        return result;
+      }
     }
   } catch (e) {
-    console.warn('[Auth] /api/client-ip failed', e);
+    console.warn('[Auth] /api/client-ip failed, trying fallback', e);
+  }
+
+  // Fallback: call ipwho.is directly from browser (works in preview & everywhere)
+  try {
+    const response = await fetch('https://ipwho.is/');
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.success !== false && data?.ip) {
+        const result = { ip: data.ip, country: data.country || '', city: data.city || '', region: data.region || '' };
+        console.log('[Auth] Location fetched from ipwho.is fallback', result);
+        return result;
+      }
+    }
+  } catch (e2) {
+    console.warn('[Auth] ipwho.is fallback also failed', e2);
   }
 
   console.warn('[Auth] Could not fetch location data');
