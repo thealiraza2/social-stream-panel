@@ -187,9 +187,14 @@ const OrderLogs = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Order Logs</h1>
-        <p className="text-muted-foreground">View and track all your orders</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Order Logs</h1>
+          <p className="text-muted-foreground">View and track all your orders</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={syncOrderStatuses} disabled={syncing}>
+          {syncing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Syncing...</> : <><RefreshCw className="h-4 w-4 mr-1" /> Sync Status</>}
+        </Button>
       </div>
 
       {/* Stat Cards */}
