@@ -57,6 +57,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkLoginLimit()) return;
     setLoading(true);
     try {
       await login(email, password);
