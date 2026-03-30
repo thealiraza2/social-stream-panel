@@ -141,9 +141,9 @@ const Services = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((s, i) => (
+                  {paginated.map((s, i) => (
                     <TableRow key={s.id}>
-                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                      <TableCell className="font-mono text-xs">{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell><Badge variant="outline">{getCategoryName(s.categoryId)}</Badge></TableCell>
                       <TableCell className="font-semibold text-primary">Rs.{s.rate}</TableCell>
@@ -163,7 +163,7 @@ const Services = () => {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y">
-              {filtered.map((s) => (
+              {paginated.map((s) => (
                 <div key={s.id} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -181,6 +181,24 @@ const Services = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t">
+                <span className="text-sm text-muted-foreground">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">{page} / {totalPages}</span>
+                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
             </>
           )}
         </CardContent>
