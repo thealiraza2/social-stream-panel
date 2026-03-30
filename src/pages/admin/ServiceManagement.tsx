@@ -120,6 +120,8 @@ const ServiceManagement = () => {
         else if (priceMode === "increase") newRate = svc.rate + val;
         else if (priceMode === "decrease") newRate = Math.max(0, svc.rate - val);
         else if (priceMode === "multiply") newRate = svc.rate * val;
+        else if (priceMode === "increase_pct") newRate = svc.rate * (1 + val / 100);
+        else if (priceMode === "decrease_pct") newRate = Math.max(0, svc.rate * (1 - val / 100));
         newRate = Math.round(newRate * 100) / 100;
         return updateDoc(doc(db, "services", id), { rate: newRate });
       }).filter(Boolean);
