@@ -49,12 +49,14 @@ const fetchLocationData = async () => {
 
 const saveLoginHistory = async (uid: string, loc: { ip: string; country: string; city: string; region: string }) => {
   try {
+    console.log('[Auth] Saving login history for', uid, loc);
     await addDoc(collection(db, "users", uid, "login_history"), {
       ip: loc.ip, country: loc.country, city: loc.city, region: loc.region,
       loginAt: serverTimestamp(),
     });
-  } catch {
-    // silent fail
+    console.log('[Auth] Login history saved successfully');
+  } catch (e) {
+    console.error('[Auth] Failed to save login history:', e);
   }
 };
 
@@ -162,14 +164,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (isMounted) setLoading(false);
         }
         // Save location on every fresh auth (not page refresh)
-        const locKey = `loc_saved_${u.uid}_${Date.now().toString().slice(0, -4)}`;
+        const locKey = `loc_saved_${u.uid}`;
         if (!sessionStorage.getItem(locKey)) {
           sessionStorage.setItem(locKey, "1");
-          fetchLocationData().then(loc => {
+          fetchLocationData().then(async (loc) => {
             if (loc) {
               console.log("[Auth] Saving location for", u.uid, loc);
-              updateDoc(doc(db, "users", u.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(e => console.error("[Auth] updateDoc failed:", e));
-              saveLoginHistory(u.uid, loc);
+              await updateDoc(doc(db, "users", u.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(e => console.error("[Auth] updateDoc failed:", e));
+              await saveLoginHistory(u.uid, loc);
             }
           });
         }
@@ -203,12 +205,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    sessionStorage.removeItem(`loc_saved_${cred.user.uid}`);
     setSessionHint(true);
     await fetchProfile(cred.user);
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    sessionStorage.removeItem(`loc_saved_${cred.user.uid}`);
     setSessionHint(true);
     await updateProfile(cred.user, { displayName });
     await sendEmailVerification(cred.user);
@@ -224,6 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
+    sessionStorage.removeItem(`loc_saved_${cred.user.uid}`);
     setSessionHint(true);
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (!snap.exists()) {
