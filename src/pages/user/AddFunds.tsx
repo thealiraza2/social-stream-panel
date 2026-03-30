@@ -50,6 +50,7 @@ const depositStatusColor: Record<string, string> = {
 const AddFunds = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { checkLimit: checkDepositLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many deposit requests. Please wait 1 minute." });
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [method, setMethod] = useState("");
   const [amount, setAmount] = useState("");
