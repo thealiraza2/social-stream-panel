@@ -85,6 +85,7 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkSignupLimit()) return;
     if (!validateEmailDomain(email)) {
       toast({ title: "Invalid Email", description: "Please use a valid personal email (Gmail, Hotmail, Yahoo, etc.) to register.", variant: "destructive" });
       startCooldown();
