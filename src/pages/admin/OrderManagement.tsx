@@ -88,33 +88,35 @@ const OrderManagement = () => {
     }
     setSyncing(true);
     let updated = 0;
+    let skipped = 0;
     const providerCache: Record<string, any> = {};
     const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+    try {
+      const provSnap = await getDocs(collection(db, "providers"));
+      provSnap.docs.forEach(d => {
+        providerCache[d.id] = d.data();
+      });
+    } catch (err) {
+      console.error("Failed to fetch providers:", err);
+    }
+
     for (const order of activeOrders) {
       try {
-        let provider = providerCache[order.providerId || ""];
-        if (!provider && order.providerId) {
-          const provDoc = await getDoc(doc(db, "providers", order.providerId));
-          if (provDoc.exists()) {
-            provider = provDoc.data();
-            providerCache[order.providerId] = provider;
-          }
-        }
-        if (!provider?.apiUrl || !provider?.apiKey) continue;
+        const provider = order.providerId ? providerCache[order.providerId] : null;
+        const apiUrl = provider?.apiUrl || "";
+        const apiKey = provider?.apiKey || "";
+
+        if (!apiUrl || !apiKey) { skipped++; continue; }
 
         const res = await fetch("https://social-stream-panel-nine.vercel.app/api/order-status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            apiUrl: provider.apiUrl,
-            apiKey: provider.apiKey,
-            orderId: order.providerOrderId,
-          }),
+          body: JSON.stringify({ apiUrl, apiKey, orderId: order.providerOrderId }),
         });
         const data = await res.json();
         if (data?.status) {
-          const newStatus = data.status.toLowerCase().replace(" ", "_");
+          const newStatus = data.status.toLowerCase().replace(/ /g, "_");
           const updateData: any = { status: newStatus };
           if (data.start_count != null) updateData.startCount = Number(data.start_count);
           if (data.remains != null) updateData.remains = Number(data.remains);
@@ -129,7 +131,10 @@ const OrderManagement = () => {
       }
     }
     setSyncing(false);
-    toast({ title: "Status Synced", description: `${updated} of ${activeOrders.length} orders updated.` });
+    const desc = skipped > 0 
+      ? `${updated} updated, ${skipped} skipped (no provider credentials).`
+      : `${updated} of ${activeOrders.length} orders updated.`;
+    toast({ title: "Status Synced", description: desc });
   }, [orders, toast]);
 
   const updateStatus = useCallback(async (orderId: string, newStatus: string) => {
