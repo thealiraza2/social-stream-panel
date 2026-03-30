@@ -5,12 +5,21 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { useSEO } from "@/hooks/useSEO";
 
 const BlogPost = () => {
   const { slug } = useParams();
   const [post, setPost] = useState<any>(null);
   const [category, setCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
+
+  useSEO({
+    title: post ? `${post.title} - BudgetSMM Blog` : "Loading... - BudgetSMM Blog",
+    description: post?.excerpt || "Read this article on the BudgetSMM blog.",
+    canonical: `https://budgetsmm.store/blog/${slug}`,
+    ogImage: post?.featuredImage || undefined,
+    ogType: "article",
+  });
 
   useEffect(() => {
     const fetch = async () => {
