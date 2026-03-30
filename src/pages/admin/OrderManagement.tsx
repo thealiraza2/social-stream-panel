@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ClipboardList, Search, RefreshCw, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, orderBy, query, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, orderBy, query, limit, startAfter, DocumentSnapshot, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
