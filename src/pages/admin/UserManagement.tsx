@@ -185,6 +185,7 @@ const UserManagement = () => {
                     <TableCell className="text-xs">{formatDate(u.lastLoginAt)}</TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
                     <TableCell className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openHistory(u)} title="Login History"><History className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>
                       {u.status === "deleted" ? (
                         <Button size="icon" variant="ghost" onClick={() => handleRecover(u.id)} title="Recover">
