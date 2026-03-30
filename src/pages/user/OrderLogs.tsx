@@ -109,34 +109,48 @@ const OrderLogs = () => {
     }
     setSyncing(true);
     let updated = 0;
+    let skipped = 0;
     const providerCache: Record<string, any> = {};
     const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+    // Pre-fetch all providers once
+    try {
+      const provSnap = await getDocs(collection(db, "providers"));
+      provSnap.docs.forEach(d => {
+        providerCache[d.id] = d.data();
+      });
+    } catch (err) {
+      console.error("Failed to fetch providers:", err);
+    }
+
     for (const order of activeOrders) {
       try {
-        // Get provider credentials
-        let provider = providerCache[order.providerId || ""];
-        if (!provider && order.providerId) {
-          const provDoc = await getDoc(doc(db, "providers", order.providerId));
-          if (provDoc.exists()) {
-            provider = provDoc.data();
-            providerCache[order.providerId] = provider;
-          }
+        const provider = order.providerId ? providerCache[order.providerId] : null;
+        const apiUrl = provider?.apiUrl || "";
+        const apiKey = provider?.apiKey || "";
+
+        if (!apiUrl || !apiKey) {
+          console.warn(`Order ${order.id}: No provider credentials found. providerId=${order.providerId}`);
+          skipped++;
+          continue;
         }
-        if (!provider?.apiUrl || !provider?.apiKey) continue;
+
+        console.log(`Syncing order ${order.id}, providerOrderId=${order.providerOrderId}, apiUrl=${apiUrl}`);
 
         const res = await fetch("https://social-stream-panel-nine.vercel.app/api/order-status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            apiUrl: provider.apiUrl,
-            apiKey: provider.apiKey,
+            apiUrl,
+            apiKey,
             orderId: order.providerOrderId,
           }),
         });
         const data = await res.json();
+        console.log(`Order ${order.id} provider response:`, data);
+
         if (data?.status) {
-          const newStatus = data.status.toLowerCase().replace(" ", "_");
+          const newStatus = data.status.toLowerCase().replace(/ /g, "_");
           const updateData: any = { status: newStatus };
           if (data.start_count != null) updateData.startCount = Number(data.start_count);
           if (data.remains != null) updateData.remains = Number(data.remains);
@@ -144,6 +158,8 @@ const OrderLogs = () => {
           await updateDoc(doc(db, "orders", order.id), updateData);
           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, ...updateData } : o));
           updated++;
+        } else if (data?.error) {
+          console.warn(`Order ${order.id} sync error:`, data.error);
         }
         await delay(500);
       } catch (err) {
@@ -151,7 +167,10 @@ const OrderLogs = () => {
       }
     }
     setSyncing(false);
-    toast({ title: "Status Synced", description: `${updated} of ${activeOrders.length} orders updated from provider.` });
+    const desc = skipped > 0 
+      ? `${updated} updated, ${skipped} skipped (no provider credentials).`
+      : `${updated} of ${activeOrders.length} orders updated from provider.`;
+    toast({ title: "Status Synced", description: desc });
   }, [orders, toast]);
 
   useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
