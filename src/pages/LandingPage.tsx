@@ -308,9 +308,9 @@ export default function LandingPage() {
     <div className="clay-landing scroll-smooth relative">
       {/* ===== Floating Blobs ===== */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 blur-3xl clay-blob" />
-        <div className="absolute -right-[10%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-[#EC4899]/10 blur-3xl clay-blob-alt animation-delay-2000" />
-        <div className="absolute bottom-[10%] left-[30%] h-[50vh] w-[50vh] rounded-full bg-[#0EA5E9]/10 blur-3xl clay-blob-slow animation-delay-4000" />
+        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/20 blur-3xl clay-blob" />
+        <div className="absolute -right-[10%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-[#EC4899]/10 dark:bg-[#EC4899]/20 blur-3xl clay-blob-alt animation-delay-2000" />
+        <div className="absolute bottom-[10%] left-[30%] h-[50vh] w-[50vh] rounded-full bg-[#0EA5E9]/10 dark:bg-[#0EA5E9]/20 blur-3xl clay-blob-slow animation-delay-4000" />
       </div>
 
       {/* ==================== NAVBAR ==================== */}
