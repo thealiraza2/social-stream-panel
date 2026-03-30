@@ -112,23 +112,24 @@ const CategoryManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"><Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} /></TableHead>
-                  <TableHead>Name</TableHead><TableHead>Sort Order</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map(c => (
-                  <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
-                    <TableCell><Checkbox checked={selectedIds.has(c.id)} onCheckedChange={() => toggleSelect(c.id)} /></TableCell>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell>{c.sortOrder}</TableCell>
-                    <TableCell><Badge variant="outline" className={c.status === "active" ? "text-green-600" : "text-red-600"}>{c.status}</Badge></TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {categories.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No categories yet</TableCell></TableRow>}
+                   <TableHead>#</TableHead><TableHead>Name</TableHead><TableHead>Sort Order</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+                 </TableRow>
+               </TableHeader>
+               <TableBody>
+                 {categories.map((c, index) => (
+                   <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
+                     <TableCell><Checkbox checked={selectedIds.has(c.id)} onCheckedChange={() => toggleSelect(c.id)} /></TableCell>
+                     <TableCell className="text-muted-foreground font-medium">{index + 1}</TableCell>
+                     <TableCell className="font-medium">{c.name}</TableCell>
+                     <TableCell>{c.sortOrder}</TableCell>
+                     <TableCell><Badge variant="outline" className={c.status === "active" ? "text-green-600" : "text-red-600"}>{c.status}</Badge></TableCell>
+                     <TableCell className="flex gap-2">
+                       <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                       <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                     </TableCell>
+                   </TableRow>
+                 ))}
+                 {categories.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No categories yet</TableCell></TableRow>}
               </TableBody>
             </Table>
           )}
