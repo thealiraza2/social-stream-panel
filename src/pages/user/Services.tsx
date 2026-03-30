@@ -76,6 +76,12 @@ const Services = () => {
     return matchSearch && matchCategory;
   }), [services, search, categoryFilter]);
 
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, categoryFilter]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+
   const getCategoryName = (catId: string) => categories.find(c => c.id === catId)?.name ?? "—";
 
   return (
