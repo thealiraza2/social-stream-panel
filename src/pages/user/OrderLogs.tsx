@@ -5,10 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, Plus, Loader2 } from "lucide-react";
+import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, Plus, Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, limit, startAfter, DocumentSnapshot, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TableSkeleton } from "@/components/TableSkeleton";
@@ -24,6 +24,7 @@ interface Order {
   startCount?: number;
   remains?: number;
   providerOrderId?: string;
+  providerId?: string;
   createdAt: any;
 }
 
