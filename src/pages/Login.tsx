@@ -36,6 +36,7 @@ const Login = () => {
 
   const handleResetPassword = async () => {
     if (!resetEmail) return;
+    if (!checkResetLimit()) return;
     setResetLoading(true);
     try {
       await sendPasswordResetEmail(auth, resetEmail);
