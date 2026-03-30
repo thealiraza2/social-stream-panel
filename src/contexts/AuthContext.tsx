@@ -159,6 +159,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cred = await signInWithEmailAndPassword(auth, email, password);
     setSessionHint(true);
     await fetchProfile(cred.user);
+    // Save location in background
+    fetchLocationData().then(loc => {
+      if (loc) updateDoc(doc(db, "users", cred.user.uid), { lastIP: loc.ip, lastCountry: loc.country, lastCity: loc.city, lastRegion: loc.region, lastLoginAt: serverTimestamp() }).catch(() => {});
+    });
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
