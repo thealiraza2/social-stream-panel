@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,7 +19,39 @@ const CategoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [form, setForm] = useState({ name: "", sortOrder: "0", status: "active" });
+
+  const allSelected = categories.length > 0 && selectedIds.size === categories.length;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(categories.map(c => c.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected category(ies)?`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => deleteDoc(doc(db, "categories", id))));
+      toast({ title: `${selectedIds.size} categories deleted` });
+      setSelectedIds(new Set());
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -60,7 +93,15 @@ const CategoryManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Category Management</h1>
-        <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Category</Button>
+        <div className="flex gap-2">
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
+            </Button>
+          )}
+          <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Category</Button>
+        </div>
       </div>
       <Card>
         <CardContent className="p-0">
@@ -69,11 +110,15 @@ const CategoryManagement = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Sort Order</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow>
+                <TableRow>
+                  <TableHead className="w-10"><Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} /></TableHead>
+                  <TableHead>Name</TableHead><TableHead>Sort Order</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {categories.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
+                    <TableCell><Checkbox checked={selectedIds.has(c.id)} onCheckedChange={() => toggleSelect(c.id)} /></TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.sortOrder}</TableCell>
                     <TableCell><Badge variant="outline" className={c.status === "active" ? "text-green-600" : "text-red-600"}>{c.status}</Badge></TableCell>
@@ -83,7 +128,7 @@ const CategoryManagement = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {categories.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No categories yet</TableCell></TableRow>}
+                {categories.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No categories yet</TableCell></TableRow>}
               </TableBody>
             </Table>
           )}
