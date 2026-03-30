@@ -61,7 +61,7 @@ const ServiceManagement = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
-  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply">("fixed");
+  const [priceMode, setPriceMode] = useState<"fixed" | "increase" | "decrease" | "multiply" | "increase_pct" | "decrease_pct">("fixed");
   const [priceValue, setPriceValue] = useState("");
   const [bulkPricing, setBulkPricing] = useState(false);
   const [form, setForm] = useState({
