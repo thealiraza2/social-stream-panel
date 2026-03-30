@@ -41,6 +41,8 @@ const ImportServices = () => {
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [search, setSearch] = useState("");
   const [exchangeRate, setExchangeRate] = useState("1");
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [categoryPages, setCategoryPages] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const load = async () => {
