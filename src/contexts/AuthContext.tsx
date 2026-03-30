@@ -49,12 +49,14 @@ const fetchLocationData = async () => {
 
 const saveLoginHistory = async (uid: string, loc: { ip: string; country: string; city: string; region: string }) => {
   try {
+    console.log('[Auth] Saving login history for', uid, loc);
     await addDoc(collection(db, "users", uid, "login_history"), {
       ip: loc.ip, country: loc.country, city: loc.city, region: loc.region,
       loginAt: serverTimestamp(),
     });
-  } catch {
-    // silent fail
+    console.log('[Auth] Login history saved successfully');
+  } catch (e) {
+    console.error('[Auth] Failed to save login history:', e);
   }
 };
 
