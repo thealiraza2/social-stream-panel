@@ -24,6 +24,17 @@ const fetchLocationData = async () => {
   }
 };
 
+const saveLoginHistory = async (uid: string, loc: { ip: string; country: string; city: string; region: string }) => {
+  try {
+    await addDoc(collection(db, "users", uid, "login_history"), {
+      ip: loc.ip, country: loc.country, city: loc.city, region: loc.region,
+      loginAt: serverTimestamp(),
+    });
+  } catch {
+    // silent fail
+  }
+};
+
 export interface UserProfile {
   uid: string;
   displayName: string;
