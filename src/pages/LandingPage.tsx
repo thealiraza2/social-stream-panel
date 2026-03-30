@@ -283,7 +283,7 @@ function PriceCalculator() {
               Rs. {estimatedPrice.toFixed(2)}
             </p>
             <p className="mt-1 text-xs text-white/80">
-              Rate: Rs. {(PRICE_MAP[platform]?.[service] ?? 0).toFixed(2)} per 1000
+              Rate: Rs. {rate.toFixed(2)} per 1000
             </p>
           </div>
         </div>
