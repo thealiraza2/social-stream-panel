@@ -15,7 +15,7 @@ const PAGE_SIZE = 50;
 
 const CACHE_KEY_SVC = "cache_user_services";
 const CACHE_KEY_CAT = "cache_user_categories";
-const CACHE_TTL = 10 * 60 * 1000;
+const CACHE_TTL = 2 * 60 * 1000;
 
 interface Category { id: string; name: string; sortOrder: number; status: string; }
 interface Service { id: string; name: string; categoryId: string; rate: number; minQuantity: number; maxQuantity: number; description: string; status: string; }
