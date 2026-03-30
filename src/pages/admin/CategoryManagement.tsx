@@ -13,6 +13,8 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
+const PAGE_SIZE = 20;
+
 const CategoryManagement = () => {
   const { toast } = useToast();
   const [categories, setCategories] = useState<any[]>([]);
@@ -22,8 +24,12 @@ const CategoryManagement = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [form, setForm] = useState({ name: "", sortOrder: "0", status: "active" });
+  const [page, setPage] = useState(1);
 
-  const allSelected = categories.length > 0 && selectedIds.size === categories.length;
+  const totalPages = Math.ceil(categories.length / PAGE_SIZE);
+  const paginated = useMemo(() => categories.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [categories, page]);
+
+  const allSelected = paginated.length > 0 && paginated.every(c => selectedIds.has(c.id));
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
