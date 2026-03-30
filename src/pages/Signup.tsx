@@ -36,6 +36,7 @@ const Signup = () => {
   const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkLimit: checkSignupLimit } = useRateLimit({ maxAttempts: 3, windowMs: 120000, cooldownMs: 60000, message: "Too many signup attempts. Please wait 1 minute." });
 
   const ruleResults = useMemo(() => passwordRules.map((r) => ({ ...r, passed: r.test(password) })), [password]);
   const passedCount = ruleResults.filter((r) => r.passed).length;
