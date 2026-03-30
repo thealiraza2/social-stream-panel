@@ -47,6 +47,7 @@ const BulkOrder = () => {
   const [linksText, setLinksText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
 
   const filteredServices = services.filter(
     (s) => s.categoryId === selectedCategory && s.status === "active"
