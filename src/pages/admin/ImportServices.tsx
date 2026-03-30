@@ -37,6 +37,7 @@ const ImportServices = () => {
   const [importing, setImporting] = useState(false);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [search, setSearch] = useState("");
+  const [exchangeRate, setExchangeRate] = useState("1");
 
   useEffect(() => {
     const load = async () => {
