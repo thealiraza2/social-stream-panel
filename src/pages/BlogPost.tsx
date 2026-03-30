@@ -8,6 +8,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { useSEO } from "@/hooks/useSEO";
 
 const BlogPost = () => {
+  const { slug } = useParams();
   const [post, setPost] = useState<any>(null);
   const [category, setCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
