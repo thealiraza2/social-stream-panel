@@ -15,7 +15,7 @@ import { useRateLimit } from "@/hooks/useRateLimit";
 
 const CACHE_KEY_SVC = "cache_neworder_services";
 const CACHE_KEY_CAT = "cache_neworder_categories";
-const CACHE_TTL = 10 * 60 * 1000;
+const CACHE_TTL = 2 * 60 * 1000;
 
 interface Category { id: string; name: string; sortOrder: number; status: string; }
 interface Service {
