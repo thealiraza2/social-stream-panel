@@ -37,6 +37,7 @@ const ImportServices = () => {
   const [importing, setImporting] = useState(false);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [search, setSearch] = useState("");
+  const [exchangeRate, setExchangeRate] = useState("1");
 
   useEffect(() => {
     const load = async () => {
@@ -106,12 +107,18 @@ const ImportServices = () => {
     setRows(prev => { const next = [...prev]; const realIdx = rows.indexOf(filtered[filteredIdx]); next[realIdx] = { ...next[realIdx], ...field }; return next; });
   };
 
+  const rateMultiplier = parseFloat(exchangeRate) || 1;
+
+  const getConvertedRate = useCallback((rate: string) => {
+    return (parseFloat(rate) || 0) * rateMultiplier;
+  }, [rateMultiplier]);
+
   const calcSelling = useCallback((row: ImportRow) => {
-    const base = parseFloat(row.svc.rate) || 0;
+    const base = getConvertedRate(row.svc.rate);
     const margin = parseFloat(row.marginValue) || 0;
     if (row.marginType === "percent") return base + (base * margin) / 100;
     return base + margin;
-  }, []);
+  }, [getConvertedRate]);
 
   const selectedRows = useMemo(() => rows.filter(r => r.selected), [rows]);
 
@@ -120,7 +127,7 @@ const ImportServices = () => {
     try {
       await addDoc(collection(db, "services"), {
         name: row.svc.name, categoryId: row.categoryId, rate: parseFloat(calcSelling(row).toFixed(4)),
-        providerRate: parseFloat(row.svc.rate) || 0, minQuantity: parseInt(row.svc.min) || 0, maxQuantity: parseInt(row.svc.max) || 0,
+        providerRate: getConvertedRate(row.svc.rate), originalProviderRate: parseFloat(row.svc.rate) || 0, exchangeRate: rateMultiplier, minQuantity: parseInt(row.svc.min) || 0, maxQuantity: parseInt(row.svc.max) || 0,
         description: (row as any).svc?.description || "", providerId: selectedProvider,
         providerServiceId: row.svc.service, providerApiUrl: provider?.apiUrl || "", providerApiKey: provider?.apiKey || "",
         type: row.svc.type || "default", status: "active", marginType: row.marginType,
@@ -145,7 +152,7 @@ const ImportServices = () => {
       const batch = toImport.map(r =>
         addDoc(collection(db, "services"), {
           name: r.svc.name, categoryId: r.categoryId, rate: parseFloat(calcSelling(r).toFixed(4)),
-          providerRate: parseFloat(r.svc.rate) || 0, minQuantity: parseInt(r.svc.min) || 0, maxQuantity: parseInt(r.svc.max) || 0,
+          providerRate: getConvertedRate(r.svc.rate), originalProviderRate: parseFloat(r.svc.rate) || 0, exchangeRate: rateMultiplier, minQuantity: parseInt(r.svc.min) || 0, maxQuantity: parseInt(r.svc.max) || 0,
           description: (r as any).svc?.description || "", providerId: selectedProvider,
           providerServiceId: r.svc.service, providerApiUrl: provider?.apiUrl || "", providerApiKey: provider?.apiKey || "",
           type: r.svc.type || "default", status: "active", marginType: r.marginType,
@@ -196,7 +203,12 @@ const ImportServices = () => {
               {fetching ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               {fetching ? "Fetching..." : "Fetch Services"}
             </Button>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Exchange Rate</Label>
+              <Input type="number" value={exchangeRate} onChange={e => setExchangeRate(e.target.value)} className="w-[100px]" placeholder="1" />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">Exchange Rate: Provider rate × {rateMultiplier} = Your rate. Set to 1 if provider already uses your currency.</p>
         </CardContent>
       </Card>
 
@@ -260,7 +272,7 @@ const ImportServices = () => {
                       <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(idx)} /></TableCell>
                       <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
                       <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                      <TableCell className="text-sm">Rs.{row.svc.rate}</TableCell>
+                      <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                       <TableCell>
