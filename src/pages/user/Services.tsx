@@ -36,6 +36,7 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
