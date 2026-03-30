@@ -236,10 +236,16 @@ const ServiceManagement = () => {
         <h1 className="text-2xl font-bold">Service Management</h1>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setBulkPriceOpen(true)}>
+                <DollarSign className="mr-2 h-4 w-4" />
+                Edit Price ({selectedIds.size})
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size} Selected`}
+              </Button>
+            </>
           )}
           <Button onClick={openAdd} className="gradient-purple text-white border-0"><Plus className="mr-2 h-4 w-4" /> Add Service</Button>
         </div>
