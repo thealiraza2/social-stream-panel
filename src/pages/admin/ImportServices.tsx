@@ -272,7 +272,7 @@ const ImportServices = () => {
                       <TableCell><Checkbox checked={row.selected} onCheckedChange={() => toggleRow(idx)} /></TableCell>
                       <TableCell className="text-xs text-muted-foreground">{row.svc.service}</TableCell>
                       <TableCell className="text-sm font-medium max-w-[250px] truncate">{row.svc.name}</TableCell>
-                      <TableCell className="text-sm">Rs.{row.svc.rate}</TableCell>
+                      <TableCell className="text-sm">Rs.{getConvertedRate(row.svc.rate).toFixed(2)}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.min).toLocaleString()}</TableCell>
                       <TableCell className="text-sm">{parseInt(row.svc.max).toLocaleString()}</TableCell>
                       <TableCell>
