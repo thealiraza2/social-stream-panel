@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Code2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useSEO } from "@/hooks/useSEO";
 
 const ApiDocs = () => (
   <div className="min-h-screen bg-background">

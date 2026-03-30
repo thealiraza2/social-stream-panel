@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, Shield } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const PrivacyPolicy = () => (
   <div className="min-h-screen bg-background">

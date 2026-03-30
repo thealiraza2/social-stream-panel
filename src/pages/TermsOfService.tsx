@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, FileText } from "lucide-react";
-
+import { useSEO } from "@/hooks/useSEO";
 const TermsOfService = () => (
   <div className="min-h-screen bg-background">
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">

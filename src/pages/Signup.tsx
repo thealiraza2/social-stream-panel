@@ -8,6 +8,7 @@ import { UserPlus, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, Check, X } from
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { useSEO } from "@/hooks/useSEO";
 
 const passwordRules = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },

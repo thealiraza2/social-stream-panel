@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, DollarSign, Check, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
+import { useSEO } from "@/hooks/useSEO";
 const plans = [
   {
     name: "Starter",

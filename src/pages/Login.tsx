@@ -9,6 +9,7 @@ import { LogIn, Zap, CheckCircle2, ChevronRight, Eye, EyeOff, KeyRound } from "l
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSEO } from "@/hooks/useSEO";
 
 const Login = () => {
   const [email, setEmail] = useState("");

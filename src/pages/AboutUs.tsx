@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, Users } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const AboutUs = () => (
   <div className="min-h-screen bg-background">

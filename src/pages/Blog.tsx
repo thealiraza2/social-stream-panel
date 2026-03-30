@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Calendar, ArrowRight, Image } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { useSEO } from "@/hooks/useSEO";
 
 const Blog = () => {
   const [posts, setPosts] = useState<any[]>([]);
