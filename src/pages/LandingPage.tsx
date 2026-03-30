@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Zap, Menu, X, ChevronRight, UserPlus, LogIn,
   CheckCircle2, Instagram, Youtube, Play, Twitter, Send,
-  ArrowRight
+  ArrowRight, Moon, Sun
 } from "lucide-react";
 import { usePrefetch } from "@/hooks/usePrefetch";
 
