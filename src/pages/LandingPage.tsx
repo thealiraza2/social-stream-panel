@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense, useCallback } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import { useTheme } from "next-themes";
