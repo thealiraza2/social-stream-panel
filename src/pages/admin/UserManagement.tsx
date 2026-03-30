@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle, Globe, MapPin } from "lucide-react";
+import { Search, Pencil, Loader2, Trash2, RotateCcw, AlertTriangle, Globe, MapPin, History } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, DocumentSnapshot, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,25 @@ const UserManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ balance: "", role: "user", status: "active", banReason: "" });
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyUser, setHistoryUser] = useState<any>(null);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const openHistory = async (u: any) => {
+    setHistoryUser(u);
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const q = query(collection(db, "users", u.id, "login_history"), orderBy("loginAt", "desc"));
+      const snap = await getDocs(q);
+      setLoginHistory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      setLoginHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   const fetchFirstPage = useCallback(async () => {
     setLoading(true);
@@ -165,6 +185,7 @@ const UserManagement = () => {
                     <TableCell className="text-xs">{formatDate(u.lastLoginAt)}</TableCell>
                     <TableCell className="text-xs">{formatDate(u.createdAt)}</TableCell>
                     <TableCell className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openHistory(u)} title="Login History"><History className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(u)}><Pencil className="h-4 w-4" /></Button>
                       {u.status === "deleted" ? (
                         <Button size="icon" variant="ghost" onClick={() => handleRecover(u.id)} title="Recover">
@@ -249,6 +270,44 @@ const UserManagement = () => {
             )}
             <Button onClick={handleSave} className="w-full gradient-purple text-white border-0">Update User</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Login History Dialog */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Login History — {historyUser?.email}</DialogTitle></DialogHeader>
+          <ScrollArea className="max-h-[400px]">
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            ) : loginHistory.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No login history found</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date & Time</TableHead><TableHead>IP Address</TableHead><TableHead>Location</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loginHistory.map(h => (
+                    <TableRow key={h.id}>
+                      <TableCell className="text-xs">{h.loginAt?.toDate ? h.loginAt.toDate().toLocaleString() : "—"}</TableCell>
+                      <TableCell className="text-xs font-mono">{h.ip || "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {h.city || h.country ? (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            {[h.city, h.region, h.country].filter(Boolean).join(", ")}
+                          </span>
+                        ) : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
