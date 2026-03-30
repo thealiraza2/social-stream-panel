@@ -5,10 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, Plus, Loader2 } from "lucide-react";
+import { ClipboardList, Search, Copy, ShoppingCart, CheckCircle2, Clock, Banknote, Plus, Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, limit, startAfter, DocumentSnapshot, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TableSkeleton } from "@/components/TableSkeleton";
@@ -24,6 +24,7 @@ interface Order {
   startCount?: number;
   remains?: number;
   providerOrderId?: string;
+  providerId?: string;
   createdAt: any;
 }
 
@@ -94,6 +95,63 @@ const OrderLogs = () => {
     }
   }, [hasMore, loadingMore, lastDoc, user]);
 
+  const [syncing, setSyncing] = useState(false);
+
+  const syncOrderStatuses = useCallback(async () => {
+    const activeOrders = orders.filter(o => 
+      o.providerOrderId && ["pending", "processing", "in_progress"].includes(o.status)
+    );
+    if (activeOrders.length === 0) {
+      toast({ title: "No active orders to sync", description: "All orders are already completed or cancelled." });
+      return;
+    }
+    setSyncing(true);
+    let updated = 0;
+    const providerCache: Record<string, any> = {};
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    for (const order of activeOrders) {
+      try {
+        // Get provider credentials
+        let provider = providerCache[order.providerId || ""];
+        if (!provider && order.providerId) {
+          const provDoc = await getDoc(doc(db, "providers", order.providerId));
+          if (provDoc.exists()) {
+            provider = provDoc.data();
+            providerCache[order.providerId] = provider;
+          }
+        }
+        if (!provider?.apiUrl || !provider?.apiKey) continue;
+
+        const res = await fetch("https://social-stream-panel-nine.vercel.app/api/order-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiUrl: provider.apiUrl,
+            apiKey: provider.apiKey,
+            orderId: order.providerOrderId,
+          }),
+        });
+        const data = await res.json();
+        if (data?.status) {
+          const newStatus = data.status.toLowerCase().replace(" ", "_");
+          const updateData: any = { status: newStatus };
+          if (data.start_count != null) updateData.startCount = Number(data.start_count);
+          if (data.remains != null) updateData.remains = Number(data.remains);
+          
+          await updateDoc(doc(db, "orders", order.id), updateData);
+          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, ...updateData } : o));
+          updated++;
+        }
+        await delay(500);
+      } catch (err) {
+        console.error(`Sync failed for order ${order.id}:`, err);
+      }
+    }
+    setSyncing(false);
+    toast({ title: "Status Synced", description: `${updated} of ${activeOrders.length} orders updated from provider.` });
+  }, [orders, toast]);
+
   useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
 
   const filtered = useMemo(() => orders.filter((o) => {
@@ -129,9 +187,14 @@ const OrderLogs = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Order Logs</h1>
-        <p className="text-muted-foreground">View and track all your orders</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Order Logs</h1>
+          <p className="text-muted-foreground">View and track all your orders</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={syncOrderStatuses} disabled={syncing}>
+          {syncing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Syncing...</> : <><RefreshCw className="h-4 w-4 mr-1" /> Sync Status</>}
+        </Button>
       </div>
 
       {/* Stat Cards */}

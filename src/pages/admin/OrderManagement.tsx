@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ClipboardList, Search, RefreshCw, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, orderBy, query, limit, startAfter, DocumentSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, orderBy, query, limit, startAfter, DocumentSnapshot, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
@@ -76,6 +76,62 @@ const OrderManagement = () => {
 
   useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
 
+  const [syncing, setSyncing] = useState(false);
+
+  const syncAllStatuses = useCallback(async () => {
+    const activeOrders = orders.filter((o: any) => 
+      o.providerOrderId && ["pending", "processing", "in_progress"].includes(o.status)
+    );
+    if (activeOrders.length === 0) {
+      toast({ title: "No active orders to sync" });
+      return;
+    }
+    setSyncing(true);
+    let updated = 0;
+    const providerCache: Record<string, any> = {};
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    for (const order of activeOrders) {
+      try {
+        let provider = providerCache[order.providerId || ""];
+        if (!provider && order.providerId) {
+          const provDoc = await getDoc(doc(db, "providers", order.providerId));
+          if (provDoc.exists()) {
+            provider = provDoc.data();
+            providerCache[order.providerId] = provider;
+          }
+        }
+        if (!provider?.apiUrl || !provider?.apiKey) continue;
+
+        const res = await fetch("https://social-stream-panel-nine.vercel.app/api/order-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiUrl: provider.apiUrl,
+            apiKey: provider.apiKey,
+            orderId: order.providerOrderId,
+          }),
+        });
+        const data = await res.json();
+        if (data?.status) {
+          const newStatus = data.status.toLowerCase().replace(" ", "_");
+          const updateData: any = { status: newStatus };
+          if (data.start_count != null) updateData.startCount = Number(data.start_count);
+          if (data.remains != null) updateData.remains = Number(data.remains);
+          
+          await updateDoc(doc(db, "orders", order.id), updateData);
+          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, ...updateData } : o));
+          updated++;
+        }
+        await delay(500);
+      } catch (err) {
+        console.error(`Sync failed for order ${order.id}:`, err);
+      }
+    }
+    setSyncing(false);
+    toast({ title: "Status Synced", description: `${updated} of ${activeOrders.length} orders updated.` });
+  }, [orders, toast]);
+
   const updateStatus = useCallback(async (orderId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { status: newStatus });
@@ -98,7 +154,12 @@ const OrderManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Order Management</h1>
-        <Button variant="outline" size="sm" onClick={fetchFirstPage}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={syncAllStatuses} disabled={syncing}>
+            {syncing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Syncing...</> : <><RefreshCw className="h-4 w-4 mr-1" /> Sync All Status</>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchFirstPage}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
+        </div>
       </div>
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
