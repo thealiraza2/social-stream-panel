@@ -443,7 +443,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
                     { to: "/services", label: "Services" },
                     { to: "/signup", label: "Sign Up" },
                     { to: "/login", label: "Login" },
-                    { to: "/pricing", label: "Pricing" },
+                    
                     { to: "/faq", label: "FAQ" },
                   ].map((l) => (
                     <li key={l.to}>
