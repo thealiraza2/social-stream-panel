@@ -25,7 +25,7 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const FAQ = lazy(() => import("./pages/FAQ"));
-const Pricing = lazy(() => import("./pages/Pricing"));
+
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Blog = lazy(() => import("./pages/Blog"));
