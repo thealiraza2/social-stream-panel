@@ -123,7 +123,7 @@ const BlogPost = () => {
               <Link to="/signup">Get Started Free <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/pricing">View Pricing</Link>
+              <Link to="/faq">View FAQ</Link>
             </Button>
           </div>
         </div>

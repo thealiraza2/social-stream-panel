@@ -109,7 +109,7 @@ const App = () => (
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/refund" element={<RefundPolicy />} />
                 <Route path="/faq" element={<FAQ />} />
-                <Route path="/pricing" element={<Pricing />} />
+                
                 <Route path="/api-docs" element={<ApiDocs />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/contact" element={<ContactUs />} />

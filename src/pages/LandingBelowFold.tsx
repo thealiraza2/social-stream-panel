@@ -163,7 +163,7 @@ export default function LandingBelowFold({ isMobile }: { isMobile: boolean }) {
               { icon: Timer, label: "Avg Completion", static: "< 2 min" },
             ].map((s) => (
               <div key={s.label} ref={s.data?.ref} className="flex items-center gap-4 text-white">
-                <div className="clay-stat-orb flex h-14 w-14 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
+                <div className="clay-stat-orb flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
                   <s.icon className="h-6 w-6" />
                 </div>
                 <div>
