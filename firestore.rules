@@ -43,9 +43,31 @@ service cloud.firestore {
     // ==========================================
     // ORDERS COLLECTION
     // ==========================================
+    function orderService() {
+      return get(/databases/$(database)/documents/services/$(request.resource.data.serviceId)).data;
+    }
+
+    // Charge must match the authoritative service rate (rate is per 1000 units)
+    // and quantity must fall within the service's configured limits.
+    function validOrderPricing() {
+      return request.resource.data.serviceId is string
+        && exists(/databases/$(database)/documents/services/$(request.resource.data.serviceId))
+        && request.resource.data.quantity is number
+        && request.resource.data.charge is number
+        && request.resource.data.quantity >= orderService().minQuantity
+        && request.resource.data.quantity <= orderService().maxQuantity
+        && request.resource.data.charge >= (orderService().rate * request.resource.data.quantity / 1000) - 0.01
+        && request.resource.data.charge <= (orderService().rate * request.resource.data.quantity / 1000) + 0.01;
+    }
+
     match /orders/{orderId} {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAdmin() || (
+        isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        validOrderPricing()
+      );
+
       // Owner can only update provider response fields on their own order
       allow update: if isAdmin() || (
         isSignedIn() &&
